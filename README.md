@@ -2,5 +2,5 @@
 files, and reviewing and scoring applicant submissions.
 
 Development of reviewpanel was funded by
-[Public Media Institute](publicmediainstitute.com), with support from
-[The Andy Warhol Foundation for the Visual Arts](warholfoundation.org).
+[Public Media Institute](https://publicmediainstitute.com), with support from
+[The Andy Warhol Foundation for the Visual Arts](https://warholfoundation.org).
