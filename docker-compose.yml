@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  djangoapp:
+    build: .
+    env_file:
+      - config/db/database_env
+    environment:
+      DJANGO_ENV: 'prod'
+      SECRET_KEY: '3@(k94m_)-1#)yke03%u72&8n%cl^q8jh&wzrryi8*m#$gkff#'
+      DEBUG: 'on'
+    volumes:
+      - .:/opt/services/djangoapp/src
+      - static_volume:/opt/services/djangoapp/static
+      - media_volume:/opt/services/djangoapp/media
+    networks:
+      - nginx_network
+      - database_network
+    depends_on:
+      - database
+
+  nginx:
+    image: nginx:1.20
+    ports:
+      - 8000:80
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/opt/services/djangoapp/static
+      - media_volume:/opt/services/djangoapp/media
+    depends_on:
+      - djangoapp
+    networks:
+      - nginx_network
+
+  database:
+    image: postgres:13
+    env_file:
+      - config/db/database_env
+    networks:
+      - database_network
+    volumes:
+      - database_volume:/var/lib/postgresql/data
+
+networks:
+  nginx_network:
+    driver: bridge
+  database_network:
+    driver: bridge
+
+volumes:
+  database_volume:
+  static_volume:
+  media_volume:

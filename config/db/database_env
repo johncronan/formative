@@ -1,0 +1,3 @@
+POSTGRES_USER=reviewpanel
+POSTGRES_PASSWORD=reviewpanelpass
+POSTGRES_DB=reviewpanel
