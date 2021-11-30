@@ -5,8 +5,8 @@ services:
     build: .
     env_file:
       - config/db/database_env
+      - config/django_env
     environment:
-      DJANGO_ENV: 'prod'
       SECRET_KEY: '3@(k94m_)-1#)yke03%u72&8n%cl^q8jh&wzrryi8*m#$gkff#'
       DEBUG: 'on'
     volumes:
@@ -36,6 +36,8 @@ services:
     image: postgres:13
     env_file:
       - config/db/database_env
+    ports:
+      - 5432:5432
     networks:
       - database_network
     volumes:

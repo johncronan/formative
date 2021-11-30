@@ -18,7 +18,7 @@ env = environ.Env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'), overwrite=True)
 ENV = env('DJANGO_ENV')
 
 SECRET_KEY = env('SECRET_KEY')
@@ -80,7 +80,7 @@ DATABASES = {
         'NAME': env('POSTGRES_DB'),
         'USER': env('POSTGRES_USER'),
         'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': 'database',
+        'HOST': env('POSTGRES_HOST'),
         'PORT': '5432',
     }
 }
