@@ -56,7 +56,7 @@ ROOT_URLCONF = 'reviewpanel.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -138,7 +138,7 @@ WEBPACK_LOADER = {
     'DEFAULT': {
         'CACHE': not DEBUG,
         'BUNDLE_DIR_NAME': 'bundles/',
-        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/', f'webpack-bundle.{ENV}.json')),
+        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/bundles/', f'webpack-bundle.{ENV}.json')),
         'POLL_INTERVAL': 0.5,
         'TIMEOUT': None,
         'IGNORE': ['.+\.hot-update.js', '.+\.map']
