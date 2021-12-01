@@ -16,7 +16,7 @@ from pathlib import Path
 env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = os.path.dirname(Path(__file__).resolve().parent)
+BASE_DIR = Path(__file__).resolve().parent
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'), overwrite=True)
 ENV = env('DJANGO_ENV')
@@ -24,6 +24,8 @@ ENV = env('DJANGO_ENV')
 SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env.bool('DEBUG', default=False)
+
+WSGI_APPLICATION = "config.wsgi.application"
 
 ALLOWED_HOSTS = []
 
@@ -51,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'reviewpanel.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATES = [
     {
@@ -68,8 +70,6 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = 'reviewpanel.wsgi.application'
 
 
 # Database
