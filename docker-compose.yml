@@ -10,7 +10,6 @@ services:
       SECRET_KEY: '3@(k94m_)-1#)yke03%u72&8n%cl^q8jh&wzrryi8*m#$gkff#'
       DEBUG: 'on'
     volumes:
-      - .:/opt/services/djangoapp/src
       - static_volume:/opt/services/djangoapp/static
       - media_volume:/opt/services/djangoapp/media
     networks:

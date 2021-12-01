@@ -16,7 +16,7 @@ from pathlib import Path
 env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = os.path.dirname(Path(__file__).resolve().parent)
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'), overwrite=True)
 ENV = env('DJANGO_ENV')
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'reviewpanel'
+    'reviewpanel',
+    'webpack_loader'
 ]
 
 MIDDLEWARE = [
@@ -124,9 +125,25 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'static')
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
 
-MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(BASE_DIR)), 'media')
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media')
+
+STATICFILES_DIRS = (
+    ("bundles", os.path.join(BASE_DIR, 'assets/bundles')),
+    ("img", os.path.join(BASE_DIR, 'assets/img')),
+)
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'CACHE': not DEBUG,
+        'BUNDLE_DIR_NAME': 'bundles/',
+        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/', f'webpack-bundle.{ENV}.json')),
+        'POLL_INTERVAL': 0.5,
+        'TIMEOUT': None,
+        'IGNORE': ['.+\.hot-update.js', '.+\.map']
+    }
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

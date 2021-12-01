@@ -8,6 +8,7 @@ django = "~=3.2"
 gunicorn = "*"
 psycopg2 = "*"
 django-environ = "*"
+django-webpack-loader = "*"
 
 [dev-packages]
 
