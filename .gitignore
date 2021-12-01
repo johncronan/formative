@@ -6,7 +6,6 @@ __pycache__/
 *~
 
 .env
-.env.*
 
 assets/node_modules
 assets/bundles/webpack-bundle.dev.json
