@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'polymorphic',
+    'webpack_loader',
     'reviewpanel',
-    'webpack_loader'
 ]
 
 MIDDLEWARE = [

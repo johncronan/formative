@@ -9,6 +9,7 @@ gunicorn = "*"
 psycopg2 = "*"
 django-environ = "*"
 django-webpack-loader = "*"
+django-polymorphic = "*"
 
 [dev-packages]
 
