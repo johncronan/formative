@@ -23,6 +23,7 @@ class FormLabel(models.Model):
 
 
 class Form(models.Model):
+    program = models.ForeignKey(Program, models.CASCADE)
     name = models.CharField(max_length=64)
     default_text_label_style = \
         models.CharField(max_length=16, choices=FormLabel.LabelStyle.choices,
