@@ -30,6 +30,8 @@ class Form(models.Model):
 
 
 class FormBlock(PolymorphicModel):
+    form = models.ForeignKey(Form, models.CASCADE,
+                             related_name='blocks', related_query_name='block')
     name = models.SlugField(max_length=32, verbose_name='identifier',
                             unique=True, allow_unicode=True)
     options = models.JSONField(default=dict)
