@@ -66,9 +66,9 @@ class Form(models.Model):
     def publish(self):
         if self.status != self.Status.DRAFT: return
         
+        self.status = self.Status.ENABLED
         with connection.schema_editor() as editor:
             editor.create_model(self.model)
-        self.status = self.Status.ENABLED
         self.save()
     
     def unpublish(self):
@@ -83,14 +83,16 @@ class Form(models.Model):
 class FormBlock(PolymorphicModel):
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['page', 'rank'], name='unique_rank')
+            models.UniqueConstraint(fields=['form', 'page', 'rank'],
+                                    name='unique_rank'),
+            models.UniqueConstraint(fields=['form', 'name'], name='unique_name')
         ]
         ordering = ['form', 'page', 'rank']
     
     form = models.ForeignKey(Form, models.CASCADE,
                              related_name='blocks', related_query_name='block')
     name = models.SlugField(max_length=32, verbose_name='identifier',
-                            unique=True, allow_unicode=True)
+                            allow_unicode=True)
     options = models.JSONField(default=dict)
     rank = models.PositiveIntegerField(default=0)
     page = models.PositiveIntegerField(default=1)
