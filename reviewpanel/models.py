@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection
 from django.core.exceptions import FieldError
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -62,6 +62,22 @@ class Form(models.Model):
         name = self.name # TODO reduce charset
         return create_model(name, dict(fields),
                             options=SubmissionMeta.Meta.__dict__)
+    
+    def publish(self):
+        if self.status != self.Status.DRAFT: return
+        
+        with connection.schema_editor() as editor:
+            editor.create_model(self.model)
+        self.status = self.Status.ENABLED
+        self.save()
+    
+    def unpublish(self):
+        if self.status == self.Status.DRAFT: return
+        
+        with connection.schema_editor() as editor:
+            editor.delete_model(self.model)
+        self.status = self.Status.DRAFT
+        self.save()
 
 
 class FormBlock(PolymorphicModel):
