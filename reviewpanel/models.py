@@ -41,6 +41,11 @@ class Form(models.Model):
 
 
 class FormBlock(PolymorphicModel):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['page', 'rank'], name='unique_rank')
+        ]
+    
     form = models.ForeignKey(Form, models.CASCADE,
                              related_name='blocks', related_query_name='block')
     name = models.SlugField(max_length=32, verbose_name='identifier',
