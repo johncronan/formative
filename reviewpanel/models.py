@@ -63,8 +63,9 @@ class Form(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        if self._state.adding:
+        if self._state.adding or self.status == self.Status.DRAFT:
             self.slug = slugify(self.name).replace('-', '')
+        
         super().save(*args, **kwargs)
     
     @cached_property
