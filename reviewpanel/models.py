@@ -11,13 +11,14 @@ from .utils import create_model
 
 
 class Program(models.Model):
-    name = models.CharField(max_length=64)
-    slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
+    name = models.CharField(max_length=32)
+    slug = models.SlugField(max_length=32, allow_unicode=True, editable=False)
     description = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
     
+    # TODO: disallow certain slug values, like "auth"
     def save(self, *args, **kwargs):
         if self._state.adding:
             self.slug = slugify(self.name).replace('-', '')
@@ -30,7 +31,7 @@ class FormLabel(models.Model):
         VERTICAL = 'vertical', _('vertical label')
         HORIZONTAL = 'horizontal', _('horizontal label')
     
-    path = models.CharField(max_length=64, primary_key=True)
+    path = models.CharField(max_length=128, primary_key=True)
     text = models.CharField(max_length=1000)
     style = models.CharField(max_length=16, choices=LabelStyle.choices)
     
