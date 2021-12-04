@@ -1,4 +1,4 @@
-__all__ = ["StockWidget", "EmailWidget"]
+__all__ = ["StockWidget", "EmailWidget", "NameWidget"]
 
 class StockWidget:
     types = {}
@@ -15,3 +15,4 @@ class StockWidget:
         self.name = name
 
 from .email import EmailWidget
+from .name import NameWidget

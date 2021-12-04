@@ -5,11 +5,12 @@ from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
 from .stock import StockWidget
+from .utils import create_model
 
 
 class Program(models.Model):
     name = models.CharField(max_length=64)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
@@ -30,14 +31,37 @@ class FormLabel(models.Model):
 
 
 class Form(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', _('unpublished')
+        DISABLED = 'disabled', _('submissions disabled')
+        ENABLED = 'enabled', _('published/enabled')
+        COMPLETED = 'completed', _('completed')
+    
     program = models.ForeignKey(Program, models.CASCADE)
     name = models.CharField(max_length=64)
+    status = models.CharField(max_length=16, choices=Status.choices)
+    # TODO: date stuff
     default_text_label_style = \
         models.CharField(max_length=16, choices=FormLabel.LabelStyle.choices,
                          default=FormLabel.LabelStyle.OUTLINED)
     
     def __str__(self):
         return self.name
+    
+    @cached_property
+    def model(self):
+        if self.status == self.Status.DRAFT: return None
+        
+        fields = []
+        for block in self.blocks.all(): fields += block.fields()
+        
+        # add methods from SubmissionMeta
+        fields += [(k, v) for k, v in SubmissionMeta.__dict__.items()
+                   if callable(v) and not isinstance(v, type)]
+        
+        name = self.name # TODO reduce charset
+        return create_model(name, dict(fields),
+                            options=SubmissionMeta.Meta.__dict__)
 
 
 class FormBlock(PolymorphicModel):
@@ -45,6 +69,7 @@ class FormBlock(PolymorphicModel):
         constraints = [
             models.UniqueConstraint(fields=['page', 'rank'], name='unique_rank')
         ]
+        ordering = ['form', 'page', 'rank']
     
     form = models.ForeignKey(Form, models.CASCADE,
                              related_name='blocks', related_query_name='block')
@@ -155,3 +180,7 @@ class CollectionBlock(FormBlock):
     def fields(self):
         return []
 
+
+class SubmissionMeta:
+    class Meta:
+        pass
