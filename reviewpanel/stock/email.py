@@ -9,4 +9,4 @@ class EmailWidget(StockWidget):
         super().__init__(name)
     
     def fields(self):
-        return [(self.name, models.EmailField())]
+        return [('_' + self.name, models.EmailField())]

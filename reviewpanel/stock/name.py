@@ -12,5 +12,5 @@ class NameWidget(StockWidget):
         cls = models.CharField
         args = {'max_length': 32}
         
-        parts = ('first_name', 'last_name')
-        return [(f'{self.name}.{field}', cls(**args)) for field in parts]
+        parts = ('firstname', 'lastname')
+        return [(f'_{self.name}_{field}', cls(**args)) for field in parts]

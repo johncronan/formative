@@ -1,6 +1,8 @@
 from django.db import models, connection
+from django.db.models import UniqueConstraint
 from django.core.exceptions import FieldError
 from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
@@ -10,10 +12,16 @@ from .utils import create_model
 
 class Program(models.Model):
     name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
     description = models.CharField(max_length=200, blank=True)
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.slug = slugify(self.name).replace('-', '')
+        super().save(*args, **kwargs)
 
 
 class FormLabel(models.Model):
@@ -31,6 +39,11 @@ class FormLabel(models.Model):
 
 
 class Form(models.Model):
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['program', 'slug'], name='unique_slug')
+        ]
+    
     class Status(models.TextChoices):
         DRAFT = 'draft', _('unpublished')
         DISABLED = 'disabled', _('submissions disabled')
@@ -39,6 +52,7 @@ class Form(models.Model):
     
     program = models.ForeignKey(Program, models.CASCADE)
     name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
     status = models.CharField(max_length=16, choices=Status.choices)
     # TODO: date stuff
     default_text_label_style = \
@@ -47,6 +61,11 @@ class Form(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.slug = slugify(self.name).replace('-', '')
+        super().save(*args, **kwargs)
     
     @cached_property
     def model(self):
@@ -59,17 +78,19 @@ class Form(models.Model):
         fields += [(k, v) for k, v in SubmissionMeta.__dict__.items()
                    if callable(v) and not isinstance(v, type)]
         
-        name = self.name # TODO reduce charset
-        return create_model(name, dict(fields),
+        name = self.slug
+        return create_model(name, dict(fields), app_label=self.program.slug,
                             options=SubmissionMeta.Meta.__dict__)
     
     def publish(self):
         if self.status != self.Status.DRAFT: return
         
         self.status = self.Status.ENABLED
+        del self.model
         with connection.schema_editor() as editor:
             editor.create_model(self.model)
         self.save()
+        
     
     def unpublish(self):
         if self.status == self.Status.DRAFT: return
@@ -77,15 +98,16 @@ class Form(models.Model):
         with connection.schema_editor() as editor:
             editor.delete_model(self.model)
         self.status = self.Status.DRAFT
+        del self.model
         self.save()
 
 
 class FormBlock(PolymorphicModel):
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['form', 'page', 'rank'],
-                                    name='unique_rank'),
-            models.UniqueConstraint(fields=['form', 'name'], name='unique_name')
+            UniqueConstraint(fields=['form', 'page', 'rank'],
+                             name='unique_rank'),
+            UniqueConstraint(fields=['form', 'name'], name='unique_name')
         ]
         ordering = ['form', 'page', 'rank']
     
@@ -120,8 +142,7 @@ class FormDependency(models.Model):
     class Meta:
         verbose_name = 'form dependencies'
         constraints = [
-            models.UniqueConstraint(fields=['block', 'value'],
-                                    name='unique_blockval')
+            UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
         ]
     
     block = models.ForeignKey(FormBlock, models.CASCADE)
