@@ -1,5 +1,5 @@
 from django.db import models, connection
-from django.db.models import UniqueConstraint
+from django.db.models import Q, UniqueConstraint
 from django.core.exceptions import FieldError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -121,7 +121,9 @@ class FormBlock(PolymorphicModel):
     rank = models.PositiveIntegerField(default=0)
     page = models.PositiveIntegerField(default=1)
     dependence = models.ForeignKey('FormBlock', models.CASCADE,
-                                   null=True, blank=True)
+                                   null=True, blank=True,
+                                   related_name='dependents',
+                                   related_query_name='dependent')
     
     def __str__(self):
         return self.name
@@ -147,7 +149,9 @@ class FormDependency(models.Model):
             UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
         ]
     
-    block = models.ForeignKey(FormBlock, models.CASCADE)
+    block = models.ForeignKey(FormBlock, models.CASCADE,
+                              related_name='dependencies',
+                              related_query_name='dependency')
     value = models.CharField(max_length=64)
     
     def __str__(self):
