@@ -1,3 +1,5 @@
+from django.db import models
+
 from . import StockWidget
 
 class EmailWidget(StockWidget):
@@ -7,4 +9,4 @@ class EmailWidget(StockWidget):
         super().__init__(name)
     
     def fields(self):
-        return [self.name]
+        return [(self.name, models.EmailField())]
