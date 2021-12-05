@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -150,3 +151,14 @@ WEBPACK_LOADER = {
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+JAZZMIN_SETTINGS = {
+    'related_modal_active': True,
+#    'custom_js': 'admin.js',
+#    'custom_css': '',
+}
+
+JAZZMIN_UI_TWEAKS = {
+    'sidebar_nav_legacy_style': True,
+    'sidebar_disable_expand': True,
+}

@@ -10,6 +10,7 @@ psycopg2 = "*"
 django-environ = "*"
 django-webpack-loader = "*"
 django-polymorphic = "*"
+django-jazzmin = "*"
 
 [dev-packages]
 
