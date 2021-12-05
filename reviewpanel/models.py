@@ -73,7 +73,7 @@ class Form(models.Model):
     def model(self):
         if self.status == self.Status.DRAFT: return None
         
-        fields = []
+        fields = [] # TODO grab some model fields from SubmissionMeta
         for block in self.blocks.all(): fields += block.fields()
         
         # add methods from SubmissionMeta
@@ -81,27 +81,78 @@ class Form(models.Model):
                    if callable(v) and not isinstance(v, type)]
         
         name = self.slug
-        return create_model(name, dict(fields), app_label=self.program.slug,
+        return create_model(name, fields, app_label=self.program.slug,
                             options=SubmissionMeta.Meta.__dict__)
+    
+    @cached_property
+    def item_model(self):
+        if self.status == self.Status.DRAFT: return None
+        
+        collections = self.collections()
+        if not collections: return None
+        
+        names = []
+        for c in collections:
+            for field in c.collection_fields():
+                if field not in names: names.append(field)
+        
+        fields = [] # TODO same as above re SubmissionItemMeta
+        
+        # the first column links submission items to the submission
+        fields.append(('_submission',
+                       models.ForeignKey(self.model, models.CASCADE)))
+        
+        # the next column identifies the item's collection name
+        fields.append(('_collection', models.CharField(max_length=32)))
+        
+        for n in names:
+            # look for a CustomBlock with the same name on page 0 (hidden)
+            try:
+                block = self.custom_blocks().get(page=0, name=n)
+            # otherwise, use the default text CustomBlock
+            except CustomBlock.DoesNotExist:
+                block = CustomBlock.text_create()
+            fields.append((n, block.field()))
+        
+        def path(instance, filename): return self.slug + '/'
+        file_field = models.FileField(upload_to=path, max_length=128)
+        fields.append(('_file', file_field))
+        
+        name = self.slug + '_item_'
+        return create_model(name, fields, app_label=self.program.slug,
+                            options=SubmissionItemMeta.Meta.__dict__)
     
     def publish(self):
         if self.status != self.Status.DRAFT: return
         
         self.status = self.Status.ENABLED
-        del self.model
+        if 'model' in self.__dict__: del self.model
+        if 'item_model' in self.__dict__: del self.item_model
+        
         with connection.schema_editor() as editor:
             editor.create_model(self.model)
-        self.save()
+            if self.item_model: editor.create_model(self.item_model)
         
+        self.save()
     
     def unpublish(self):
         if self.status == self.Status.DRAFT: return
         
         with connection.schema_editor() as editor:
             editor.delete_model(self.model)
+            if self.item_model: editor.delete_model(self.item_model)
+        
         self.status = self.Status.DRAFT
-        del self.model
+        if 'model' in self.__dict__: del self.model
+        if 'item_model' in self.__dict__: del self.item_model
+        
         self.save()
+    
+    def custom_blocks(self):
+        return self.blocks.instance_of(CustomBlock)
+    
+    def collections(self):
+        return self.blocks.instance_of(CollectionBlock)
 
 
 class FormBlock(PolymorphicModel):
@@ -110,6 +161,7 @@ class FormBlock(PolymorphicModel):
             UniqueConstraint(fields=['form', 'page', 'rank'],
                              name='unique_rank'),
             UniqueConstraint(fields=['form', 'name'], name='unique_name')
+#                             condition=~Q(instance_of=CollectionBlock))
         ]
         ordering = ['form', 'page', 'rank']
     
@@ -164,6 +216,8 @@ class CustomBlock(FormBlock):
     
     MAX_CHARS_PER_WORD = 10
     CHOICE_VAL_MAXLEN = 64
+    DEFAULT_TEXT_MAXLEN = 1000
+    
     class InputType(models.TextChoices):
         TEXT = 'text', _('text')
         NUMERIC = 'num', _('numeric')
@@ -181,6 +235,12 @@ class CustomBlock(FormBlock):
     min_words = models.PositiveIntegerField(null=True, blank=True)
     max_words = models.PositiveIntegerField(null=True, blank=True)
     
+    @classmethod
+    def text_create(cls, *args, **kwargs):
+        if 'max_chars' not in kwargs:
+            kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
+        return cls(*args, **kwargs, type=cls.InputType.TEXT)
+    
     def field(self):
         if self.type == self.InputType.TEXT:
             chars = self.max_chars
@@ -188,7 +248,8 @@ class CustomBlock(FormBlock):
                 chars = self.max_words * self.MAX_CHARS_PER_WORD
             
             cls = models.TextField
-            if chars and chars <= 1000: cls = models.CharField
+            if chars and chars <= self.DEFAULT_TEXT_MAXLEN:
+                cls = models.CharField
             
             return cls(max_length=chars)
 
@@ -224,8 +285,21 @@ class CollectionBlock(FormBlock):
     
     def fields(self):
         return []
+    
+    def collection_fields(self):
+        fields = []
+        if self.name3: fields.insert(0, self.name3)
+        if self.name2: fields.insert(0, self.name2)
+        if self.name1: fields.insert(0, self.name1)
+        
+        return fields
 
 
 class SubmissionMeta:
+    class Meta:
+        pass
+
+
+class SubmissionItemMeta:
     class Meta:
         pass
