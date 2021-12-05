@@ -21,4 +21,4 @@ EXPOSE 8000
 
 # TODO: change to an app user? (https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
 
-CMD ["gunicorn", "--chdir", "reviewpanel", "--bind", ":8000", "config.wsgi:application"]
+CMD ["gunicorn", "--chdir", ".", "--bind", ":8000", "config.wsgi:application"]
