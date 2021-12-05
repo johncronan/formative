@@ -74,7 +74,7 @@ class Form(models.Model):
         if self.status == self.Status.DRAFT: return None
         
         fields = [] # TODO grab some model fields from SubmissionMeta
-        for block in self.blocks.all(): fields += block.fields()
+        for block in self.blocks.filter(page__gt=0): fields += block.fields()
         
         # add methods from SubmissionMeta
         fields += [(k, v) for k, v in SubmissionMeta.__dict__.items()
