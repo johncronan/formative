@@ -73,16 +73,16 @@ class Form(models.Model):
     def model(self):
         if self.status == self.Status.DRAFT: return None
         
-        fields = [] # TODO grab some model fields from SubmissionMeta
+        fields = [] # TODO grab some model fields from SubmissionSpec
         for block in self.blocks.filter(page__gt=0): fields += block.fields()
         
-        # add methods from SubmissionMeta
-        fields += [(k, v) for k, v in SubmissionMeta.__dict__.items()
+        # add methods from SubmissionSpec
+        fields += [(k, v) for k, v in SubmissionSpec.__dict__.items()
                    if callable(v) and not isinstance(v, type)]
         
         name = self.slug
         return create_model(name, fields, app_label=self.program.slug,
-                            options=SubmissionMeta.Meta.__dict__)
+                            options=SubmissionSpec.Meta.__dict__)
     
     @cached_property
     def item_model(self):
@@ -96,7 +96,7 @@ class Form(models.Model):
             for field in c.collection_fields():
                 if field not in names: names.append(field)
         
-        fields = [] # TODO same as above re SubmissionItemMeta
+        fields = []
         
         # the first column links submission items to the submission
         fields.append(('_submission',
@@ -104,6 +104,8 @@ class Form(models.Model):
         
         # the next column identifies the item's collection name
         fields.append(('_collection', models.CharField(max_length=32)))
+        
+        # TODO: a column holding the CollectionBlock id (for redisplay)
         
         for n in names:
             # look for a CustomBlock with the same name on page 0 (hidden)
@@ -120,7 +122,7 @@ class Form(models.Model):
         
         name = self.slug + '_item_'
         return create_model(name, fields, app_label=self.program.slug,
-                            options=SubmissionItemMeta.Meta.__dict__)
+                            options=SubmissionItemSpec.Meta.__dict__)
     
     def publish(self):
         if self.status != self.Status.DRAFT: return
@@ -295,11 +297,13 @@ class CollectionBlock(FormBlock):
         return fields
 
 
-class SubmissionMeta:
+class SubmissionSpec:
     class Meta:
         pass
+    
+    # TODO: date stuff
 
 
-class SubmissionItemMeta:
+class SubmissionItemSpec:
     class Meta:
-        pass
+        order_with_respect_to = '_submission'
