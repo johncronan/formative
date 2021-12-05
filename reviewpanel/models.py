@@ -158,6 +158,22 @@ class Form(models.Model):
         return self.blocks.instance_of(CollectionBlock)
 
 
+class FormDependency(models.Model):
+    class Meta:
+        verbose_name_plural = 'form dependencies'
+        constraints = [
+            UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
+        ]
+    
+    block = models.ForeignKey('FormBlock', models.CASCADE,
+                              related_name='dependencies',
+                              related_query_name='dependency')
+    value = models.CharField(max_length=64)
+    
+    def __str__(self):
+        return f'{self.block}="{self.value}"'
+
+
 class FormBlock(PolymorphicModel):
     class Meta:
         constraints = [
@@ -195,22 +211,6 @@ class FormBlock(PolymorphicModel):
     
     def fields(self):
         return self.stock.fields()
-
-
-class FormDependency(models.Model):
-    class Meta:
-        verbose_name_plural = 'form dependencies'
-        constraints = [
-            UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
-        ]
-    
-    block = models.ForeignKey(FormBlock, models.CASCADE,
-                              related_name='dependencies',
-                              related_query_name='dependency')
-    value = models.CharField(max_length=64)
-    
-    def __str__(self):
-        return f'{self.block}="{self.value}"'
 
 
 class CustomBlock(FormBlock):
