@@ -33,7 +33,8 @@ class FormLabel(models.Model):
     
     path = models.CharField(max_length=128, primary_key=True)
     text = models.CharField(max_length=1000)
-    style = models.CharField(max_length=16, choices=LabelStyle.choices)
+    style = models.CharField(max_length=16, choices=LabelStyle.choices,
+                             default=LabelStyle.OUTLINED)
     
     def __str__(self):
         return self.path
@@ -73,16 +74,12 @@ class Form(models.Model):
     def model(self):
         if self.status == self.Status.DRAFT: return None
         
-        fields = [] # TODO grab some model fields from SubmissionSpec
+        fields = []
         for block in self.blocks.filter(page__gt=0): fields += block.fields()
-        
-        # add methods from SubmissionSpec
-        fields += [(k, v) for k, v in SubmissionSpec.__dict__.items()
-                   if callable(v) and not isinstance(v, type)]
         
         name = self.slug
         return create_model(name, fields, app_label=self.program.slug,
-                            options=SubmissionSpec.Meta.__dict__)
+                            base_class=Submission, meta=Submission.Meta)
     
     @cached_property
     def item_model(self):
@@ -122,7 +119,7 @@ class Form(models.Model):
         
         name = self.slug + '_item_'
         return create_model(name, fields, app_label=self.program.slug,
-                            options=SubmissionItemSpec.Meta.__dict__)
+                            base_class=SubmissionItem, meta=SubmissionItem.Meta)
     
     def publish(self):
         if self.status != self.Status.DRAFT: return
@@ -171,7 +168,7 @@ class FormBlock(PolymorphicModel):
                              related_name='blocks', related_query_name='block')
     name = models.SlugField(max_length=32, verbose_name='identifier',
                             allow_unicode=True)
-    options = models.JSONField(default=dict)
+    options = models.JSONField(default=dict, blank=True)
     rank = models.PositiveIntegerField(default=0)
     page = models.PositiveIntegerField(default=1)
     dependence = models.ForeignKey('FormBlock', models.CASCADE,
@@ -281,9 +278,9 @@ class CollectionBlock(FormBlock):
     has_file = models.BooleanField(default=False)
     file_optional = models.BooleanField(default=False)
     # we don't need these references indexed or validated here, so no SlugField
-    name1 = models.CharField(max_length=32, default='')
-    name2 = models.CharField(max_length=32, default='')
-    name3 = models.CharField(max_length=32, default='')
+    name1 = models.CharField(max_length=32, default='', blank=True)
+    name2 = models.CharField(max_length=32, default='', blank=True)
+    name3 = models.CharField(max_length=32, default='', blank=True)
     
     def fields(self):
         return []
@@ -297,13 +294,14 @@ class CollectionBlock(FormBlock):
         return fields
 
 
-class SubmissionSpec:
+class Submission(models.Model):
     class Meta:
-        pass
+        abstract = True
     
     # TODO: date stuff
 
 
-class SubmissionItemSpec:
+class SubmissionItem(models.Model):
     class Meta:
+        abstract = True
         order_with_respect_to = '_submission'
