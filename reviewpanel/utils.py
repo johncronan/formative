@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.apps.config import AppConfig
 from django.db import models
 from django.contrib import admin
 
