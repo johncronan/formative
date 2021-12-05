@@ -93,16 +93,10 @@ class Form(models.Model):
             for field in c.collection_fields():
                 if field not in names: names.append(field)
         
-        fields = []
-        
-        # the first column links submission items to the submission
-        fields.append(('_submission',
-                       models.ForeignKey(self.model, models.CASCADE)))
-        
-        # the next column identifies the item's collection name
-        fields.append(('_collection', models.CharField(max_length=32)))
-        
-        # TODO: a column holding the CollectionBlock id (for redisplay)
+        fields = [
+            # the first column links submission items to the submission
+            ('_submission', models.ForeignKey(self.model, models.CASCADE))
+        ]
         
         for n in names:
             # look for a CustomBlock with the same name on page 0 (hidden)
@@ -275,6 +269,8 @@ class CollectionBlock(FormBlock):
     block = models.OneToOneField(FormBlock, on_delete=models.CASCADE,
                                  parent_link=True, primary_key=True)
     fixed = models.BooleanField(default=False)
+    min_items = models.PositiveIntegerField(null=True, blank=True)
+    max_items = models.PositiveIntegerField(null=True, blank=True)
     has_file = models.BooleanField(default=False)
     file_optional = models.BooleanField(default=False)
     # we don't need these references indexed or validated here, so no SlugField
@@ -305,3 +301,9 @@ class SubmissionItem(models.Model):
     class Meta:
         abstract = True
         order_with_respect_to = '_submission'
+    
+    # the item's collection name
+    _collection = models.CharField(max_length=32)
+    
+    # id of the collection block this item came from
+    _block = models.PositiveBigIntegerField()
