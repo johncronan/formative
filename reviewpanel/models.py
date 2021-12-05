@@ -1,5 +1,6 @@
 from django.db import models, connection
 from django.db.models import Q, UniqueConstraint
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
@@ -78,7 +79,7 @@ class Form(models.Model):
         for block in self.blocks.filter(page__gt=0): fields += block.fields()
         
         name = self.slug
-        return create_model(name, fields, app_label=self.program.slug,
+        return create_model(name, fields, table_prefix=self.program.slug,
                             base_class=Submission, meta=Submission.Meta)
     
     @cached_property
@@ -108,9 +109,24 @@ class Form(models.Model):
             fields.append((n, block.field()))
         
         name = self.slug + '_item_'
-        return create_model(name, fields, app_label=self.program.slug,
+        return create_model(name, fields, table_prefix=self.program.slug,
                             base_class=SubmissionItem, meta=SubmissionItem.Meta)
     
+    def publish_model(self, model):
+        with connection.schema_editor() as editor:
+            editor.create_model(model)
+        ctype = ContentType(app_label=model._meta.app_label,
+                            model=model.__name__)
+        ctype.save()
+        ContentType.objects.clear_cache()
+    
+    def unpublish_model(self, model):
+        ctype = ContentType.objects.get_for_model(model)
+        ctype.delete()
+        ContentType.objects.clear_cache()
+        with connection.schema_editor() as editor:
+            editor.delete_model(model)
+            
     def publish(self):
         if self.status != self.Status.DRAFT: return
         
@@ -118,18 +134,16 @@ class Form(models.Model):
         if 'model' in self.__dict__: del self.model
         if 'item_model' in self.__dict__: del self.item_model
         
-        with connection.schema_editor() as editor:
-            editor.create_model(self.model)
-            if self.item_model: editor.create_model(self.item_model)
+        self.publish_model(self.model)
+        if self.item_model: self.publish_model(self.item_model)
         
         self.save()
     
     def unpublish(self):
         if self.status == self.Status.DRAFT: return
         
-        with connection.schema_editor() as editor:
-            editor.delete_model(self.model)
-            if self.item_model: editor.delete_model(self.item_model)
+        self.unpublish_model(self.model)
+        if self.item_model: self.unpublish_model(self.item_model)
         
         self.status = self.Status.DRAFT
         if 'model' in self.__dict__: del self.model
@@ -185,7 +199,7 @@ class FormBlock(PolymorphicModel):
 
 class FormDependency(models.Model):
     class Meta:
-        verbose_name = 'form dependencies'
+        verbose_name_plural = 'form dependencies'
         constraints = [
             UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
         ]
