@@ -107,10 +107,6 @@ class Form(models.Model):
                 block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
-        def path(instance, filename): return self.slug + '/'
-        file_field = models.FileField(upload_to=path, max_length=128)
-        fields.append(('_file', file_field))
-        
         name = self.slug + '_item_'
         return create_model(name, fields, app_label=self.program.slug,
                             base_class=SubmissionItem, meta=SubmissionItem.Meta)
@@ -207,7 +203,6 @@ class CustomBlock(FormBlock):
     class Meta:
         db_table = 'reviewpanel_formcustomblock'
     
-    MAX_CHARS_PER_WORD = 10
     CHOICE_VAL_MAXLEN = 64
     DEFAULT_TEXT_MAXLEN = 1000
     
@@ -236,15 +231,9 @@ class CustomBlock(FormBlock):
     
     def field(self):
         if self.type == self.InputType.TEXT:
-            chars = self.max_chars
-            if self.max_words and not chars:
-                chars = self.max_words * self.MAX_CHARS_PER_WORD
-            
-            cls = models.TextField
-            if chars and chars <= self.DEFAULT_TEXT_MAXLEN:
-                cls = models.CharField
-            
-            return cls(max_length=chars)
+            if self.max_chars and self.max_chars <= self.DEFAULT_TEXT_MAXLEN:
+                return models.CharField(max_length=self.max_chars)
+            return models.TextField(max_length=self.max_chars)
 
         elif self.type == self.InputType.NUMERIC:
             if not self.required:
@@ -252,8 +241,9 @@ class CustomBlock(FormBlock):
             return models.IntegerField()
 
         elif self.type == self.InputType.CHOICE:
-            args = {'max_length': self.CHOICE_VAL_MAXLEN}
-            return models.CharField(max_length=self.CHOICE_VAL_MAXLEN)
+            args = {}
+            if not self.required: args['blank'] = True
+            return models.CharField(max_length=self.CHOICE_VAL_MAXLEN, **args)
         
         elif self.type == self.InputType.BOOLEAN:
             return models.BooleanField(default=False)
@@ -297,6 +287,8 @@ class Submission(models.Model):
     # TODO: date stuff
 
 
+def file_path(instance, filename): return instance.slug + '/'
+
 class SubmissionItem(models.Model):
     class Meta:
         abstract = True
@@ -307,3 +299,5 @@ class SubmissionItem(models.Model):
     
     # id of the collection block this item came from
     _block = models.PositiveBigIntegerField()
+    
+    _file = models.FileField(upload_to=file_path, max_length=128, blank=True)
