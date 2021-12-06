@@ -162,3 +162,6 @@ JAZZMIN_UI_TWEAKS = {
     'sidebar_nav_legacy_style': True,
     'sidebar_disable_expand': True,
 }
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SILENCED_SYSTEM_CHECKS = ['security.W019']
