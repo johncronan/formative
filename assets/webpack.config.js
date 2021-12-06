@@ -1,6 +1,8 @@
 const path = require("path");
 const webpack = require("webpack");
 const BundleTracker = require("webpack-bundle-tracker");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const autoprefixer = require("autoprefixer");
 
 const resolve = path.resolve.bind(path, __dirname);
 
@@ -43,27 +45,29 @@ module.exports = (env, argv) => {
 
   return {
     mode: argv.mode,
-    entry: "./index.js",
+    entry: ["./index.js", "./app.scss"],
     output,
     module: {
       rules: [
-        // Scripts
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          loader: "babel-loader"
-        },
         // Styles
         {
           test: /\.(sa|sc|c)ss$/,
           use: [
             {
-              loader: "style-loader"
+              loader: MiniCssExtractPlugin.loader
             },
             {
               loader: "css-loader",
               options: {
-                sourceMap: true
+                sourceMap: true,
+              }
+            },
+            {
+              loader: "postcss-loader",
+              options: {
+                postcssOptions: {
+                  plugins: [autoprefixer()]
+                }
               }
             },
             {
@@ -76,6 +80,15 @@ module.exports = (env, argv) => {
               }
             }
           ]
+        },
+        // Scripts
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          loader: "babel-loader",
+          options: {
+            presets: ['@babel/preset-env']
+          }
         }
       ]
     },
@@ -83,6 +96,7 @@ module.exports = (env, argv) => {
       new BundleTracker({
         filename: `bundles/webpack-bundle.${env.env}.json`
       }),
+      new MiniCssExtractPlugin()
     ],
     devtool: "source-map"
   };
