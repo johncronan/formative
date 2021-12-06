@@ -69,7 +69,10 @@ module.exports = (env, argv) => {
             {
               loader: "sass-loader",
               options: {
-                sourceMap: true
+                sourceMap: true,
+                sassOptions: {
+                  includePaths: ['./node_modules']
+                }
               }
             }
           ]

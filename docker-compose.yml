@@ -12,6 +12,7 @@ services:
     volumes:
       - static_volume:/opt/services/djangoapp/static
       - media_volume:/opt/services/djangoapp/media
+      - ./templates:/opt/services/djangoapp/src/templates
     networks:
       - nginx_network
       - database_network
