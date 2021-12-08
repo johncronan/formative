@@ -8,7 +8,7 @@
     {% block page_extra_meta %}{% endblock %}
     {% render_bundle 'main' 'css' %}
   </head>
-  <body>
+  <body{% block body_attributes %}{% endblock %}>
     {% block body %}{% endblock %}
     {% render_bundle 'main' 'js' %}
   </body>

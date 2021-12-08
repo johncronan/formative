@@ -1,6 +1,9 @@
+@use 'libs/reset';
+
+@use '@material/typography/mdc-typography';
+@use '@material/layout-grid/mdc-layout-grid';
 @use '@material/button/mdc-button';
 @use '@material/button';
-@use '@material/layout-grid/mdc-layout-grid';
 @use 'include-media' as *;
 
 .rp-centered-grid {

@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
+{% block page_extra_meta %}
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+{% endblock %}
+
+{% block body_attributes %} class="mdc-typography"{% endblock %}
+
 {% block body %}
 <div class="mdc-layout-grid rp-centered-grid">
   <div class="mdc-layout-grid__inner">
