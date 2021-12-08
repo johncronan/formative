@@ -1,1 +1,2 @@
-import {MDCRipple} from '@material/ripple/index';
+import "./scss/main.scss";
+import "./js/main.js";
