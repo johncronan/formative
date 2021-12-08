@@ -1,2 +1,9 @@
 @use '@material/button/mdc-button';
 @use '@material/button';
+@use '@material/layout-grid/mdc-layout-grid';
+@use 'include-media' as *;
+
+.rp-centered-grid {
+  margin: 0 auto;
+  max-width: 840px;
+}
