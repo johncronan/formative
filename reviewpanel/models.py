@@ -15,7 +15,8 @@ class Program(models.Model):
     name = models.CharField(max_length=32)
     slug = models.SlugField(max_length=32, allow_unicode=True, editable=False)
     description = models.CharField(max_length=200, blank=True)
-    
+    hidden = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
     
@@ -24,6 +25,9 @@ class Program(models.Model):
         if self._state.adding:
             self.slug = slugify(self.name).replace('-', '')
         super().save(*args, **kwargs)
+    
+    def visible_forms(self):
+        return self.forms.exclude(status=Form.Status.DRAFT)
 
 
 class FormLabel(models.Model):
@@ -53,7 +57,8 @@ class Form(models.Model):
         ENABLED = 'enabled', _('published/enabled')
         COMPLETED = 'completed', _('completed')
     
-    program = models.ForeignKey(Program, models.CASCADE)
+    program = models.ForeignKey(Program, models.CASCADE,
+                                related_name='forms', related_query_name='form')
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
     status = models.CharField(max_length=16, choices=Status.choices)
@@ -156,6 +161,15 @@ class Form(models.Model):
     
     def collections(self):
         return self.blocks.instance_of(CollectionBlock)
+    
+    def status_message(self):
+        if self.status == self.Status.DRAFT:
+            return 'NA'
+        elif self.status == self.Status.DISABLED:
+            return 'Not yet open for submissions'
+        elif self.status == self.Status.COMPLETED:
+            return 'Closed'
+        return 'Open for submissions'
 
 
 class FormDependency(models.Model):

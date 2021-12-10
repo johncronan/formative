@@ -1,1 +1,20 @@
-<p>{{ program }}</p>
+<div class="mdc-card rp-program-card">
+  <div class="mdc-card-wrapper__text-section">
+    <div class="rp-program-card__title">{{ program.name }}</div>
+    <div class="rp-program-card__subhead">{{ program.description }}</div>
+  </div>
+</div>
+{% for form in program.visible_forms %}
+<div class="mdc-card rp-form-card">
+  <div class="mdc-card-wrapper__text-section">
+    <div class="rp-program-card__title">{{ form.name }}</div>
+    <div class="rp-program-card__subhead">{{ form.status_message }}</div>
+  </div>
+  <div class="mdc-card__actions">
+      <button class="mdc-button
+                     mdc-card__action mdc-card__action--button">
+        <span class="mdc-button__label">Apply</span>
+      </button>
+  </div>
+</div>
+{% endfor %}

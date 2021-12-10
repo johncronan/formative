@@ -4,9 +4,46 @@
 @use '@material/layout-grid/mdc-layout-grid';
 @use '@material/button/mdc-button';
 @use '@material/button';
+@use '@material/card';
+
 @use 'include-media' as *;
+
+@include card.core-styles;
 
 .rp-centered-grid {
   margin: 0 auto;
   max-width: 840px;
+}
+ 
+.rp-program-card,.rp-form-card {
+  &__title {
+    font-size: 1.25rem;
+    line-height: 2rem;
+    font-weight: 500;
+  }
+  
+  &__subhead {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+  }
+}
+
+.rp-program-card {
+  grid-column: span 8;
+  padding-bottom: 16px;
+}
+
+.rp-form-card {
+  grid-column: span 4;
+}
+
+.mdc-card-wrapper__text-section {
+  padding-left: 16px;
+  padding-right: 16px;
+   
+  &:first-child {
+    padding-top: 16px;
+  }
 }
