@@ -7,11 +7,9 @@
 {% block body_attributes %} class="mdc-typography"{% endblock %}
 
 {% block body %}
-<div class="mdc-layout-grid rp-centered-grid">
+<div class="mdc-layout-grid rp-maxwidth-grid">
   <div class="mdc-layout-grid__inner">
-    <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
-      {% block content %}{% endblock %}
-    </div>
+    {% block content %}{% endblock %}
   </div>
 </div>
 {% endblock %}

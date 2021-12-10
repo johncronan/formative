@@ -8,11 +8,19 @@
 
 @use 'include-media' as *;
 
+// there seems to be some bug in mdc preventing @use with this one:
+@import '@material/layout-grid/mixins';
+
 @include card.core-styles;
 
-.rp-centered-grid {
-  margin: 0 auto;
-  max-width: 840px;
+// TODO: grab these numeric values from the mdc defaults
+$breakpoints: (medium: 480px, large: 840px);
+
+.rp-maxwidth-grid {
+  // the 1040px is the only one we're customizing
+  @include mdc-layout-grid('desktop', 24px, 1040px);
+  @include mdc-layout-grid('tablet', 16px);
+  @include mdc-layout-grid('phone', 16px);
 }
  
 .rp-program-card,.rp-form-card {
@@ -31,12 +39,10 @@
 }
 
 .rp-program-card {
-  grid-column: span 8;
   padding-bottom: 16px;
 }
 
 .rp-form-card {
-  grid-column: span 4;
 }
 
 .mdc-card-wrapper__text-section {
