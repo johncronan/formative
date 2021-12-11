@@ -10,7 +10,7 @@ class NameWidget(CompositeStockWidget):
     
     def fields(self):
         cls = models.CharField
-        args = {'max_length': 32}
+        args = {'max_length': 32, 'blank': True}
         
         parts = ('firstname', 'lastname')
         return [(self.field_name(field), cls(**args)) for field in parts]

@@ -9,4 +9,4 @@ class EmailWidget(StockWidget):
         super().__init__(name)
     
     def fields(self):
-        return [(self.field_name(), models.EmailField())]
+        return [(self.field_name(), models.EmailField(blank=True))]

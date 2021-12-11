@@ -5,6 +5,7 @@ from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 
 from .stock import StockWidget
@@ -23,11 +24,14 @@ class AutoSlugModel(models.Model):
         try:
             super().save(*args, **kwargs)
         except ValidationError as e:
-            raise ValidationError('Name must be unique (with ' +
-                                  'nonalphanumeric characters removed)') from e
+            raise ValidationError(_('Name must be unique (with non-' +
+                                  'alphanumeric characters removed)')) from e
     
     
 class Program(AutoSlugModel):
+    class Meta:
+        ordering = ['created']
+    
     name = models.CharField(max_length=32)
     slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
                             editable=False)
@@ -35,6 +39,8 @@ class Program(AutoSlugModel):
                                editable=False)
     description = models.CharField(max_length=200, blank=True)
     hidden = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    
 
     def __str__(self):
         return self.name
@@ -74,6 +80,10 @@ class Form(AutoSlugModel):
         ENABLED = 'enabled', _('published/enabled')
         COMPLETED = 'completed', _('completed')
     
+    class Validation(models.TextChoices):
+        # currently, validation to create a submission is always by email
+        EMAIL = 'email', _('email address')
+    
     program = models.ForeignKey(Program, models.CASCADE,
                                 related_name='forms', related_query_name='form')
     name = models.CharField(max_length=64)
@@ -82,8 +92,15 @@ class Form(AutoSlugModel):
                                editable=False)
         
         
-    status = models.CharField(max_length=16, choices=Status.choices)
-    # TODO: date stuff
+    status = models.CharField(max_length=16, default=Status.DRAFT,
+                              choices=Status.choices)
+    created = models.DateTimeField(auto_now_add=True)
+    # this is also the published date, for enabled and completed forms
+    modified = models.DateTimeField(default=timezone.now, editable=False)
+    completed = models.DateTimeField(null=True, blank=True, editable=False)
+    validation_type = models.CharField(max_length=16, editable=False,
+                                       default=Validation.EMAIL,
+                                       choices=Validation.choices)
     default_text_label_style = \
         models.CharField(max_length=16, choices=FormLabel.LabelStyle.choices,
                          default=FormLabel.LabelStyle.OUTLINED)
@@ -96,7 +113,8 @@ class Form(AutoSlugModel):
         if self.status == self.Status.DRAFT: return None
         
         fields = []
-        for block in self.blocks.filter(page__gt=0): fields += block.fields()
+        for block in self.blocks.exclude(page=0, rank__gt=0):
+            fields += block.fields()
         
         name = self.db_slug
         return create_model(name, fields, table_prefix=self.program.db_slug,
@@ -181,10 +199,10 @@ class Form(AutoSlugModel):
         if self.status == self.Status.DRAFT:
             return 'NA'
         elif self.status == self.Status.DISABLED:
-            return 'Not yet open for submissions'
+            return _('Not yet open for submissions')
         elif self.status == self.Status.COMPLETED:
-            return 'Closed'
-        return 'Open for submissions'
+            return _('Closed')
+        return _('Open for submissions')
 
 
 class FormDependency(models.Model):
@@ -279,14 +297,11 @@ class CustomBlock(FormBlock):
             return models.TextField(max_length=self.max_chars)
 
         elif self.type == self.InputType.NUMERIC:
-            if not self.required:
-                return models.IntegerField(null=True, blank=True)
-            return models.IntegerField()
+            return models.IntegerField(null=True, blank=True)
 
         elif self.type == self.InputType.CHOICE:
-            args = {}
-            if not self.required: args['blank'] = True
-            return models.CharField(max_length=self.CHOICE_VAL_MAXLEN, **args)
+            return models.CharField(max_length=self.CHOICE_VAL_MAXLEN,
+                                    blank=True)
         
         elif self.type == self.InputType.BOOLEAN:
             return models.BooleanField(default=False)
@@ -327,7 +342,9 @@ class Submission(models.Model):
     class Meta:
         abstract = True
     
-    # TODO: date stuff
+    _created = models.DateTimeField(auto_now_add=True)
+    _modified = models.DateTimeField(auto_now=True)
+    _submitted = models.DateTimeField(null=True, blank=True, editable=False)
 
 
 def file_path(instance, filename): return instance.slug + '/'
