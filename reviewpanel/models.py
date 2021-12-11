@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
+import uuid
 
 from .stock import StockWidget
 from .utils import create_model
@@ -195,6 +196,9 @@ class Form(AutoSlugModel):
     def collections(self):
         return self.blocks.instance_of(CollectionBlock)
     
+    def validation_block(self):
+        return self.blocks.get(page=0, rank=0)
+    
     def status_message(self):
         if self.status == self.Status.DRAFT:
             return 'NA'
@@ -342,6 +346,8 @@ class Submission(models.Model):
     class Meta:
         abstract = True
     
+    _id = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                           editable=False)
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
