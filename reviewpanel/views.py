@@ -17,3 +17,4 @@ class ProgramIndexView(generic.ListView):
 class ProgramView(generic.DetailView):
     model = Program
     template_name = 'apply/program.html'
+    slug_field = 'slug'

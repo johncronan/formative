@@ -1,7 +1,7 @@
 from django.db import models, connection
 from django.db.models import Q, UniqueConstraint
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -11,9 +11,28 @@ from .stock import StockWidget
 from .utils import create_model
 
 
-class Program(models.Model):
+class AutoSlugModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.slug = slugify(self.name)
+            self.db_slug = self.slug.replace('-', '')
+        try:
+            super().save(*args, **kwargs)
+        except ValidationError as e:
+            raise ValidationError('Name must be unique (with ' +
+                                  'nonalphanumeric characters removed)') from e
+    
+    
+class Program(AutoSlugModel):
     name = models.CharField(max_length=32)
-    slug = models.SlugField(max_length=32, allow_unicode=True, editable=False)
+    slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
+                            editable=False)
+    db_slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
+                               editable=False)
     description = models.CharField(max_length=200, blank=True)
     hidden = models.BooleanField(default=False)
 
@@ -21,10 +40,6 @@ class Program(models.Model):
         return self.name
     
     # TODO: disallow certain slug values, like "auth"
-    def save(self, *args, **kwargs):
-        if self._state.adding:
-            self.slug = slugify(self.name).replace('-', '')
-        super().save(*args, **kwargs)
     
     def visible_forms(self):
         return self.forms.exclude(status=Form.Status.DRAFT)
@@ -45,10 +60,12 @@ class FormLabel(models.Model):
         return self.path
 
 
-class Form(models.Model):
+class Form(AutoSlugModel):
     class Meta:
         constraints = [
-            UniqueConstraint(fields=['program', 'slug'], name='unique_slug')
+            UniqueConstraint(fields=['program', 'slug'], name='unique_slug'),
+            UniqueConstraint(fields=['program', 'db_slug'],
+                             name='unique_db_slug')
         ]
     
     class Status(models.TextChoices):
@@ -61,6 +78,10 @@ class Form(models.Model):
                                 related_name='forms', related_query_name='form')
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
+    db_slug = models.SlugField(max_length=64, allow_unicode=True,
+                               editable=False)
+        
+        
     status = models.CharField(max_length=16, choices=Status.choices)
     # TODO: date stuff
     default_text_label_style = \
@@ -70,12 +91,6 @@ class Form(models.Model):
     def __str__(self):
         return self.name
     
-    def save(self, *args, **kwargs):
-        if self._state.adding or self.status == self.Status.DRAFT:
-            self.slug = slugify(self.name).replace('-', '')
-        
-        super().save(*args, **kwargs)
-    
     @cached_property
     def model(self):
         if self.status == self.Status.DRAFT: return None
@@ -83,8 +98,8 @@ class Form(models.Model):
         fields = []
         for block in self.blocks.filter(page__gt=0): fields += block.fields()
         
-        name = self.slug
-        return create_model(name, fields, table_prefix=self.program.slug,
+        name = self.db_slug
+        return create_model(name, fields, table_prefix=self.program.db_slug,
                             base_class=Submission, meta=Submission.Meta)
     
     @cached_property
@@ -113,8 +128,8 @@ class Form(models.Model):
                 block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
-        name = self.slug + '_item_'
-        return create_model(name, fields, table_prefix=self.program.slug,
+        name = self.db_slug + '_item_'
+        return create_model(name, fields, table_prefix=self.program.db_slug,
                             base_class=SubmissionItem, meta=SubmissionItem.Meta)
     
     def publish_model(self, model):
