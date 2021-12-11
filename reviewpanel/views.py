@@ -11,7 +11,7 @@ class ProgramIndexView(generic.ListView):
     context_object_name = 'programs'
     
     def get_queryset(self):
-        return Program.objects.all()
+        return Program.objects.filter(hidden=False)
 
 
 class ProgramView(generic.DetailView):

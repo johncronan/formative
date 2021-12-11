@@ -1,3 +1,5 @@
+{% with forms=program.visible_forms %}
+{% if forms %}
 <div class="mdc-card mdc-card--outlined rp-program-card
             mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
   <div class="mdc-card-wrapper__text-section">
@@ -5,7 +7,7 @@
     <div class="rp-program-card__subhead">{{ program.description }}</div>
   </div>
 </div>
-{% for form in program.visible_forms %}
+{% for form in forms %}
 <div class="mdc-card rp-form-card
             mdc-layout-grid__cell mdc-layout-grid__cell--span-6-desktop">
   <div class="mdc-card-wrapper__text-section">
@@ -20,3 +22,5 @@
   </div>
 </div>
 {% endfor %}
+{% endif %}
+{% endwith %}
