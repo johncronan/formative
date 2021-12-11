@@ -1,8 +1,8 @@
 from django.db import models
 
-from . import StockWidget
+from . import CompositeStockWidget
 
-class NameWidget(StockWidget):
+class NameWidget(CompositeStockWidget):
     TYPE = 'name'
     
     def __init__(self, name, **kwargs):
@@ -13,4 +13,4 @@ class NameWidget(StockWidget):
         args = {'max_length': 32}
         
         parts = ('firstname', 'lastname')
-        return [(f'_{self.name}_{field}', cls(**args)) for field in parts]
+        return [(self.field_name(field), cls(**args)) for field in parts]
