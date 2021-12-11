@@ -18,3 +18,14 @@ class ProgramView(generic.DetailView):
     model = Program
     template_name = 'apply/program.html'
     slug_field = 'slug'
+
+
+class FormView(generic.DetailView):
+    model = Form
+    template_name = 'apply/form.html'
+    
+    def get_object(self):
+        return get_object_or_404(Form,
+                                 program__slug=self.kwargs['program_slug'],
+                                 slug=self.kwargs['form_slug'])
+        

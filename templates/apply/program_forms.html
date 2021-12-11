@@ -13,10 +13,10 @@
     <div class="rp-program-card__subhead">{{ form.status_message }}</div>
   </div>
   <div class="mdc-card__actions">
-      <button class="mdc-button
-                     mdc-card__action mdc-card__action--button">
+      <a class="mdc-button mdc-card__action mdc-card__action--button"
+         href="{% url 'form' program.slug form.slug %}">
         <span class="mdc-button__label">Apply</span>
-      </button>
+      </a>
   </div>
 </div>
 {% endfor %}
