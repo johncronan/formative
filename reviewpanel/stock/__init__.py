@@ -11,6 +11,10 @@ class StockWidget:
     def by_type(cls, type):
         return cls.types[type]
     
+    @classmethod
+    def default_options(cls):
+        return { 'type': cls.TYPE }
+    
     def __init__(self, name):
         self.name = name
     
