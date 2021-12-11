@@ -1,4 +1,16 @@
 {% extends 'apply/base.html' %}
 
+{% block pre_layout %}
+<form method="POST"
+      action="{% url 'new_submission' form.program.slug form.slug %}">
+{% endblock %}
+
 {% block content %}
+{% with block=form.validation_block %}
+  
+{% endwith %}
+{% endblock %}
+
+{% block post_layout %}
+</form>
 {% endblock %}

@@ -7,9 +7,11 @@
 {% block body_attributes %} class="mdc-typography"{% endblock %}
 
 {% block body %}
+{% block pre_layout %}{% endblock %}
 <div class="mdc-layout-grid rp-maxwidth-grid">
   <div class="mdc-layout-grid__inner">
     {% block content %}{% endblock %}
   </div>
 </div>
+{% block post_layout %}{% endblock %}
 {% endblock %}
