@@ -351,6 +351,10 @@ class Submission(models.Model):
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
+    
+    def email(self):
+        # TODO: need some workaround for template underscore issue?
+        return self._email
 
 
 def file_path(instance, filename): return instance.slug + '/'

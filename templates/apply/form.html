@@ -1,13 +1,14 @@
 {% extends 'apply/base.html' %}
 
 {% block pre_layout %}
-<form method="POST"
-      action="{% url 'new_submission' form.program.slug form.slug %}">
+<form method="post">
+{% csrf_token %}
 {% endblock %}
 
 {% block content %}
-{% with block=form.validation_block %}
-  
+{% with block=program_form.validation_block %}
+  {{ form }}
+  <input type="submit" value="Submit">
 {% endwith %}
 {% endblock %}
 
