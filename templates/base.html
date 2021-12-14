@@ -1,4 +1,3 @@
-{% load render_bundle from webpack_loader %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,10 +6,9 @@
     <meta name="description" content="{% block page_desc %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block page_extra_meta %}{% endblock %}
-    {% render_bundle 'main' 'css' %}
+    {% block head_trailing %}{% endblock %}
   </head>
   <body{% block body_attributes %}{% endblock %}>
     {% block body %}{% endblock %}
-    {% render_bundle 'main' 'js' %}
   </body>
 </html>

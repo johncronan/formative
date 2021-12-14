@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'polymorphic',
     'webpack_loader',
+    'widget_tweaks',
     'reviewpanel',
 ]
 

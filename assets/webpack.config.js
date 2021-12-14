@@ -45,7 +45,10 @@ module.exports = (env, argv) => {
 
   return {
     mode: argv.mode,
-    entry: "./index.js",
+    entry: {
+      'apply': './apply.js',
+      'review': './review.js',
+    },
     output,
     module: {
       rules: [

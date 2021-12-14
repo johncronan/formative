@@ -1,17 +1,23 @@
 {% extends 'base.html' %}
+{% load render_bundle from webpack_loader %}
 
 {% block page_extra_meta %}
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
 {% endblock %}
 
+{% block head_trailing %}
+  {% render_bundle 'apply' 'css' %}
+{% endblock %}
+
 {% block body_attributes %} class="mdc-typography"{% endblock %}
 
 {% block body %}
-{% block pre_layout %}{% endblock %}
-<div class="mdc-layout-grid rp-maxwidth-grid">
-  <div class="mdc-layout-grid__inner">
-    {% block content %}{% endblock %}
+  {% block pre_layout %}{% endblock %}
+  <div class="mdc-layout-grid rp-maxwidth-grid">
+    <div class="mdc-layout-grid__inner">
+      {% block content %}{% endblock %}
+    </div>
   </div>
-</div>
-{% block post_layout %}{% endblock %}
+  {% block post_layout %}{% endblock %}
+  {% render_bundle 'apply' 'js' %}
 {% endblock %}
