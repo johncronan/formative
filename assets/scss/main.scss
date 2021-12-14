@@ -9,6 +9,8 @@
 @use '@material/line-ripple/mdc-line-ripple';
 @use '@material/notched-outline/mdc-notched-outline';
 @use '@material/textfield';
+@use '@material/textfield/helper-text';
+@use '@material/textfield/helper-text/mixins' as *;
 
 @use 'include-media' as *;
 
@@ -17,6 +19,7 @@
 
 @include card.core-styles;
 @include textfield.core-styles;
+@include helper-text.helper-text-core-styles;
 
 
 // TODO: grab these numeric values from the mdc defaults
@@ -27,6 +30,12 @@ $breakpoints: (medium: 480px, large: 840px);
   @include mdc-layout-grid('desktop', 24px, 1040px);
   @include mdc-layout-grid('tablet', 16px);
   @include mdc-layout-grid('phone', 16px);
+}
+
+.rp-layout-cell-fill {
+  & .mdc-text-field {
+    width: 100%;
+  }
 }
  
 .rp-program-card,.rp-form-card {
@@ -44,11 +53,19 @@ $breakpoints: (medium: 480px, large: 840px);
   }
 }
 
+.rp-form-top {
+  padding-top: 16px;
+}
+
 .rp-program-card {
   padding-bottom: 16px;
 }
 
 .rp-form-card {
+}
+
+.rp-submit-button {
+  grid-column-start: 1;
 }
 
 .mdc-card-wrapper__text-section {
@@ -57,5 +74,11 @@ $breakpoints: (medium: 480px, large: 840px);
    
   &:first-child {
     padding-top: 16px;
+  }
+}
+
+.mdc-text-field-helper-text--persistent {
+  &.mdc-text-field-helper-text--validation-msg {
+    color: #af0109 !important;
   }
 }

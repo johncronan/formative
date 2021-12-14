@@ -10,5 +10,5 @@ document.querySelectorAll('.mdc-notched-outline')
         .forEach(outline => outlines.push(new MDCNotchedOutline(outline)));
 
 window.addEventListener("pageshow", function() {
-  texts.forEach(text => { text.value = text.value; });
+  texts.forEach(text => { if (text.value) text.value = text.value; });
 });

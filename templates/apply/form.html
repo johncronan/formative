@@ -8,23 +8,40 @@
 {% endblock %}
 
 {% block content %}
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-12">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    </div>
   {% for field in form.visible_fields %}
-    {{ field.errors }}
-    <div class="mdc-text-field mdc-text-field--outlined
-                mdc-layout-grid__cell mdc-layout-grid__cell--span-6-desktop">
-      {% render_field field class+="mdc-text-field__input" %}
-      <div class="mdc-notched-outline">
-        <div class="mdc-notched-outline__leading"></div>
-        <div class="mdc-notched-outline__notch">
-          <label for="id_{{ field.name }}" class="mdc-floating-label">
-            {{ field.label }}
-          </label>
+    <div class="rp-layout-cell-fill mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-6-desktop
+                mdc-layout-grid__cell--span-5-tablet">
+      <div class="mdc-text-field mdc-text-field--outlined">
+        {% render_field field class+="mdc-text-field__input" %}
+        <div class="mdc-notched-outline">
+          <div class="mdc-notched-outline__leading"></div>
+          <div class="mdc-notched-outline__notch">
+            <label for="id_{{ field.name }}" class="mdc-floating-label">
+              {{ field.label }}
+            </label>
+          </div>
+          <div class="mdc-notched-outline__trailing"></div>
         </div>
-        <div class="mdc-notched-outline__trailing"></div>
       </div>
+      {% if field.errors %}
+      <div class="mdc-text-field-helper-line">
+        <div class="mdc-text-field-helper-text
+                    mdc-text-field-helper-text--persistent
+                    mdc-text-field-helper-text--validation-msg">
+          {{ field.errors.0|escape }}
+        </div>
+      </div>
+      {% endif %}
     </div>
   {% endfor %}
-  <input type="submit" value="Submit">
+  <input class="rp-submit-button mdc-button mdc-button--raised
+                mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
+         type="submit" value="Submit">
 {% endblock %}
 
 {% block post_layout %}
