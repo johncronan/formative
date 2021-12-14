@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.views import generic
 
 from .models import Program, Form
+from .forms import OpenForm
 
 
 class ProgramIndexView(generic.ListView):
@@ -20,40 +21,51 @@ class ProgramView(generic.DetailView):
     slug_field = 'slug'
 
 
-class DynamicFormView:
+class DynamicFormMixin:
     def get_program_form(self):
         return get_object_or_404(Form,
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
 
-    
-class FormView(generic.CreateView, DynamicFormView):
+
+class ProgramFormView(generic.edit.ProcessFormView,
+                      generic.detail.SingleObjectTemplateResponseMixin,
+                      generic.edit.FormMixin, DynamicFormMixin):
     template_name = 'apply/form.html'
-    fields = ['_email']
-    
-    def get_queryset(self):
-        self.program_form = self.get_program_form()
-        if not self.program_form.model: raise Http404
-        
-        return self.program_form.model.objects.all()
+    form_class = OpenForm
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['program_form'] = self.program_form
+        
+        program_form = self.get_program_form()
+        if not program_form.model: raise Http404
+        
+        context['program_form'] = program_form
         return context
     
     def get_success_url(self):
+        program_form = self.get_program_form()
         return reverse('submission', kwargs={
-            'program_slug': self.program_form.program.slug,
-            'form_slug': self.program_form.slug,
+            'program_slug': program_form.program.slug,
+            'form_slug': program_form.slug,
             'sid': self.object._id
         })
+    
+    def form_valid(self, form):
+        model = self.get_program_form().model
+        self.object, created = model.objects.get_or_create(
+            _email=form.cleaned_data['email']
+        )
+        # TODO: send the email
+        return super().form_valid(form)
 
 
-class SubmissionView(generic.UpdateView, DynamicFormView):
+class SubmissionView(generic.UpdateView, DynamicFormMixin):
     template_name = 'apply/submission.html'
-    fields = ['_email']
     context_object_name = 'submission'
+    
+    def get_form(self):
+        return None
     
     def get_object(self):
         form = self.get_program_form()

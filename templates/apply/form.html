@@ -6,10 +6,11 @@
 {% endblock %}
 
 {% block content %}
-{% with block=program_form.validation_block %}
-  {{ form }}
+  {% for field in form.visible_fields %}
+    {{ field.errors }}
+    {{ field.label_tag }} {{ field }}
+  {% endfor %}
   <input type="submit" value="Submit">
-{% endwith %}
 {% endblock %}
 
 {% block post_layout %}

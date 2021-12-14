@@ -26,3 +26,9 @@ class CustomBlockAdmin(PolymorphicChildModelAdmin):
 @admin.register(CollectionBlock)
 class CollectionBlockAdmin(PolymorphicChildModelAdmin):
     base_model = FormBlock
+
+# TODO: how to keep this updated?
+#for form in Form.objects.exclude(status=Form.Status.DRAFT):
+#    class SubmissionAdmin(admin.ModelAdmin):
+#        pass
+#    admin.site.register(form.model, SubmissionAdmin)

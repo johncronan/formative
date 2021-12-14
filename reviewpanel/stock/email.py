@@ -9,4 +9,9 @@ class EmailWidget(StockWidget):
         super().__init__(name)
     
     def fields(self):
-        return [(self.field_name(), models.EmailField(blank=True))]
+        field = models.EmailField(blank=True)
+        if self.name == 'email':
+            # only the validation block can use the name 'email' - needs unique
+            field = models.EmailField(blank=True, unique=True)
+        
+        return [(self.field_name(), field)]
