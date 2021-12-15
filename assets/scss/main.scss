@@ -33,6 +33,8 @@ $breakpoints: (medium: 480px, large: 840px);
 }
 
 .rp-layout-cell-fill {
+  min-height: 75px;
+  
   & .mdc-text-field {
     width: 100%;
   }

@@ -4,7 +4,16 @@
 {% endblock %}
 
 {% block content %}
-{{ submission.email }}
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-1">
+      Email:
+    </div>
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-3">
+      {{ submission.email }}
+    </div>
+    
+    {# TODO: render form here #}
 {% endblock %}
 
 {% block post_layout %}

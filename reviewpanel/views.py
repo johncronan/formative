@@ -1,10 +1,11 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.forms.models import modelform_factory
 from django.views import generic
 
 from .models import Program, Form
-from .forms import OpenForm
+from .forms import OpenForm, SubmissionForm
 
 
 class ProgramIndexView(generic.ListView):
@@ -65,7 +66,13 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
     context_object_name = 'submission'
     
     def get_form(self):
-        return None
+        form = self.get_program_form()
+        if not form.model: raise Http404
+        
+        form = modelform_factory(form.model, form=SubmissionForm,
+                                 exclude=['_created', '_modified',
+                                          '_submitted', '_email'])
+        return form
     
     def get_object(self):
         form = self.get_program_form()
