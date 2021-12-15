@@ -22,18 +22,11 @@ class ProgramView(generic.DetailView):
     slug_field = 'slug'
 
 
-class DynamicFormMixin:
+class DynamicFormMixin(generic.edit.FormMixin):
     def get_program_form(self):
         return get_object_or_404(Form,
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
-
-
-class ProgramFormView(generic.edit.ProcessFormView,
-                      generic.detail.SingleObjectTemplateResponseMixin,
-                      generic.edit.FormMixin, DynamicFormMixin):
-    template_name = 'apply/form.html'
-    form_class = OpenForm
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -43,6 +36,13 @@ class ProgramFormView(generic.edit.ProcessFormView,
         
         context['program_form'] = program_form
         return context
+
+
+class ProgramFormView(generic.edit.ProcessFormView,
+                      generic.detail.SingleObjectTemplateResponseMixin,
+                      DynamicFormMixin):
+    template_name = 'apply/form.html'
+    form_class = OpenForm
     
     def get_success_url(self):
         program_form = self.get_program_form()
@@ -74,6 +74,17 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
                                           '_submitted', '_email'])
         return form
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        page = 1
+        if 'page' in self.kwargs: page = int(self.kwargs['page'])
+        context['page'] = page
+        context['visible_blocks'] = \
+            context['program_form'].visible_blocks(page=page)
+        
+        return context
+        
     def get_object(self):
         form = self.get_program_form()
         if not form.model: raise Http404

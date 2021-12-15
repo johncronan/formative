@@ -1,9 +1,13 @@
 {% extends 'apply/base.html' %}
 
+{% load form_block %}
+
 {% block pre_layout %}
 {% endblock %}
 
 {% block content %}
+    {# TODO: put in app bar {{ program_form.name }} #}
+    {% if page == 1 %}
     <div class="rp-form-top mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-1">
       Email:
@@ -12,8 +16,20 @@
                 mdc-layout-grid__cell--span-3">
       {{ submission.email }}
     </div>
+    {% endif %}
     
-    {# TODO: render form here #}
+    {% for block in visible_blocks %}
+      {% block_field form block as field %}
+      
+      {% if block.block_type == 'custom' %}
+        {% include "./custom_block.html" %}
+      {% elif block.block_type == 'collection' %}
+        {% include "./collection_block.html" %}
+      {% else %}
+        {# TODO #}
+      {% endif %}
+    {% endfor %}
+    
 {% endblock %}
 
 {% block post_layout %}

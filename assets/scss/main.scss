@@ -34,6 +34,7 @@ $breakpoints: (medium: 480px, large: 840px);
 
 .rp-layout-cell-fill {
   min-height: 75px;
+  grid-column-start: 1;
   
   & .mdc-text-field {
     width: 100%;

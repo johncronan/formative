@@ -199,6 +199,11 @@ class Form(AutoSlugModel):
     def validation_block(self):
         return self.blocks.get(page=0, rank=0)
     
+    def visible_blocks(self, page=None):
+        if page and page > 0:
+            return self.blocks.filter(page=page)
+        return self.blocks.filter(page__gt=0)
+    
     def status_message(self):
         if self.status == self.Status.DRAFT:
             return 'NA'
@@ -249,6 +254,11 @@ class FormBlock(PolymorphicModel):
     
     def __str__(self):
         return self.name
+    
+    def block_type(self):
+        if type(self) == CustomBlock: return 'custom'
+        if type(self) == CollectionBlock: return 'collection'
+        return 'stock'
     
     def stock_type(self):
         if 'type' not in self.options:
