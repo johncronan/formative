@@ -3,6 +3,8 @@
 {% load form_block %}
 
 {% block pre_layout %}
+<form method="post">
+{% csrf_token %}
 {% endblock %}
 
 {% block content %}
@@ -30,7 +32,13 @@
       {% endif %}
     {% endfor %}
     
+  <input class="rp-submit-button mdc-button mdc-button--raised
+                mdc-layout-grid__cell mdc-layout-grid__cell--span-3"
+         type="submit" value="continue">
+  {{ form.errors }}
+  {{ form.non_field_errors }}
 {% endblock %}
 
 {% block post_layout %}
+</form>
 {% endblock %}

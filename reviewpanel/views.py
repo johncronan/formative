@@ -69,10 +69,11 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
         form = self.get_program_form()
         if not form.model: raise Http404
         
-        form = modelform_factory(form.model, form=SubmissionForm,
-                                 exclude=['_created', '_modified',
-                                          '_submitted', '_email'])
-        return form
+        form_class = modelform_factory(form.model, form=SubmissionForm,
+                                       exclude=['_created', '_modified',
+                                                '_submitted', '_email'])
+        
+        return form_class(**self.get_form_kwargs())
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
