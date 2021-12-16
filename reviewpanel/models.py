@@ -389,6 +389,8 @@ class SubmissionItem(models.Model):
         abstract = True
         order_with_respect_to = '_submission'
     
+    # see Form.item_model() for _submission = models.ForeignKey(Submission)
+    
     # the item's collection name
     _collection = models.CharField(max_length=32)
     
