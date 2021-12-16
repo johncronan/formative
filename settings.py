@@ -164,5 +164,6 @@ JAZZMIN_UI_TWEAKS = {
     'sidebar_disable_expand': True,
 }
 
+CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://localhost:8000']
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 SILENCED_SYSTEM_CHECKS = ['security.W019']
