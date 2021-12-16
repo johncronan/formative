@@ -3,7 +3,7 @@ from django.db.models import Q, UniqueConstraint
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
-from django.utils.text import slugify
+from django.utils.text import slugify, capfirst
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
@@ -322,6 +322,21 @@ class CustomBlock(FormBlock):
     
     def fields(self):
         return [(self.name, self.field())]
+    
+    def span(self, media=None):
+        # TODO: be smart (also check options for override)
+        if media == 'desktop': return 6
+        if media == 'tablet': return 5
+        return 4
+    
+    def tablet_span(self): return self.span(media='tablet')
+    
+    def desktop_span(self): return self.span(media='desktop')
+    
+    def label(self):
+        # if ...
+        
+        return capfirst(self.name)
 
 
 class CollectionBlock(FormBlock):
