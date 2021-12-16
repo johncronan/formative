@@ -1,19 +1,13 @@
 {% load widget_tweaks %}
-
-<div class="rp-layout-cell-fill mdc-layout-grid__cell
-            mdc-layout-grid__cell--span-{{ block.span }}
-            mdc-layout-grid__cell--span-{{ block.tablet_span }}-tablet
-            mdc-layout-grid__cell--span-{{ block.desktop_span }}-desktop">
-
-{% with types=block.InputType %}
-{% if block.type == types.TEXT or block.type == types.NUMERIC %}
-  <div class="mdc-text-field mdc-text-field--outlined">
+<div class="rp-text-field">
+  <div class="mdc-text-field mdc-text-field--outlined
+              rp-layout-span-{{ span }}">
     {% render_field field class+="mdc-text-field__input" %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
       <div class="mdc-notched-outline__notch">
         <label for="id_{{ field.name }}" class="mdc-floating-label">
-          {{ block.label }}
+          {{ label }}
         </label>
       </div>
       <div class="mdc-notched-outline__trailing"></div>
@@ -28,11 +22,4 @@
     </div>
   </div>
   {% endif %}
-{% elif block.type == types.CHOICE %}
-
-{% elif block.type == types.BOOLEAN %}
-
-{% endif %}
-{% endwith %}
-
 </div>

@@ -9,9 +9,12 @@ def block_field(form, block):
 
 @register.simple_tag(takes_context=True)
 def include_stock(context, block):
-    name = 'apply/stock/' + block.stock.template_name
-    t = context.template.engine.get_template(name)
+    stock = block.stock
+    name = 'apply/stock/' + stock.template_name
+    template = context.template.engine.get_template(name)
     
-    return t.render(context.new({
-        'block': block
+    fields = [ (name, context['form'][name]) for name in stock.field_names() ]
+    return template.render(context.new({
+        'block': block,
+        'block_fields': fields
     }))

@@ -40,6 +40,18 @@ $breakpoints: (medium: 480px, large: 840px);
     width: 100%;
   }
 }
+
+.rp-stock-cell-1 {
+  grid-column-start: 1;
+}
+
+.rp-text-field {
+  min-height: 75px;
+  
+  & .mdc-text-field {
+    width: 100%;
+  }
+}
  
 .rp-program-card,.rp-form-card {
   &__title {
@@ -58,6 +70,7 @@ $breakpoints: (medium: 480px, large: 840px);
 
 .rp-form-top {
   padding-top: 16px;
+  padding-bottom: 8px;
 }
 
 .rp-program-card {

@@ -326,7 +326,7 @@ class CustomBlock(FormBlock):
     def span(self, media=None):
         # TODO: be smart (also check options for override)
         if media == 'desktop': return 6
-        if media == 'tablet': return 5
+        if media == 'tablet': return 6
         return 4
     
     def tablet_span(self): return self.span(media='tablet')
