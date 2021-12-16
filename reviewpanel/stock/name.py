@@ -7,6 +7,8 @@ class NameWidget(CompositeStockWidget):
     
     def __init__(self, name, **kwargs):
         super().__init__(name)
+        
+        self.template_name = 'name.html'
     
     def fields(self):
         cls = models.CharField

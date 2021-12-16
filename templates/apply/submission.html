@@ -21,14 +21,13 @@
     {% endif %}
     
     {% for block in visible_blocks %}
-      {% block_field form block as field %}
-      
       {% if block.block_type == 'custom' %}
+        {% block_field form block as field %}
         {% include "./custom_block.html" %}
       {% elif block.block_type == 'collection' %}
         {% include "./collection_block.html" %}
       {% else %}
-        {# TODO #}
+        {% include_stock block %}
       {% endif %}
     {% endfor %}
     

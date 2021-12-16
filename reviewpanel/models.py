@@ -334,7 +334,7 @@ class CustomBlock(FormBlock):
     def desktop_span(self): return self.span(media='desktop')
     
     def label(self):
-        # if ...
+        if 'label' in self.options: return self.options['label']
         
         return capfirst(self.name)
 
