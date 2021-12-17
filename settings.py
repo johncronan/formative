@@ -28,10 +28,11 @@ DEBUG = env.bool('DEBUG', default=False)
 WSGI_APPLICATION = "config.wsgi.application"
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='').split(',')
+csrf_hosts = [ host[0] == '.' and '*' + host or host for host in ALLOWED_HOSTS ]
 
 CSRF_TRUSTED_ORIGINS = [ 'http://localhost' ]
 if DEBUG:
-    CSRF_TRUSTED_ORIGINS = [ f'http://{host}:8000' for host in ALLOWED_HOSTS ]
+    CSRF_TRUSTED_ORIGINS = [ f'http://{host}:8000' for host in csrf_hosts ]
 
 
 # Application definition
