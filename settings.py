@@ -164,6 +164,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 JAZZMIN_SETTINGS = {
     'related_modal_active': True,
+    'hide_models': ['reviewpanel.collectionblock', 'reviewpanel.customblock'],
 #    'custom_js': 'admin.js',
 #    'custom_css': '',
 }

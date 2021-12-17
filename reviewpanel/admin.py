@@ -8,7 +8,18 @@ from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
 
 admin.site.register(Program)
 
-admin.site.register(Form)
+@admin.register(Form)
+class FormAdmin(admin.ModelAdmin):
+    def response_change(self, request, obj):
+        ret = super().response_change(request, obj)
+        
+        action, kwargs = None, {}
+        if '_publish' in request.POST: action = 'publish'
+        elif '_unpublish' in request.POST: action = 'unpublish'
+        
+        if action:
+            getattr(obj, action)(**kwargs)
+        return ret
 
 admin.site.register(FormLabel)
 
