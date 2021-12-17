@@ -15,7 +15,7 @@ module.exports = (env, argv) => {
       outputPath = resolve("bundles/prod");
       break;
     case "dev":
-      publicPath = "http://127.0.0.1:8000/static/bundles/dev/";
+      publicPath = "/static/bundles/dev/";
       outputPath = resolve("bundles/dev");
       break;
   }

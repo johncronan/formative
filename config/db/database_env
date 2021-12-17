@@ -1,4 +1,4 @@
 POSTGRES_USER=reviewpanel
 POSTGRES_PASSWORD=reviewpanelpass
 POSTGRES_DB=reviewpanel
-POSTGRES_HOST=database
+POSTGRES_DOCKER_HOST=database

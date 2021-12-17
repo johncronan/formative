@@ -27,7 +27,11 @@ DEBUG = env.bool('DEBUG', default=False)
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='').split(',')
+
+CSRF_TRUSTED_ORIGINS = [ 'http://localhost' ]
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = [ f'http://{host}:8000' for host in ALLOWED_HOSTS ]
 
 
 # Application definition
@@ -78,13 +82,17 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+host = env('POSTGRES_HOST', default='')
+if env('DOCKER_ENV', default=''):
+    host = env('POSTGRES_DOCKER_HOST')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': env('POSTGRES_DB'),
         'USER': env('POSTGRES_USER'),
         'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': env('POSTGRES_HOST'),
+        'HOST': host,
         'PORT': '5432',
     }
 }
@@ -164,6 +172,5 @@ JAZZMIN_UI_TWEAKS = {
     'sidebar_disable_expand': True,
 }
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://localhost:8000']
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 SILENCED_SYSTEM_CHECKS = ['security.W019']

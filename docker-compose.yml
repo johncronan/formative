@@ -6,9 +6,9 @@ services:
     env_file:
       - config/db/database_env
       - config/django_env
+      - .env
     environment:
-      SECRET_KEY: '3@(k94m_)-1#)yke03%u72&8n%cl^q8jh&wzrryi8*m#$gkff#'
-      DEBUG: 'on'
+      DOCKER_ENV: on
     volumes:
       - static_volume:/opt/services/djangoapp/static
       - media_volume:/opt/services/djangoapp/media
