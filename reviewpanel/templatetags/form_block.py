@@ -13,7 +13,9 @@ def include_stock(context, block):
     name = 'apply/stock/' + stock.template_name
     template = context.template.engine.get_template(name)
     
-    fields = [ (name, context['form'][name]) for name in stock.field_names() ]
+    fields = [ (name[name[1:].index('_')+1:], context['form'][name])
+               for name in stock.field_names() ]
+    
     return template.render(context.new({
         'block': block,
         'block_fields': fields

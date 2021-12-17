@@ -3,9 +3,9 @@
             mdc-layout-grid__cell mdc-layout-grid__cell--span-2
             mdc-layout-grid__cell--span-3-tablet
             mdc-layout-grid__cell--span-3-desktop">
-  {% if name == '_name_firstname' %}
+  {% if name == '_firstname' %}
     {% include "./textfield.html" with label="first name" %}
-  {% elif name == '_name_lastname' %}
+  {% elif name == '_lastname' %}
     {% include "./textfield.html" with label="last name" %}
   {% endif %}
 </div>
