@@ -65,11 +65,19 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
     template_name = 'apply/submission.html'
     context_object_name = 'submission'
     
+    def dispatch(self, request, *args, **kwargs):
+        page = 1
+        if 'page' in self.kwargs: page = int(self.kwargs['page'])
+        self.page = page
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_form(self):
         form = self.get_program_form()
         if not form.model: raise Http404
         
         form_class = modelform_factory(form.model, form=SubmissionForm,
+                                       fields=form.get_fields(page=self.page),
                                        exclude=['_created', '_modified',
                                                 '_submitted', '_email'])
         
@@ -78,11 +86,9 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        page = 1
-        if 'page' in self.kwargs: page = int(self.kwargs['page'])
-        context['page'] = page
+        context['page'] = self.page
         context['visible_blocks'] = \
-            context['program_form'].visible_blocks(page=page)
+            context['program_form'].visible_blocks(page=self.page)
         
         return context
         

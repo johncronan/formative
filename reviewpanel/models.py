@@ -109,6 +109,13 @@ class Form(AutoSlugModel):
     def __str__(self):
         return self.name
     
+    def get_fields(self, page=1):
+        names = []
+        for block in self.blocks.filter(page=page):
+            names += [ f[0] for f in block.fields() ]
+        
+        return names
+    
     @cached_property
     def model(self):
         if self.status == self.Status.DRAFT: return None
