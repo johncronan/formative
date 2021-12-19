@@ -5,6 +5,6 @@
 .dockerignore
 Dockerfile*
 docker-compose*
-node_modules
+assets/node_modules
 logs
 README.md
