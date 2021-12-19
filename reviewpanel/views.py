@@ -46,6 +46,7 @@ class ProgramFormView(generic.edit.ProcessFormView,
     
     def get_success_url(self):
         program_form = self.get_program_form()
+        
         return reverse('submission', kwargs={
             'program_slug': program_form.program.slug,
             'form_slug': program_form.slug,
@@ -98,3 +99,19 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
         
         submission = get_object_or_404(form.model, _id=self.kwargs['sid'])
         return submission
+    
+    def get_success_url(self):
+        form = self.get_program_form()
+        
+        kwargs = {
+            'program_slug': form.program.slug,
+            'form_slug': form.slug,
+            'sid': self.object._id,
+        }
+        
+        if self.page == form.num_pages(): name = 'submission_review'
+        else:
+            kwargs['page'] = self.page + 1
+            name = 'submission_page'
+        
+        return reverse(name, kwargs=kwargs)

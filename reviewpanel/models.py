@@ -1,5 +1,5 @@
 from django.db import models, connection
-from django.db.models import Q, UniqueConstraint
+from django.db.models import Q, UniqueConstraint, Max
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
@@ -196,6 +196,9 @@ class Form(AutoSlugModel):
         if 'item_model' in self.__dict__: del self.item_model
         
         self.save()
+    
+    def num_pages(self):
+        return self.blocks.aggregate(Max('page'))['page__max']
     
     def custom_blocks(self):
         return self.blocks.instance_of(CustomBlock)
