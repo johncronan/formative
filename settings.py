@@ -102,18 +102,19 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
+prefix = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': prefix + '.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': prefix + '.MinimumLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': prefix + '.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': prefix + '.NumericPasswordValidator',
     },
 ]
 
@@ -150,7 +151,8 @@ WEBPACK_LOADER = {
     'DEFAULT': {
         'CACHE': not DEBUG,
         'BUNDLE_DIR_NAME': 'bundles/',
-        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/bundles/', f'webpack-bundle.{ENV}.json')),
+        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/bundles/',
+                                                f'webpack-bundle.{ENV}.json')),
         'POLL_INTERVAL': 0.5,
         'TIMEOUT': None,
         'IGNORE': ['.+\.hot-update.js', '.+\.map']
