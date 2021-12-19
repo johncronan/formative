@@ -53,15 +53,23 @@ class Program(AutoSlugModel):
 
 
 class FormLabel(models.Model):
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['form', 'path', 'style'],
+                             name='unique_path_style')
+        ]
+    
     class LabelStyle(models.TextChoices):
-        OUTLINED = 'outlined', _('outlined text')
+        WIDGET = 'widget', _('widget label')
         VERTICAL = 'vertical', _('vertical label')
         HORIZONTAL = 'horizontal', _('horizontal label')
     
-    path = models.CharField(max_length=128, primary_key=True)
+    form = models.ForeignKey('Form', models.CASCADE, related_name='labels',
+                             related_query_name='label')
+    path = models.CharField(max_length=128)
     text = models.CharField(max_length=1000)
     style = models.CharField(max_length=16, choices=LabelStyle.choices,
-                             default=LabelStyle.OUTLINED)
+                             default=LabelStyle.WIDGET)
     
     def __str__(self):
         return self.path
@@ -104,7 +112,7 @@ class Form(AutoSlugModel):
                                        choices=Validation.choices)
     default_text_label_style = \
         models.CharField(max_length=16, choices=FormLabel.LabelStyle.choices,
-                         default=FormLabel.LabelStyle.OUTLINED)
+                         default=FormLabel.LabelStyle.WIDGET)
     
     def __str__(self):
         return self.name
@@ -353,6 +361,10 @@ class CollectionBlock(FormBlock):
     class Meta:
         db_table = 'reviewpanel_formcollectionblock'
     
+    class AlignType(models.TextChoices):
+        HORIZONTAL = 'horizontal', _('horizontal')
+        VERTICAL = 'vertical', _('vertical')
+    
     block = models.OneToOneField(FormBlock, on_delete=models.CASCADE,
                                  parent_link=True, primary_key=True)
     fixed = models.BooleanField(default=False)
@@ -364,6 +376,8 @@ class CollectionBlock(FormBlock):
     name1 = models.CharField(max_length=32, default='', blank=True)
     name2 = models.CharField(max_length=32, default='', blank=True)
     name3 = models.CharField(max_length=32, default='', blank=True)
+    type = models.CharField(max_length=16, choices=AlignType.choices,
+                            default=AlignType.HORIZONTAL)
     
     def fields(self):
         return []
