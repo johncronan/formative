@@ -19,6 +19,7 @@ COPY . /opt/services/djangoapp/src
 
 EXPOSE 8000
 
-# TODO: change to an app user? (https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/)
+# TODO: change to an app user?
 
-CMD ["gunicorn", "--chdir", ".", "--bind", ":8000", "config.wsgi:application"]
+CMD ["gunicorn", "--reload", "--chdir", ".", "--bind", ":8000", \
+     "config.wsgi:application"]
