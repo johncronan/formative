@@ -7,6 +7,8 @@ class EmailWidget(StockWidget):
     
     def __init__(self, name, **kwargs):
         super().__init__(name)
+        
+        self.template_name = 'email.html'
     
     def fields(self):
         field = models.EmailField(blank=True)

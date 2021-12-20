@@ -20,13 +20,16 @@ class StockWidget:
     
     def field_name(self):
         return '_' + self.name
+    
+    def field_names(self):
+        return (self.field_name(),)
 
 
 class CompositeStockWidget(StockWidget):
     TYPE = None
     
     def field_names(self):
-        return (f[0] for f in self.fields())
+        return tuple(f[0] for f in self.fields())
     
     def field_name(self, field):
         # name has an initial underscore so that non-stock fields can't conflict
