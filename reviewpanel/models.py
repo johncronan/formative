@@ -222,18 +222,21 @@ class Form(AutoSlugModel):
             return self.blocks.filter(page=page)
         return self.blocks.filter(page__gt=0)
 
-    def label_texts(self):
-        texts = {}
+    def field_labels(self):
+        labels = {}
         for label in self.labels.all():
-            key, target = label.path, texts
+            key, target = label.path, labels
             if '.' in label.path:
                 stock, key = label.path.split('.')
-                if stock not in texts: texts[stock] = {}
-                target = texts[stock]
+                if stock not in labels: labels[stock] = {}
+                target = labels[stock]
             if key not in target: target[key] = {}
-            target[key][label.style] = label.text
+            target[key][label.style] = label
 
-        return texts
+        return labels
+
+    def label_class(self):
+        return FormLabel
     
     def status_message(self):
         if self.status == self.Status.DRAFT:
@@ -243,9 +246,6 @@ class Form(AutoSlugModel):
         elif self.status == self.Status.COMPLETED:
             return _('Closed')
         return _('Open for submissions')
-
-    def label_class(self):
-        return FormLabel
 
 
 class FormDependency(models.Model):

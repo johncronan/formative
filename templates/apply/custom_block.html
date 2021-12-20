@@ -7,7 +7,7 @@
   <div class="rp-label-cell mdc-layout-grid__cell
               mdc-layout-grid__cell--span-8-tablet
               mdc-layout-grid__cell--span-8-desktop">
-    {{ label }}
+    {{ label.text }}
   </div>
 {% endif %}
 {% endwith %}
@@ -27,7 +27,7 @@
       {% if label %}
       <div class="mdc-notched-outline__notch">
         <label for="id_{{ field.name }}" class="mdc-floating-label">
-          {{ label }}
+          {{ label.text }}
         </label>
       </div>
       {% endif %}
