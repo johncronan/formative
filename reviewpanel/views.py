@@ -86,10 +86,11 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        form = context['program_form']
         
         context['page'] = self.page
-        context['visible_blocks'] = \
-            context['program_form'].visible_blocks(page=self.page)
+        context['visible_blocks'] = form.visible_blocks(page=self.page)
+        context['labels' ] = form.label_texts()
         
         return context
         

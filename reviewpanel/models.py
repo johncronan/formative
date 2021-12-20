@@ -221,6 +221,19 @@ class Form(AutoSlugModel):
         if page and page > 0:
             return self.blocks.filter(page=page)
         return self.blocks.filter(page__gt=0)
+
+    def label_texts(self):
+        texts = {}
+        for label in self.labels.all():
+            key, target = label.path, texts
+            if '.' in label.path:
+                stock, key = label.path.split('.')
+                if stock not in texts: texts[stock] = {}
+                target = texts[stock]
+            if key not in target: target[key] = {}
+            target[key][label.style] = label.text
+
+        return texts
     
     def status_message(self):
         if self.status == self.Status.DRAFT:
