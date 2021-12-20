@@ -23,6 +23,7 @@
     {% for block in visible_blocks %}
       {% if block.block_type == 'custom' %}
         {% block_field form block as field %}
+        {% block_labels field_labels block as labels %}
         {% include "./custom_block.html" %}
       {% elif block.block_type == 'collection' %}
         {% include "./collection_block.html" %}

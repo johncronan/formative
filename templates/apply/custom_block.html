@@ -1,4 +1,16 @@
 {% load widget_tweaks %}
+{% load form_block %}
+
+{% with ltypes=block.form.label_class.LabelStyle %}
+{% with label=labels|get_by_style:ltypes.VERTICAL %}
+{% if label %}
+  <div class="rp-label-cell mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop">
+    {{ label }}
+  </div>
+{% endif %}
+{% endwith %}
 
 <div class="rp-layout-cell-fill mdc-layout-grid__cell
             mdc-layout-grid__cell--span-{{ block.span }}
@@ -7,18 +19,22 @@
 
 {% with types=block.InputType %}
 {% if block.type == types.TEXT or block.type == types.NUMERIC %}
+  {% with label=labels|get_by_style:ltypes.WIDGET %}
   <div class="mdc-text-field mdc-text-field--outlined">
     {% render_field field class+="mdc-text-field__input" %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
+      {% if label %}
       <div class="mdc-notched-outline__notch">
         <label for="id_{{ field.name }}" class="mdc-floating-label">
-          {{ block.label }}
+          {{ label }}
         </label>
       </div>
+      {% endif %}
       <div class="mdc-notched-outline__trailing"></div>
     </div>
   </div>
+  {% endwith %}
   {% if field.errors %}
   <div class="mdc-text-field-helper-line">
     <div class="mdc-text-field-helper-text
@@ -35,4 +51,5 @@
 {% endif %}
 {% endwith %}
 
+{% endwith %}
 </div>

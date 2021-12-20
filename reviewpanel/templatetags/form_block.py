@@ -7,6 +7,15 @@ register = template.Library()
 def block_field(form, block):
     return form[block.name]
 
+@register.simple_tag
+def block_labels(labels, block):
+    return labels[block.name]
+
+@register.filter
+def get_by_style(labels, style):
+    if style in labels: return labels[style]
+    return None
+
 @register.simple_tag(takes_context=True)
 def include_stock(context, block):
     stock = block.stock

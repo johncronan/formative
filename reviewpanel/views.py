@@ -90,7 +90,7 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
         
         context['page'] = self.page
         context['visible_blocks'] = form.visible_blocks(page=self.page)
-        context['labels' ] = form.label_texts()
+        context['field_labels' ] = form.label_texts()
         
         return context
         

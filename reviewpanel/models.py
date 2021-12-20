@@ -244,6 +244,9 @@ class Form(AutoSlugModel):
             return _('Closed')
         return _('Open for submissions')
 
+    def label_class(self):
+        return FormLabel
+
 
 class FormDependency(models.Model):
     class Meta:
