@@ -40,6 +40,7 @@ services:
     env_file:
       - config/db/database_env
     ports:
+      # a port map for the development environment:
       - 5432:5432
     networks:
       - database_network
