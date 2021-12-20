@@ -73,6 +73,10 @@ $breakpoints: (medium: 480px, large: 840px);
   padding-bottom: 8px;
 }
 
+.rp-form-bottom {
+  grid-column-start: 1;
+}
+
 .rp-program-card {
   padding-bottom: 16px;
 }

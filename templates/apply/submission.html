@@ -31,10 +31,14 @@
       {% endif %}
     {% endfor %}
     
+    {% if program_form.num_pages > 1 %}
+      <div class="rp-form-bottom mdc-layout-grid__cell">
+        Page {{ page }} of {{ program_form.num_pages }}
+      </div>
+    {% endif %}
   <input class="rp-submit-button mdc-button mdc-button--raised
                 mdc-layout-grid__cell mdc-layout-grid__cell--span-3"
          type="submit" value="continue">
-  {{ form.errors }}
   {{ form.non_field_errors }}
 {% endblock %}
 

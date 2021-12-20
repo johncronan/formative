@@ -17,28 +17,8 @@
   {% for field in form.visible_fields %}
     <div class="rp-layout-cell-fill mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-6-desktop
-                mdc-layout-grid__cell--span-5-tablet">
-      <div class="mdc-text-field mdc-text-field--outlined">
-        {% render_field field class+="mdc-text-field__input" %}
-        <div class="mdc-notched-outline">
-          <div class="mdc-notched-outline__leading"></div>
-          <div class="mdc-notched-outline__notch">
-            <label for="id_{{ field.name }}" class="mdc-floating-label">
-              {{ field.label }}
-            </label>
-          </div>
-          <div class="mdc-notched-outline__trailing"></div>
-        </div>
-      </div>
-      {% if field.errors %}
-      <div class="mdc-text-field-helper-line">
-        <div class="mdc-text-field-helper-text
-                    mdc-text-field-helper-text--persistent
-                    mdc-text-field-helper-text--validation-msg">
-          {{ field.errors.0|escape }}
-        </div>
-      </div>
-      {% endif %}
+                mdc-layout-grid__cell--span-6-tablet">
+      {% include "./stock/textfield.html" %}
     </div>
   {% endfor %}
   <input class="rp-submit-button mdc-button mdc-button--raised
