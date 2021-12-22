@@ -23,39 +23,38 @@ class ProgramView(generic.DetailView):
     slug_field = 'slug'
 
 
-class DynamicFormMixin(generic.edit.FormMixin):
-    def get_program_form(self):
-        return get_object_or_404(Form,
+class ProgramFormMixin(generic.edit.FormMixin):
+    def dispatch(self, request, *args, **kwargs):
+        form = get_object_or_404(Form,
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
+        self.program_form = form
+
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        program_form = self.get_program_form()
-        if not program_form.model: raise Http404
+        if not self.program_form.model: raise Http404
         
-        context['program_form'] = program_form
+        context['program_form'] = self.program_form
         return context
 
 
-class ProgramFormView(generic.edit.ProcessFormView,
-                      generic.detail.SingleObjectTemplateResponseMixin,
-                      DynamicFormMixin):
+class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
+                      generic.detail.SingleObjectTemplateResponseMixin):
     template_name = 'apply/form.html'
     form_class = OpenForm
     
     def get_success_url(self):
-        program_form = self.get_program_form()
-        
         return reverse('submission', kwargs={
-            'program_slug': program_form.program.slug,
-            'form_slug': program_form.slug,
+            'program_slug': self.program_form.program.slug,
+            'form_slug': self.program_form.slug,
             'sid': self.object._id
         })
     
     def form_valid(self, form):
-        model = self.get_program_form().model
+        model = self.program_form.model
         self.object, created = model.objects.get_or_create(
             _email=form.cleaned_data['email']
         )
@@ -63,7 +62,7 @@ class ProgramFormView(generic.edit.ProcessFormView,
         return super().form_valid(form)
 
 
-class SubmissionView(generic.UpdateView, DynamicFormMixin):
+class SubmissionView(ProgramFormMixin, generic.UpdateView):
     template_name = 'apply/submission.html'
     context_object_name = 'submission'
     
@@ -75,11 +74,8 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
         return super().dispatch(request, *args, **kwargs)
     
     def get_form(self):
-        form = self.get_program_form()
-        if not form.model: raise Http404
-
         fields, widgets, radios = [], {}, []
-        for block in form.blocks.filter(page=self.page):
+        for block in self.program_form.blocks.filter(page=self.page):
             for name, field in block.fields():
                 fields.append(name)
                 if type(block) == CustomBlock:
@@ -87,7 +83,8 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
                         widgets[name] = forms.RadioSelect
                         radios.append(name)
             
-        form_class = modelform_factory(form.model, form=SubmissionForm,
+        form_class = modelform_factory(self.program_form.model,
+                                       form=SubmissionForm,
                                        fields=fields, widgets=widgets,
                                        exclude=['_created', '_modified',
                                                 '_submitted', '_email'])
@@ -110,22 +107,19 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
         return context
         
     def get_object(self):
-        form = self.get_program_form()
-        if not form.model: raise Http404
-        
-        submission = get_object_or_404(form.model, _id=self.kwargs['sid'])
+        submission = get_object_or_404(self.program_form.model,
+                                       _id=self.kwargs['sid'])
         return submission
     
     def get_success_url(self):
-        form = self.get_program_form()
-        
         kwargs = {
-            'program_slug': form.program.slug,
-            'form_slug': form.slug,
+            'program_slug': self.program_form.program.slug,
+            'form_slug': self.program_form.slug,
             'sid': self.object._id,
         }
         
-        if self.page == form.num_pages(): name = 'submission_review'
+        if self.page == self.program_form.num_pages():
+            name = 'submission_review'
         else:
             kwargs['page'] = self.page + 1
             name = 'submission_page'
