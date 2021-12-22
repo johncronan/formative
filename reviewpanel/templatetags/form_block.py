@@ -9,7 +9,8 @@ def block_field(form, block):
 
 @register.simple_tag
 def block_labels(labels, block):
-    return labels[block.name]
+    if block.name in labels: return labels[block.name]
+    return {}
 
 @register.filter
 def get_by_style(labels, style):

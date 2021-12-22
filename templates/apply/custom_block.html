@@ -1,16 +1,22 @@
-{% load widget_tweaks %}
+{% load patched_widget_tweaks %}
 {% load form_block %}
 
-{% with ltypes=block.form.label_class.LabelStyle %}
-{% with label=labels|get_by_style:ltypes.VERTICAL %}
+{% with styles=block.form.label_class.LabelStyle %}
+{% with label=labels|get_by_style:styles.VERTICAL %}
+{% with hlabel=labels|get_by_style:styles.HORIZONTAL %}
+{% with wlabel=labels|get_by_style:styles.WIDGET %}
 {% if label %}
   <div class="rp-label-cell mdc-layout-grid__cell
               mdc-layout-grid__cell--span-8-tablet
               mdc-layout-grid__cell--span-8-desktop">
-    {{ label.text }}
+    <label
+  {% if not hlabel and not wlabel %}
+      for="id_{{ field.name }}"
+  {% endif %}>
+      {{ label.text }}
+    </label>
   </div>
 {% endif %}
-{% endwith %}
 
 <div class="rp-layout-cell-fill mdc-layout-grid__cell
             mdc-layout-grid__cell--span-{{ block.span }}
@@ -19,22 +25,21 @@
 
 {% with types=block.InputType %}
 {% if block.type == types.TEXT or block.type == types.NUMERIC %}
-  {% with label=labels|get_by_style:ltypes.WIDGET %}
   <div class="mdc-text-field mdc-text-field--outlined">
     {% render_field field class+="mdc-text-field__input" %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
-      {% if label %}
+      {% if wlabel %}
       <div class="mdc-notched-outline__notch">
-        <label for="id_{{ field.name }}" class="mdc-floating-label">
-          {{ label.text }}
+        <label for="id_{{ field.name }}" class="mdc-floating-label"
+          {{ wlabel.text }}
         </label>
       </div>
       {% endif %}
       <div class="mdc-notched-outline__trailing"></div>
     </div>
   </div>
-  {% endwith %}
+  
   {% if field.errors %}
   <div class="mdc-text-field-helper-line">
     <div class="mdc-text-field-helper-text
@@ -45,10 +50,29 @@
   </div>
   {% endif %}
 {% elif block.type == types.CHOICE %}
-
+  <div class="rp-choice-field mdc-form-field">
+  {% for subfield in field %}
+    <div class="mdc-radio mdc-radio--touch">
+      {{ subfield|add_class:"mdc-radio__native-control" }}
+      <div class="mdc-radio__background">
+        <div class="mdc-radio__outer-circle"></div>
+        <div class="mdc-radio__inner-circle"></div>
+      </div>
+      <div class="mdc-radio__ripple"></div>
+      <div class="mdc-radio__focus-ring"></div>
+    </div>
+    <label for="{{ field.id_for_label }}">
+      {# the label #}
+    </label>
+  {% endfor %}
+  </div>
 {% elif block.type == types.BOOLEAN %}
 
 {% endif %}
+{% endwith %}
+
+{% endwith %}
+{% endwith %}
 {% endwith %}
 
 {% endwith %}

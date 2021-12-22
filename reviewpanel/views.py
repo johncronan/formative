@@ -1,10 +1,11 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django import forms
 from django.forms.models import modelform_factory
 from django.views import generic
 
-from .models import Program, Form
+from .models import Program, Form, CustomBlock
 from .forms import OpenForm, SubmissionForm
 
 
@@ -76,13 +77,27 @@ class SubmissionView(generic.UpdateView, DynamicFormMixin):
     def get_form(self):
         form = self.get_program_form()
         if not form.model: raise Http404
-        
+
+        fields, widgets, radios = [], {}, []
+        for block in form.blocks.filter(page=self.page):
+            for name, field in block.fields():
+                fields.append(name)
+                if type(block) == CustomBlock:
+                    if block.type == CustomBlock.InputType.CHOICE:
+                        widgets[name] = forms.RadioSelect
+                        radios.append(name)
+            
         form_class = modelform_factory(form.model, form=SubmissionForm,
-                                       fields=form.get_fields(page=self.page),
+                                       fields=fields, widgets=widgets,
                                        exclude=['_created', '_modified',
                                                 '_submitted', '_email'])
         
-        return form_class(**self.get_form_kwargs())
+        f = form_class(**self.get_form_kwargs())
+        for n in radios:
+            # TODO: use formfield_callback instead, to specify empty_label=None
+            f.fields[n].choices = f.fields[n].choices[1:]
+
+        return f
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

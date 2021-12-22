@@ -117,13 +117,6 @@ class Form(AutoSlugModel):
     def __str__(self):
         return self.name
     
-    def get_fields(self, page=1):
-        names = []
-        for block in self.blocks.filter(page=page):
-            names += [ f[0] for f in block.fields() ]
-        
-        return names
-    
     @cached_property
     def model(self):
         if self.status == self.Status.DRAFT: return None
@@ -337,6 +330,12 @@ class CustomBlock(FormBlock):
         if 'max_chars' not in kwargs:
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
+
+    def choices(self):
+        if 'choices' not in self.options or not self.options['choices']:
+            raise FieldError('choices not defined')
+        
+        return self.options['choices']
     
     def field(self):
         if self.type == self.InputType.TEXT:
@@ -349,6 +348,7 @@ class CustomBlock(FormBlock):
 
         elif self.type == self.InputType.CHOICE:
             return models.CharField(max_length=self.CHOICE_VAL_MAXLEN,
+                                    choices=[(c, c) for c in self.choices()],
                                     blank=True)
         
         elif self.type == self.InputType.BOOLEAN:
