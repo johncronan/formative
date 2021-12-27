@@ -17,7 +17,6 @@ class AutoSlugModel(models.Model):
     class Meta:
         abstract = True
     
-    
     def save(self, *args, **kwargs):
         if self._state.adding:
             self.slug = slugify(self.name)
@@ -364,13 +363,7 @@ class CustomBlock(FormBlock):
         return 4
     
     def tablet_span(self): return self.span(media='tablet')
-    
     def desktop_span(self): return self.span(media='desktop')
-    
-    def label(self):
-        if 'label' in self.options: return self.options['label']
-        
-        return capfirst(self.name)
 
 
 class CollectionBlock(FormBlock):
@@ -418,7 +411,6 @@ class Submission(models.Model):
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
     
     def email(self):
-        # TODO: need some workaround for template underscore issue?
         return self._email
 
 

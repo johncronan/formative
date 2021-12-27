@@ -52,6 +52,10 @@ $breakpoints: (medium: 480px, large: 840px);
   grid-column-start: 1;
 }
 
+.rp-label-cell {
+  margin-bottom: -8px;
+}
+
 .rp-text-field {
   min-height: 75px;
   
@@ -93,11 +97,6 @@ $breakpoints: (medium: 480px, large: 840px);
 
 .rp-submit-button {
   grid-column-start: 1;
-}
-
-.rp-choice-field {
-  flex-direction: column;
-  align-items: start;
 }
 
 .mdc-card-wrapper__text-section {

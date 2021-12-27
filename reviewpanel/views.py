@@ -75,10 +75,12 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     
     def get_form(self):
         fields, widgets, radios = [], {}, []
+        
         for block in self.program_form.blocks.filter(page=self.page):
             for name, field in block.fields():
                 fields.append(name)
-                if type(block) == CustomBlock:
+                
+                if block.block_type() == 'custom':
                     if block.type == CustomBlock.InputType.CHOICE:
                         widgets[name] = forms.RadioSelect
                         radios.append(name)

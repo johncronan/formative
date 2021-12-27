@@ -50,8 +50,10 @@
   </div>
   {% endif %}
 {% elif block.type == types.CHOICE %}
-  <div class="rp-choice-field mdc-form-field">
   {% for subfield in field %}
+  <div class="rp-choice-field mdc-form-field">
+  {% with clabels=labels|get_by_choice:subfield.data.value %}
+  {% with cwlabel=clabels|get_by_style:styles.WIDGET %}
     <div class="mdc-radio mdc-radio--touch">
       {{ subfield|add_class:"mdc-radio__native-control" }}
       <div class="mdc-radio__background">
@@ -61,11 +63,15 @@
       <div class="mdc-radio__ripple"></div>
       <div class="mdc-radio__focus-ring"></div>
     </div>
-    <label for="{{ field.id_for_label }}">
-      {# the label #}
+    {% if cwlabel %}
+    <label for="{{ subfield.id_for_label }}">
+      {{ cwlabel.text }}
     </label>
-  {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% endwith %}
   </div>
+  {% endfor %}
 {% elif block.type == types.BOOLEAN %}
 
 {% endif %}

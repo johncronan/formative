@@ -17,6 +17,11 @@ def get_by_style(labels, style):
     if style in labels: return labels[style]
     return None
 
+@register.filter
+def get_by_choice(labels, choice):
+    if choice in labels: return labels[choice]
+    return None
+
 @register.simple_tag(takes_context=True)
 def include_stock(context, block):
     stock = block.stock
