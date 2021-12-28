@@ -3,10 +3,10 @@
             mdc-layout-grid__cell mdc-layout-grid__cell--span-2
             mdc-layout-grid__cell--span-3-tablet
             mdc-layout-grid__cell--span-3-desktop">
-  {% if name == '_firstname' %}
-    {% include "./textfield.html" %}
-  {% elif name == '_lastname' %}
-    {% include "./textfield.html" %}
+  {% if name == 'firstname' %}
+    {% include "./textfield.html" with labels=labels.firstname %}
+  {% elif name == 'lastname' %}
+    {% include "./textfield.html" with labels=labels.lastname %}
   {% endif %}
 </div>
 {% endfor %}

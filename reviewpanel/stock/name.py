@@ -9,10 +9,14 @@ class NameWidget(CompositeStockWidget):
         super().__init__(name)
         
         self.template_name = 'name.html'
+        self.widgets = {
+            'firstname': 'First name',
+            'lastname': 'Last name'
+        }
     
     def fields(self):
         cls = models.CharField
         args = {'max_length': 32, 'blank': True}
         
-        parts = ('firstname', 'lastname')
-        return [(self.field_name(field), cls(**args)) for field in parts]
+        return [ (self.field_name(field), cls(**args))
+                 for field in self.widget_names() ]

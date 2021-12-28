@@ -1,0 +1,31 @@
+{% load patched_widget_tweaks %}
+{% load form_block %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+{% with wlabel=labels|get_by_style:'widget' %}
+  <div class="mdc-text-field mdc-text-field--outlined">
+    {% render_field field class+="mdc-text-field__input" %}
+    <div class="mdc-notched-outline">
+      <div class="mdc-notched-outline__leading"></div>
+      {% if wlabel %}
+      <div class="mdc-notched-outline__notch">
+        <label for="{{ field.id_for_label }}" class="mdc-floating-label">
+          {{ wlabel.text }}
+        </label>
+      </div>
+      {% endif %}
+      <div class="mdc-notched-outline__trailing"></div>
+    </div>
+  </div>
+  
+  {% if field.errors %}
+  <div class="mdc-text-field-helper-line">
+    <div class="mdc-text-field-helper-text
+                mdc-text-field-helper-text--persistent
+                mdc-text-field-helper-text--validation-msg">
+      {{ field.errors.0|escape }}
+    </div>
+  </div>
+  {% endif %}
+{% endwith %}
+{% endwith %}

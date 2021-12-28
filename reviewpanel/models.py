@@ -3,7 +3,7 @@ from django.db.models import Q, UniqueConstraint, Max
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
-from django.utils.text import slugify, capfirst
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel

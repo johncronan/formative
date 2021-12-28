@@ -23,18 +23,16 @@ def get_by_choice(labels, choice):
     return None
 
 @register.simple_tag(takes_context=True)
-def include_stock(context, block):
+def include_stock(context, block, labels):
     stock = block.stock
     name = 'apply/stock/' + stock.template_name
     template = context.template.engine.get_template(name)
     
-    names = stock.field_names()
-    if len(names) > 1:
-        fields = [ (n[n[1:].index('_')+1:], context['form'][n]) for n in names ]
-    else:
-        fields = [ (n, context['form'][n]) for n in names ]
+    names = stock.widget_names()
+    fields = [ (n, context['form'][stock.field_name(n)]) for n in names ]
     
     return template.render(context.new({
-        'block': block,
-        'block_fields': fields
+        'form_block': block,
+        'block_fields': fields,
+        'labels': labels
     }))

@@ -1,24 +1,4 @@
 {% load widget_tweaks %}
 <div class="rp-text-field">
-  <div class="mdc-text-field mdc-text-field--outlined">
-    {% render_field field class+="mdc-text-field__input" %}
-    <div class="mdc-notched-outline">
-      <div class="mdc-notched-outline__leading"></div>
-      <div class="mdc-notched-outline__notch">
-        <label for="id_{{ field.name }}" class="mdc-floating-label">
-          {{ field.label }}
-        </label>
-      </div>
-      <div class="mdc-notched-outline__trailing"></div>
-    </div>
-  </div>
-  {% if field.errors %}
-  <div class="mdc-text-field-helper-line">
-    <div class="mdc-text-field-helper-text
-                mdc-text-field-helper-text--persistent
-                mdc-text-field-helper-text--validation-msg">
-      {{ field.errors.0|escape }}
-    </div>
-  </div>
-  {% endif %}
+  {% include "apply/custom_block_text.html" %}
 </div>

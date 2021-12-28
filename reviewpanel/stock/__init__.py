@@ -1,4 +1,7 @@
+from django.utils.text import capfirst
+
 __all__ = ["StockWidget", "EmailWidget", "NameWidget"]
+
 
 class StockWidget:
     types = {}
@@ -15,25 +18,52 @@ class StockWidget:
     def default_options(cls):
         return { 'type': cls.TYPE }
     
-    def __init__(self, name):
+    def __init__(self, name, **kwargs):
         self.name = name
     
-    def field_name(self):
+    def widget_names(self):
+        return (self.name,)
+
+    def field_name(self, *args):
         return '_' + self.name
     
     def field_names(self):
         return (self.field_name(),)
 
+    def default_label(self):
+        return capfirst(self.name)
+
+    def widget_labels(self):
+        from ..models import FormLabel
+        
+        return {
+            self.name: (FormLabel.LabelStyle.WIDGET, self.default_label())
+        }
+
 
 class CompositeStockWidget(StockWidget):
     TYPE = None
+
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
+        
+        # dict mapping path names to default widget labels
+        self.widgets = {}
+
+    def widget_names(self): return self.widgets.keys()
     
     def field_names(self):
-        return tuple(f[0] for f in self.fields())
+        return tuple(self.field_name(f) for f in self.widget_names())
     
     def field_name(self, field):
         # name has an initial underscore so that non-stock fields can't conflict
         return f'_{self.name}_{field}'
+
+    def widget_labels(self):
+        from ..models import FormLabel
+        
+        return { f'{self.name}.{name}': (FormLabel.LabelStyle.WIDGET, label)
+                 for name, label in self.widgets.items() }
 
 
 from .email import EmailWidget
