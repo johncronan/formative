@@ -128,8 +128,6 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
-
 USE_TZ = True
 
 
@@ -155,7 +153,7 @@ WEBPACK_LOADER = {
                                                 f'webpack-bundle.{ENV}.json')),
         'POLL_INTERVAL': 0.5,
         'TIMEOUT': None,
-        'IGNORE': ['.+\.hot-update.js', '.+\.map']
+        'IGNORE': [r".+\.hot-update.js", r".+\.map"]
     }
 }
 
