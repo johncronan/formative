@@ -338,17 +338,20 @@ class CustomBlock(FormBlock):
     
     def field(self):
         if self.type == self.InputType.TEXT:
+            blank = False
+            if not self.max_chars and not self.max_words: blank = True
+            
             if self.max_chars and self.max_chars <= self.DEFAULT_TEXT_MAXLEN:
-                return models.CharField(max_length=self.max_chars)
-            return models.TextField(max_length=self.max_chars)
+                return models.CharField(max_length=self.max_chars, blank=blank)
+            return models.TextField(max_length=self.max_chars, blank=blank)
 
         elif self.type == self.InputType.NUMERIC:
-            return models.IntegerField(null=True, blank=True)
+            return models.IntegerField(null=True, blank=(not self.required))
 
         elif self.type == self.InputType.CHOICE:
             return models.CharField(max_length=self.CHOICE_VAL_MAXLEN,
                                     choices=[(c, c) for c in self.choices()],
-                                    blank=True)
+                                    blank=(not self.required))
         
         elif self.type == self.InputType.BOOLEAN:
             return models.BooleanField(default=False)
