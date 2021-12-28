@@ -1,5 +1,5 @@
 from django.db.models import Q
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.utils.text import capfirst
 
@@ -16,6 +16,13 @@ def form_post_save(sender, instance, created, **kwargs):
         b = FormBlock(form=form, page=0, rank=0, name='email',
                       options=EmailWidget.default_options())
         b.save()
+
+@receiver(pre_delete, sender=Form)
+def form_pre_delete(sender, instance, **kwargs):
+    form = instance
+
+    if form.status != Form.Status.DRAFT:
+        form.unpublish()
 
 
 @receiver(post_save, sender=CustomBlock)
