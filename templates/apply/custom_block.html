@@ -18,12 +18,16 @@
   </div>
 {% endif %}
 
-<div class="rp-layout-cell-fill mdc-layout-grid__cell
+{% with types=block.InputType %}
+<div class="rp-layout-cell-fill 
+            {% if block.type == types.TEXT or block.type == types.NUMERIC %}
+            rp-layout-cell-text
+            {% endif %}
+            mdc-layout-grid__cell
             mdc-layout-grid__cell--span-{{ block.span }}
             mdc-layout-grid__cell--span-{{ block.tablet_span }}-tablet
             mdc-layout-grid__cell--span-{{ block.desktop_span }}-desktop">
 
-{% with types=block.InputType %}
 {% if block.type == types.TEXT or block.type == types.NUMERIC %}
   <div class="mdc-text-field mdc-text-field--outlined">
     {% render_field field class+="mdc-text-field__input" %}
@@ -31,7 +35,7 @@
       <div class="mdc-notched-outline__leading"></div>
       {% if wlabel %}
       <div class="mdc-notched-outline__notch">
-        <label for="id_{{ field.name }}" class="mdc-floating-label"
+        <label for="{{ field.id_for_label }}" class="mdc-floating-label"
           {{ wlabel.text }}
         </label>
       </div>
@@ -49,6 +53,7 @@
     </div>
   </div>
   {% endif %}
+  
 {% elif block.type == types.CHOICE %}
   {% for subfield in field %}
   <div class="rp-choice-field mdc-form-field">
@@ -72,8 +77,27 @@
   {% endwith %}
   </div>
   {% endfor %}
-{% elif block.type == types.BOOLEAN %}
 
+  {# TODO: if field.errors #}
+  
+{% elif block.type == types.BOOLEAN %}
+  <div class="rp-boolean-field mdc-form-field">
+    <div class="mdc-checkbox mdc-checkbox--touch">
+      {% render_field field class+="mdc-checkbox__native-control" %}
+      <div class="mdc-checkbox__background">
+        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+          <path class="mdc-checkbox__checkmark-path" fill="none"
+                d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+        </svg>
+        <div class="mdc-checkbox__mixedmark"></div>
+      </div>
+      <div class="mdc-checkbox__ripple"></div>
+    </div>
+    {% if wlabel %}
+    <label for="{{ field.id_for_label }}">{{ wlabel.text }}</label>
+    {% endif %}
+  </div>
+  
 {% endif %}
 {% endwith %}
 

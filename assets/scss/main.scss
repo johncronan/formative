@@ -13,6 +13,7 @@
 @use '@material/textfield/helper-text';
 @use '@material/textfield/helper-text/mixins' as *;
 @use '@material/radio/styles';
+@use '@material/checkbox';
 
 @use 'include-media' as *;
 
@@ -23,6 +24,7 @@
 @include form-field.core-styles;
 @include textfield.core-styles;
 @include helper-text.helper-text-core-styles;
+@include checkbox.core-styles;
 
 
 // TODO: grab these numeric values from the mdc defaults
@@ -36,9 +38,8 @@ $breakpoints: (medium: 480px, large: 840px);
 }
 
 .rp-layout-cell-fill {
-  min-height: 75px;
   grid-column-start: 1;
-  
+
   & .mdc-text-field {
     width: 100%;
   }
@@ -46,6 +47,10 @@ $breakpoints: (medium: 480px, large: 840px);
   & .mdc-form-field {
   	width: 100%;
   }
+}
+
+.rp-layout-cell-text {
+  min-height: 75px;
 }
 
 .rp-label-cell,.rp-stock-cell-1 {

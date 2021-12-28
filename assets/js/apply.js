@@ -3,6 +3,7 @@ import {MDCFormField} from '@material/form-field';
 import {MDCTextField} from '@material/textfield';
 import {MDCNotchedOutline} from '@material/notched-outline';
 import {MDCRadio} from '@material/radio';
+import {MDCCheckbox} from '@material/checkbox';
 
 const texts = [];
 document.querySelectorAll('.mdc-text-field')
@@ -13,6 +14,9 @@ document.querySelectorAll('.mdc-notched-outline')
 const radios = [];
 document.querySelectorAll('.mdc-radio')
         .forEach(radio => radios.push(new MDCRadio(radio)));
+const checkboxes = [];
+document.querySelectorAll('.mdc-checkbox')
+        .forEach(checkbox => checkboxes.push(new MDCCheckbox(checkbox)));
 const formFields = [];
 //document.querySelectorAll('.mdc-form-field')
 //        .forEach(field => formFields.push(new MDCFormField('.mdc-form-field')))
