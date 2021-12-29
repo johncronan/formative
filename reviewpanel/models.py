@@ -306,6 +306,7 @@ class CustomBlock(FormBlock):
     
     CHOICE_VAL_MAXLEN = 64
     DEFAULT_TEXT_MAXLEN = 1000
+    MAX_TEXT_MAXLEN = 65535
     
     class InputType(models.TextChoices):
         TEXT = 'text', _('text')
@@ -338,12 +339,15 @@ class CustomBlock(FormBlock):
     
     def field(self):
         if self.type == self.InputType.TEXT:
-            blank = False
-            if not self.max_chars and not self.max_words: blank = True
+            blank, max_chars = False, self.max_chars
             
-            if self.max_chars and self.max_chars <= self.DEFAULT_TEXT_MAXLEN:
-                return models.CharField(max_length=self.max_chars, blank=blank)
-            return models.TextField(max_length=self.max_chars, blank=blank)
+            if not self.max_chars and not self.max_words: blank = True
+            if not self.max_chars or self.max_chars > self.MAX_TEXT_MAXLEN:
+                max_chars = self.MAX_TEXT_MAXLEN
+            
+            if self.num_lines > 1 or self.max_chars > self.DEFAULT_TEXT_MAXLEN:
+                return models.TextField(max_length=max_chars, blank=blank)
+            return models.CharField(max_length=self.max_chars, blank=blank)
 
         elif self.type == self.InputType.NUMERIC:
             return models.IntegerField(null=True, blank=(not self.required))

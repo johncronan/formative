@@ -4,20 +4,30 @@
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with wlabel=labels|get_by_style:'widget' %}
   <div class="mdc-text-field
+        {% if form_block.num_lines > 1 %}
+              rp-textarea rp-textarea-rows-{{ form_block.num_lines }}
+        {% endif %}
 		      {% if field.errors %}rp-text-field--invalid{% endif %}
 			  mdc-text-field--outlined">
+  {% if form_block.num_lines == 1 or not form_block.num_lines %}
     {% render_field field class+="mdc-text-field__input" %}
+  {% endif %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
-      {% if wlabel %}
+      {% if wlabel or not form_block %}
       <div class="mdc-notched-outline__notch">
         <label for="{{ field.id_for_label }}" class="mdc-floating-label">
-          {{ wlabel.text }}
+          {% if wlabel %}{{ wlabel.text }}{% else %}{{ field.label }}{% endif %}
         </label>
       </div>
       {% endif %}
       <div class="mdc-notched-outline__trailing"></div>
     </div>
+  {% with lines=form_block.num_lines %}
+  {% if lines > 1 %}
+    {% render_field field class+="mdc-text-field__input" rows=lines %}
+  {% endif %}
+  {% endwith %}
   </div>
   
   <div class="mdc-text-field-helper-line">

@@ -36,6 +36,7 @@ def customblock_post_save(sender, instance, created, **kwargs):
     if block.type in (CustomBlock.InputType.TEXT,
                       CustomBlock.InputType.NUMERIC):
         style = block.form.default_text_label_style
+        if block.num_lines > 1: style = FormLabel.LabelStyle.VERTICAL
     elif block.type == CustomBlock.InputType.CHOICE:
         style = FormLabel.LabelStyle.VERTICAL
 

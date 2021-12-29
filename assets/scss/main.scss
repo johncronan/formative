@@ -10,6 +10,7 @@
 @use '@material/line-ripple/mdc-line-ripple';
 @use '@material/notched-outline/mdc-notched-outline';
 @use '@material/textfield';
+@use '@material/textfield/mixins' as textfield-mixins;
 @use '@material/textfield/helper-text';
 @use '@material/textfield/helper-text/mixins' as *;
 @use '@material/textfield/character-counter';
@@ -70,7 +71,20 @@ $breakpoints: (medium: 480px, large: 840px);
     width: 100%;
   }
 }
- 
+
+$maxlines: 100;
+@for $i from 2 through $maxlines {
+  .rp-textarea-rows-#{$i} {
+    @include textfield-mixins.outlined-height(27px * $i - 8px);
+  }
+}
+
+textarea.mdc-text-field__input {
+  resize: none;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
 .rp-program-card,.rp-form-card {
   &__title {
     font-size: 1.25rem;

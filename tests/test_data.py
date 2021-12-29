@@ -46,7 +46,7 @@ def test_stock_email_block(stock_email_block):
 def custom_text_block(program_form, stock_email_block):
     b = CustomBlock(form=program_form, name='response', page=2,
                     type=CustomBlock.InputType.TEXT,
-                    min_chars=1, max_chars=1000)
+                    min_chars=1, max_chars=1000, num_lines=5)
     b.save()
     yield b
 
