@@ -64,7 +64,6 @@ def formblock_post_save(sender, instance, created, **kwargs):
         l.save()
 
 def delete_block_labels(form, name):
-    print('delete_block_labels ', form.name, name)
     labels = FormLabel.objects.filter(form=form)
     labels.filter(Q(path=name) | Q(path__startswith=name+'.')).delete()
 
