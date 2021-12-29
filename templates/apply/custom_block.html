@@ -19,15 +19,14 @@
 {% endif %}
 
 {% with types=form_block.InputType %}
-{{ block.type }}
 <div class="rp-layout-cell-fill 
     {% if form_block.type == types.TEXT or form_block.type == types.NUMERIC %}
             rp-layout-cell-text
     {% endif %}
             mdc-layout-grid__cell
-            mdc-layout-grid__cell--span-{{ block.span }}
-            mdc-layout-grid__cell--span-{{ block.tablet_span }}-tablet
-            mdc-layout-grid__cell--span-{{ block.desktop_span }}-desktop">
+            mdc-layout-grid__cell--span-{{ form_block.span }}
+            mdc-layout-grid__cell--span-{{ form_block.tablet_span }}-tablet
+            mdc-layout-grid__cell--span-{{ form_block.desktop_span }}-desktop">
 
 {% if form_block.type == types.TEXT or form_block.type == types.NUMERIC %}
   {% include "./custom_block_text.html" %}

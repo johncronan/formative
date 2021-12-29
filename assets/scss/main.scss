@@ -34,8 +34,8 @@
 $breakpoints: (medium: 480px, large: 840px);
 
 .rp-maxwidth-grid {
-  // the 1040px is the only one we're customizing
-  @include mdc-layout-grid('desktop', 24px, 1040px);
+  // the 992px is the only one we're customizing
+  @include mdc-layout-grid('desktop', 24px, 992px);
   @include mdc-layout-grid('tablet', 16px);
   @include mdc-layout-grid('phone', 16px);
 }
@@ -53,6 +53,7 @@ $breakpoints: (medium: 480px, large: 840px);
 }
 
 .rp-layout-cell-text {
+  // TODO: change both of these to something that applies also to textarea
   min-height: 75px;
 }
 

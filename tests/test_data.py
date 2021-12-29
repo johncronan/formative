@@ -44,9 +44,8 @@ def test_stock_email_block(stock_email_block):
 
 @pytest.fixture(scope='session')
 def custom_text_block(program_form, stock_email_block):
-    b = CustomBlock(form=program_form, name='response', page=2,
-                    type=CustomBlock.InputType.TEXT,
-                    min_chars=1, max_chars=1000, num_lines=5)
+    b = CustomBlock(form=program_form, name='answer', page=2,
+                    type=CustomBlock.InputType.TEXT, max_chars=1000)
     b.save()
     yield b
 
@@ -54,8 +53,19 @@ def test_custom_text_block(custom_text_block):
     assert custom_text_block
 
 @pytest.fixture(scope='session')
+def custom_textarea_block(program_form, custom_text_block):
+    b = CustomBlock(form=program_form, name='response', page=2, rank=1,
+                    type=CustomBlock.InputType.TEXT,
+                    min_chars=1, max_chars=1000, num_lines=5)
+    b.save()
+    yield b
+
+def test_custom_textarea_block(custom_textarea_block):
+    assert custom_textarea_block
+
+@pytest.fixture(scope='session')
 def custom_choice_block(program_form, custom_text_block):
-    b = CustomBlock(form=program_form, name='type', page=2, rank=1,
+    b = CustomBlock(form=program_form, name='type', page=2, rank=2,
                     type=CustomBlock.InputType.CHOICE, required=True,
                     options={'choices': ['foo', 'bar', 'baz']})
     b.save()
@@ -65,8 +75,18 @@ def test_custom_choice_block(custom_choice_block):
     assert custom_choice_block
 
 @pytest.fixture(scope='session')
-def custom_boolean_block(program_form, custom_choice_block):
-    b = CustomBlock(form=program_form, name='optin', page=2, rank=2,
+def custom_numeric_block(program_form, custom_choice_block):
+    b = CustomBlock(form=program_form, name='number of items', page=2, rank=3,
+                    type=CustomBlock.InputType.NUMERIC)
+    b.save()
+    yield b
+
+def test_custom_numeric_block(custom_numeric_block):
+    assert custom_numeric_block
+
+@pytest.fixture(scope='session')
+def custom_boolean_block(program_form, custom_numeric_block):
+    b = CustomBlock(form=program_form, name='optin', page=2, rank=4,
                     type=CustomBlock.InputType.BOOLEAN)
     b.save()
     yield b

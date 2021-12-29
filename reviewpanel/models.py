@@ -364,10 +364,20 @@ class CustomBlock(FormBlock):
         return [(self.name, self.field())]
     
     def span(self, media=None):
-        # TODO: be smart (also check options for override)
-        if media == 'desktop': return 6
-        if media == 'tablet': return 6
-        return 4
+        width = 6
+        if self.num_lines > 1: width = 8
+        if self.type in (self.InputType.CHOICE, self.InputType.BOOLEAN):
+            width = 8
+        elif self.type == self.InputType.NUMERIC: width = 2
+
+        if not media: return min(width, 4)
+        
+        if media == 'tablet' and 'span_tablet' in self.options:
+            return self.options['span_tablet']
+        if media == 'desktop' and 'span_desktop' in self.options:
+            return self.options['span_desktop']
+        
+        return width
     
     def tablet_span(self): return self.span(media='tablet')
     def desktop_span(self): return self.span(media='desktop')
