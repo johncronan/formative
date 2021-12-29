@@ -3,7 +3,9 @@
 
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with wlabel=labels|get_by_style:'widget' %}
-  <div class="mdc-text-field mdc-text-field--outlined">
+  <div class="mdc-text-field
+		      {% if field.errors %}rp-text-field--invalid{% endif %}
+			  mdc-text-field--outlined">
     {% render_field field class+="mdc-text-field__input" %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
@@ -18,14 +20,15 @@
     </div>
   </div>
   
-  {% if field.errors %}
   <div class="mdc-text-field-helper-line">
+  {% if field.errors %}
     <div class="mdc-text-field-helper-text
                 mdc-text-field-helper-text--persistent
                 mdc-text-field-helper-text--validation-msg">
       {{ field.errors.0|escape }}
     </div>
-  </div>
   {% endif %}
+    {# TODO <div class="mdc-text-field-character-counter"></div> #}
+  </div>
 {% endwith %}
 {% endwith %}

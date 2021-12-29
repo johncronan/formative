@@ -12,6 +12,7 @@
 @use '@material/textfield';
 @use '@material/textfield/helper-text';
 @use '@material/textfield/helper-text/mixins' as *;
+@use '@material/textfield/character-counter';
 @use '@material/radio/styles';
 @use '@material/checkbox';
 
@@ -24,6 +25,7 @@
 @include form-field.core-styles;
 @include textfield.core-styles;
 @include helper-text.helper-text-core-styles;
+@include character-counter.character-counter-core-styles;
 @include checkbox.core-styles;
 
 
