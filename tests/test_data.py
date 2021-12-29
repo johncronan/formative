@@ -76,7 +76,7 @@ def test_custom_choice_block(custom_choice_block):
 
 @pytest.fixture(scope='session')
 def custom_numeric_block(program_form, custom_choice_block):
-    b = CustomBlock(form=program_form, name='number of items', page=2, rank=3,
+    b = CustomBlock(form=program_form, name='numitems', page=2, rank=3,
                     type=CustomBlock.InputType.NUMERIC)
     b.save()
     yield b
