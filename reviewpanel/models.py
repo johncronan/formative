@@ -370,6 +370,8 @@ class CustomBlock(FormBlock):
             width = 8
         elif self.type == self.InputType.NUMERIC: width = 2
 
+        if 'span_tablet' in self.options:
+            if not media: return min(width, self.options['span_tablet'], 4)
         if not media: return min(width, 4)
         
         if media == 'tablet' and 'span_tablet' in self.options:
