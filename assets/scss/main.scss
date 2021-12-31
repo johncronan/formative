@@ -123,11 +123,14 @@ textarea.mdc-text-field__input {
 .rp-prevpage-button {
   grid-column-start: 1;
   position: relative;
-  top: -6px;
+  top: 2px;
 }
 
 .rp-save-button {
+  margin-top: 8px;
+  
   @include media ("<tablet") {
+    grid-column-start: 2;
   	grid-column-end: span 1;
   }
   @include media(">=tablet") {
@@ -136,6 +139,8 @@ textarea.mdc-text-field__input {
 }
 
 .rp-submit-button {
+  margin-top: 8px;
+  
   @include media(">=tablet") {
   	grid-column-end: span 3;
   }
