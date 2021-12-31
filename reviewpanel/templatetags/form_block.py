@@ -22,6 +22,10 @@ def get_by_choice(labels, choice):
     if choice in labels: return labels[choice]
     return None
 
+@register.filter
+def underscore(obj, name):
+    return getattr(obj, '_' + name)
+
 @register.simple_tag(takes_context=True)
 def include_stock(context, block, labels):
     stock = block.stock

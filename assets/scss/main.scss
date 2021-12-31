@@ -4,6 +4,7 @@
 @use '@material/layout-grid/mdc-layout-grid';
 @use '@material/button/mdc-button';
 @use '@material/button';
+@use '@material/icon-button/styles' as icon-button-styles;
 @use '@material/card';
 @use '@material/form-field';
 @use '@material/floating-label/mdc-floating-label';
@@ -14,13 +15,15 @@
 @use '@material/textfield/helper-text';
 @use '@material/textfield/helper-text/mixins' as *;
 @use '@material/textfield/character-counter';
-@use '@material/radio/styles';
+@use '@material/radio/styles' as radio-styles;
 @use '@material/checkbox';
 
 @use 'include-media' as *;
 
 // there seems to be some bug in mdc preventing @use with this one:
 @import '@material/layout-grid/mixins';
+
+@import 'material-icons/iconfont/filled.css';
 
 @include card.core-styles;
 @include form-field.core-styles;
@@ -31,7 +34,7 @@
 
 
 // TODO: grab these numeric values from the mdc defaults
-$breakpoints: (medium: 480px, large: 840px);
+$breakpoints: (phone: 480px, tablet: 600px, desktop: 840px);
 
 .rp-maxwidth-grid {
   // the 992px is the only one we're customizing
@@ -53,8 +56,8 @@ $breakpoints: (medium: 480px, large: 840px);
 }
 
 .rp-layout-cell-text {
-  // TODO: change both of these to something that applies also to textarea
-  min-height: 75px;
+  // TODO: change both of these to something that applies also to textarea?
+  // min-height: 75px;
 }
 
 .rp-label-cell,.rp-stock-cell-1 {
@@ -66,7 +69,7 @@ $breakpoints: (medium: 480px, large: 840px);
 }
 
 .rp-text-field {
-  min-height: 75px;
+  // min-height: 75px;
   
   & .mdc-text-field {
     width: 100%;
@@ -117,8 +120,25 @@ textarea.mdc-text-field__input {
 .rp-form-card {
 }
 
-.rp-submit-button {
+.rp-prevpage-button {
   grid-column-start: 1;
+  position: relative;
+  top: -6px;
+}
+
+.rp-save-button {
+  @include media ("<tablet") {
+  	grid-column-end: span 1;
+  }
+  @include media(">=tablet") {
+  	grid-column-start: 4;
+  }
+}
+
+.rp-submit-button {
+  @include media(">=tablet") {
+  	grid-column-end: span 3;
+  }
 }
 
 .mdc-card-wrapper__text-section {

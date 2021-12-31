@@ -102,10 +102,12 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         context = super().get_context_data(**kwargs)
         form = context['program_form']
         
-        context['page'] = self.page
-        context['visible_blocks'] = form.visible_blocks(page=self.page)
-        context['field_labels' ] = form.field_labels()
-        
+        context.update({
+            'page': self.page,
+            'prev_page': self.page > 1 and self.page - 1 or None,
+            'visible_blocks': form.visible_blocks(page=self.page),
+            'field_labels': form.field_labels(),
+        })
         return context
         
     def get_object(self):
@@ -119,11 +121,14 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             'form_slug': self.program_form.slug,
             'sid': self.object._id,
         }
-        
-        if self.page == self.program_form.num_pages():
-            name = 'submission_review'
+
+        name = 'submission_page'
+        if 'continue' in self.request.POST:
+            if self.page == self.program_form.num_pages(): # we're done
+                name = 'submission_review'
+            else: kwargs['page'] = self.page + 1
         else:
-            kwargs['page'] = self.page + 1
-            name = 'submission_page'
+            if self.page == 1: name = 'submission'
+            else: kwargs['page'] = self.page
         
         return reverse(name, kwargs=kwargs)

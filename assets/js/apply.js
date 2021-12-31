@@ -38,7 +38,11 @@ const formFields = [];
 //document.querySelectorAll('.mdc-form-field')
 //        .forEach(field => formFields.push(new MDCFormField('.mdc-form-field')))
 
-// TODO: set formField.input = radio
+// TODO: set formField.input = radio, for ripple?
+
+const ripples = [];
+document.querySelectorAll('.mdc-button,.mdc-button-icon')
+        .forEach(button => ripples.push(new MDCRipple(button)));
 
 window.addEventListener("pageshow", function() {
   document.querySelectorAll('.rp-text-field--invalid')
