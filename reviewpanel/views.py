@@ -114,13 +114,35 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         submission = get_object_or_404(self.program_form.model,
                                        _id=self.kwargs['sid'])
         return submission
-    
-    def get_success_url(self):
-        kwargs = {
+
+    def url_args(self):
+        return {
             'program_slug': self.program_form.program.slug,
             'form_slug': self.program_form.slug,
             'sid': self.object._id,
         }
+        
+    def render_to_response(self, context):
+        if context['page'] <= self.object._valid + 1:
+            return super().render_to_response(context)
+        
+        p, name, args = self.object._valid, 'submission_page', self.url_args()
+        if p: args['page'] = p + 1
+        else: name = 'submission'
+
+        return HttpResponseRedirect(reverse(name, kwargs=args))
+    
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        # TODO: state inconsistency possible if _valid > page - on later pages 
+        # we need to clear, ensure it happens for the blocks that we later skip
+        self.object._valid = self.page
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        kwargs = self.url_args() 
 
         name = 'submission_page'
         if 'continue' in self.request.POST:

@@ -146,6 +146,11 @@ textarea.mdc-text-field__input {
   }
 }
 
+.rp-start-button {
+  margin-top: 8px;
+  grid-column-start: 1;
+}
+
 .mdc-card-wrapper__text-section {
   padding-left: 16px;
   padding-right: 16px;
