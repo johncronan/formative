@@ -138,10 +138,19 @@ textarea.mdc-text-field__input {
   }
 }
 
-.rp-submit-button {
+.rp-continue-button {
   margin-top: 8px;
   
   @include media(">=tablet") {
+  	grid-column-end: span 3;
+  }
+}
+
+.rp-submit-button {
+  grid-column-start: 3;
+
+  @include media(">=tablet") {
+  	grid-column-start: 6;
   	grid-column-end: span 3;
   }
 }

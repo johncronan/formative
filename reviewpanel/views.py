@@ -65,31 +65,31 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
 class SubmissionView(ProgramFormMixin, generic.UpdateView):
     template_name = 'apply/submission.html'
     context_object_name = 'submission'
+    first_page = False
     
     def dispatch(self, request, *args, **kwargs):
-        page = 1
-        if 'page' in self.kwargs: page = int(self.kwargs['page'])
-        self.page = page
+        self.page = None
+        if 'page' in self.kwargs: self.page = self.kwargs['page']
+        if self.first_page: self.page = 1
         
         return super().dispatch(request, *args, **kwargs)
     
     def get_form(self):
         fields, widgets, radios = [], {}, []
-        
-        for block in self.program_form.blocks.filter(page=self.page):
-            for name, field in block.fields():
-                fields.append(name)
-                
-                if block.block_type() == 'custom':
-                    if block.type == CustomBlock.InputType.CHOICE:
-                        widgets[name] = forms.RadioSelect
-                        radios.append(name)
+
+        if self.page:
+            for block in self.program_form.blocks.filter(page=self.page):
+                for name, field in block.fields():
+                    fields.append(name)
+                    
+                    if block.block_type() == 'custom':
+                        if block.type == CustomBlock.InputType.CHOICE:
+                            widgets[name] = forms.RadioSelect
+                            radios.append(name)
             
         form_class = modelform_factory(self.program_form.model,
                                        form=SubmissionForm,
-                                       fields=fields, widgets=widgets,
-                                       exclude=['_created', '_modified',
-                                                '_submitted', '_email'])
+                                       fields=fields, widgets=widgets)
         
         f = form_class(**self.get_form_kwargs())
         for n in radios:
@@ -102,30 +102,40 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         context = super().get_context_data(**kwargs)
         form = context['program_form']
         
-        context.update({
-            'page': self.page,
-            'prev_page': self.page > 1 and self.page - 1 or None,
-            'visible_blocks': form.visible_blocks(page=self.page),
-            'field_labels': form.field_labels(),
-        })
-        return context
+        if self.page:
+            context.update({
+                'page': self.page,
+                'prev_page': self.page > 1 and self.page - 1 or None,
+                'visible_blocks': form.visible_blocks(page=self.page),
+                'field_labels': form.field_labels(),
+            })
+        else: context['prev_page'] = form.num_pages()
         
+        return context
+    
     def get_object(self):
         submission = get_object_or_404(self.program_form.model,
                                        _id=self.kwargs['sid'])
         return submission
 
-    def url_args(self):
-        return {
+    def url_args(self, id=True):
+        args = {
             'program_slug': self.program_form.program.slug,
-            'form_slug': self.program_form.slug,
-            'sid': self.object._id,
+            'form_slug': self.program_form.slug
         }
+        if id: args['sid'] = self.object._id
+        return args
         
     def render_to_response(self, context):
-        if context['page'] <= self.object._valid + 1:
-            return super().render_to_response(context)
+        if self.object._submitted:
+            return HttpResponseRedirect(reverse('thanks',
+                                                kwargs=self.url_args(id=False)))
         
+        if (self.page and context['page'] <= self.object._valid + 1
+            or self.object._valid == self.program_form.num_pages()):
+            return super().render_to_response(context)
+
+        # tried to skip ahead - go back to the last page that can be displayed
         p, name, args = self.object._valid, 'submission_page', self.url_args()
         if p: args['page'] = p + 1
         else: name = 'submission'
@@ -133,6 +143,13 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return HttpResponseRedirect(reverse(name, kwargs=args))
     
     def form_valid(self, form):
+        if not self.page:
+            # the draft submission will now be marked as submitted
+            self.object._submit()
+            
+            return HttpResponseRedirect(reverse('thanks',
+                                                kwargs=self.url_args(id=False)))
+        
         self.object = form.save(commit=False)
         # TODO: state inconsistency possible if _valid > page - on later pages 
         # we need to clear, ensure it happens for the blocks that we later skip

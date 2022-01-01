@@ -430,8 +430,9 @@ class Submission(models.Model):
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
     
-    def email(self):
-        return self._email
+    def _submit(self):
+        self._submitted = timezone.now()
+        self.save()
 
 
 def file_path(instance, filename): return instance.slug + '/'

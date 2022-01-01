@@ -8,9 +8,10 @@ urlpatterns = [
     path('<slug:program_slug>/<slug:form_slug>/',
          views.ProgramFormView.as_view(), name='form'),
     path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/',
-         views.SubmissionView.as_view(), name='submission'),
+         views.SubmissionView.as_view(first_page=True), name='submission'),
     path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/page-<int:page>',
          views.SubmissionView.as_view(), name='submission_page'),
     path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/review',
-         views.SubmissionView.as_view(), name='submission_review'),
+         views.SubmissionView.as_view(template_name='apply/review.html'),
+         name='submission_review'),
 ]
