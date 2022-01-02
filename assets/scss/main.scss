@@ -20,6 +20,8 @@
 
 @use 'include-media' as *;
 
+@use 'libs/markdown';
+
 // there seems to be some bug in mdc preventing @use with this one:
 @import '@material/layout-grid/mixins';
 
@@ -35,6 +37,10 @@
 
 // TODO: grab these numeric values from the mdc defaults
 $breakpoints: (phone: 480px, tablet: 600px, desktop: 840px);
+
+em {
+  font-style: italic;
+}
 
 .rp-maxwidth-grid {
   // the 992px is the only one we're customizing
@@ -79,14 +85,15 @@ $breakpoints: (phone: 480px, tablet: 600px, desktop: 840px);
 $maxlines: 100;
 @for $i from 2 through $maxlines {
   .rp-textarea-rows-#{$i} {
-    @include textfield-mixins.outlined-height(27px * $i - 8px);
+    @include textfield-mixins.outlined-height(20px * $i + 26px);
   }
 }
 
-textarea.mdc-text-field__input {
+.rp-textarea textarea.mdc-text-field__input {
   resize: none;
-  margin-top: 16px;
-  margin-bottom: 16px;
+  margin-top: 13px;
+  line-height: 1.25rem;
+  height: auto;
 }
 
 .rp-program-card,.rp-form-card {
@@ -173,4 +180,8 @@ textarea.mdc-text-field__input {
   &.mdc-text-field-helper-text--validation-msg {
     color: #af0109 !important;
   }
+}
+
+.rp-review-pre,.rp-review-post,.rp-review-label,.rp-review-value-wide {
+  grid-column-start: 1;
 }

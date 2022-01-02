@@ -9,6 +9,8 @@ class NameWidget(CompositeStockWidget):
         super().__init__(name)
         
         self.template_name = 'name.html'
+        self.review_template_name = 'name_review.html'
+        
         self.widgets = {
             'firstname': 'First name',
             'lastname': 'Last name'

@@ -9,6 +9,7 @@ class EmailWidget(StockWidget):
         super().__init__(name)
         
         self.template_name = 'email.html'
+        self.review_template_name = 'review.html'
     
     def fields(self):
         field = models.EmailField(blank=True)

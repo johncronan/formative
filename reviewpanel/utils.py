@@ -22,3 +22,11 @@ def create_model(name, fields, app_label='reviewpanel', module='',
     # Create the class, which automatically triggers ModelBase processing
     model = type(name, (base_class,), attrs)
     return model
+
+def remove_p(text):
+    s = text.strip()
+    if s[:3] == '<p>':
+        i = s.index('</p>')
+        if i + 3+1 == len(s): return s[3:-3-1]
+    
+    return text

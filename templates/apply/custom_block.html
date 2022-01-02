@@ -13,7 +13,7 @@
   {% if not hlabel and not wlabel %}
       for="{{ field.id_for_label }}"
   {% endif %}>
-      {{ label.text }}
+      {{ label.display }}: {# TODO: i18n for colon #}
     </label>
   </div>
 {% endif %}
@@ -47,7 +47,7 @@
     </div>
     {% if cwlabel %}
     <label for="{{ subfield.id_for_label }}">
-      {{ cwlabel.text }}
+      {{ cwlabel.display_inline }}
     </label>
     {% endif %}
   {% endwith %}
@@ -69,7 +69,7 @@
       <div class="mdc-checkbox__ripple"></div>
     </div>
     {% if wlabel %}
-    <label for="{{ field.id_for_label }}">{{ wlabel.text }}</label>
+    <label for="{{ field.id_for_label }}">{{ wlabel.display_inline }}</label>
     {% endif %}
   </div>
   

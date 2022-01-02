@@ -34,7 +34,7 @@ def customblock_post_save(sender, instance, created, **kwargs):
     # set up default labels for the block
     style = FormLabel.LabelStyle.WIDGET
     if block.type == CustomBlock.InputType.TEXT:
-        style = block.form.default_text_label_style
+        style = block.form.default_text_label_style()
         if block.num_lines > 1: style = FormLabel.LabelStyle.VERTICAL
     elif block.type == CustomBlock.InputType.CHOICE:
         style = FormLabel.LabelStyle.VERTICAL
@@ -42,7 +42,6 @@ def customblock_post_save(sender, instance, created, **kwargs):
         style = FormLabel.LabelStyle.HORIZONTAL
 
     text = capfirst(block.name)
-    if style != FormLabel.LabelStyle.WIDGET: text += ':' # TODO: i18n
     
     l = FormLabel(form=block.form, path=block.name, style=style, text=text)
     l.save()

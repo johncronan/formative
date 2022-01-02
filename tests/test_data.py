@@ -16,7 +16,8 @@ def test_program(program):
 
 @pytest.fixture(scope='session')
 def program_form(program):
-    f = Form(program=program, name='Exhibitions Application 2022')
+    opt = { 'review_pre': 'Review your application below:' }
+    f = Form(program=program, name='Exhibitions Application 2022', options=opt)
     f.save()
     yield f
 

@@ -17,7 +17,11 @@
       {% if wlabel or not form_block %}
       <div class="mdc-notched-outline__notch">
         <label for="{{ field.id_for_label }}" class="mdc-floating-label">
-          {% if wlabel %}{{ wlabel.text }}{% else %}{{ field.label }}{% endif %}
+        {% if wlabel %}
+          {{ wlabel.display_inline }}
+        {% else %}
+          {{ field.label }}
+        {% endif %}
         </label>
       </div>
       {% endif %}

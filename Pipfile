@@ -12,6 +12,7 @@ django-webpack-loader = "*"
 django-polymorphic = "*"
 django-jazzmin = "*"
 django-widget-tweaks = "*"
+markdown = "*"
 
 [dev-packages]
 pytest = "*"

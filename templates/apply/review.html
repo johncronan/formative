@@ -8,6 +8,55 @@
 {% endblock %}
 
 {% block content %}
+  {% if program_form.review_pre %}
+  <div class="rp-review-pre mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-4
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop">
+    {{ program_form.review_pre }}
+  </div>
+  {% endif %}
+
+  {% for form_block in program_form.visible_blocks %}
+  {% if form_block.show_in_review %}
+    {% block_labels field_labels form_block as labels %}
+    
+    {% if form_block.block_type == 'custom' %}
+      {% block_field form form_block as field %}
+      {% with types=form_block.InputType %}
+      {% if form_block.type == types.CHOICE %}
+        {% with clabel=labels|for_choice_value:field.value %}
+          {% include "./review_block.html" with value=clabel.display_inline %}
+        {% endwith %}
+      {% elif form_block.type == types.BOOLEAN %}
+        {% if field.value %}
+          {% include "./review_block.html" with value="Yes" %}
+        {% else %}
+          {% include "./review_block.html" with value="No" %}
+        {% endif %}
+      {% else %}
+        {% include "./review_block.html" %}
+      {% endif %}
+      {% endwith %}
+      
+    {% elif form_block.block_type == 'collection' %}
+    
+    {% else %}
+	  {% include_stock_review form_block labels %}
+	  
+    {% endif %}
+  {% endif %}
+  {% endfor %}
+  
+  {% if program_form.review_post %}
+  <div class="rp-review-post mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-4
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop">
+    {{ program_form.review_post }}
+  </div>
+  {% endif %}
+  
   {% with program_form as form %}
   {% with submission|underscore:'id' as id %}
   <a href="{% if prev_page > 1 %}

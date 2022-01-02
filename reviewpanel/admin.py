@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
@@ -21,7 +22,13 @@ class FormAdmin(admin.ModelAdmin):
             getattr(obj, action)(**kwargs)
         return ret
 
-admin.site.register(FormLabel)
+@admin.register(FormLabel)
+class FormLabelAdmin(admin.ModelAdmin):
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield= super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'text':
+            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        return formfield
 
 admin.site.register(FormDependency)
 

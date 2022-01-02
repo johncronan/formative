@@ -77,16 +77,19 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_form(self):
         fields, widgets, radios = [], {}, []
 
-        if self.page:
-            for block in self.program_form.blocks.filter(page=self.page):
-                for name, field in block.fields():
-                    fields.append(name)
-                    
-                    if block.block_type() == 'custom':
-                        if block.type == CustomBlock.InputType.CHOICE:
-                            widgets[name] = forms.RadioSelect
-                            radios.append(name)
-            
+        query = self.program_form.blocks.all()
+        if self.page: query = query.filter(page=self.page)
+        elif self.request.method == 'POST': query = query.none()
+        
+        for block in query:
+            for name, field in block.fields():
+                fields.append(name)
+                
+                if block.block_type() == 'custom':
+                    if block.type == CustomBlock.InputType.CHOICE:
+                        widgets[name] = forms.RadioSelect
+                        radios.append(name)
+        
         form_class = modelform_factory(self.program_form.model,
                                        form=SubmissionForm,
                                        fields=fields, widgets=widgets)
@@ -101,13 +104,13 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = context['program_form']
-        
+
+        context['field_labels'] = form.field_labels()
         if self.page:
             context.update({
                 'page': self.page,
                 'prev_page': self.page > 1 and self.page - 1 or None,
                 'visible_blocks': form.visible_blocks(page=self.page),
-                'field_labels': form.field_labels(),
             })
         else: context['prev_page'] = form.num_pages()
         

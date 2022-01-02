@@ -3,14 +3,17 @@ from django.db.models import Q, UniqueConstraint, Max
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 import uuid
+import markdown
 
 from .stock import StockWidget
-from .utils import create_model
+from .utils import create_model, remove_p
 
 
 class AutoSlugModel(models.Model):
@@ -38,6 +41,7 @@ class Program(AutoSlugModel):
     db_slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
                                editable=False)
     description = models.CharField(max_length=200, blank=True)
+    options = models.JSONField(default=dict, blank=True)
     hidden = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     
@@ -47,31 +51,12 @@ class Program(AutoSlugModel):
     
     # TODO: disallow certain slug values, like "auth"
     
+    @cached_property
+    def markdown(self):
+        return markdown.Markdown()
+    
     def visible_forms(self):
         return self.forms.exclude(status=Form.Status.DRAFT)
-
-
-class FormLabel(models.Model):
-    class Meta:
-        constraints = [
-            UniqueConstraint(fields=['form', 'path', 'style'],
-                             name='unique_path_style')
-        ]
-    
-    class LabelStyle(models.TextChoices):
-        WIDGET = 'widget', _('widget label')
-        VERTICAL = 'vertical', _('vertical label')
-        HORIZONTAL = 'horizontal', _('horizontal label')
-    
-    form = models.ForeignKey('Form', models.CASCADE, related_name='labels',
-                             related_query_name='label')
-    path = models.CharField(max_length=128)
-    text = models.CharField(max_length=1000)
-    style = models.CharField(max_length=16, choices=LabelStyle.choices,
-                             default=LabelStyle.WIDGET)
-    
-    def __str__(self):
-        return self.path
 
 
 class Form(AutoSlugModel):
@@ -98,10 +83,9 @@ class Form(AutoSlugModel):
     slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
     db_slug = models.SlugField(max_length=64, allow_unicode=True,
                                editable=False)
-        
-        
     status = models.CharField(max_length=16, default=Status.DRAFT,
                               choices=Status.choices)
+    options = models.JSONField(default=dict, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     # this is also the published date, for enabled and completed forms
     modified = models.DateTimeField(default=timezone.now, editable=False)
@@ -109,9 +93,6 @@ class Form(AutoSlugModel):
     validation_type = models.CharField(max_length=16, editable=False,
                                        default=Validation.EMAIL,
                                        choices=Validation.choices)
-    default_text_label_style = \
-        models.CharField(max_length=16, choices=FormLabel.LabelStyle.choices,
-                         default=FormLabel.LabelStyle.WIDGET)
     
     def __str__(self):
         return self.name
@@ -196,6 +177,11 @@ class Form(AutoSlugModel):
         if 'item_model' in self.__dict__: del self.item_model
         
         self.save()
+
+    def default_text_label_style(self):
+        if 'default_text_label_style' in self.options:
+            return self.options['default_text_label_style']
+        return FormLabel.LabelStyle.WIDGET
     
     def num_pages(self):
         return self.blocks.aggregate(Max('page'))['page__max']
@@ -239,6 +225,45 @@ class Form(AutoSlugModel):
             return _('Closed')
         return _('Open for submissions')
 
+    def review_pre(self):
+        if 'review_pre' in self.options:
+            md = self.program.markdown
+            return mark_safe(remove_p(md.convert(self.options['review_pre'])))
+    
+    def review_post(self):
+        if 'review_post' in self.options:
+            md = self.program.markdown
+            return mark_safe(remove_p(md.convert(self.options['review_post'])))
+
+
+class FormLabel(models.Model):
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['form', 'path', 'style'],
+                             name='unique_path_style')
+        ]
+    
+    class LabelStyle(models.TextChoices):
+        WIDGET = 'widget', _('widget label')
+        VERTICAL = 'vertical', _('vertical label')
+        HORIZONTAL = 'horizontal', _('horizontal label')
+    
+    form = models.ForeignKey('Form', models.CASCADE, related_name='labels',
+                             related_query_name='label')
+    path = models.CharField(max_length=128)
+    text = models.CharField(max_length=1000)
+    style = models.CharField(max_length=16, choices=LabelStyle.choices,
+                             default=LabelStyle.WIDGET)
+    
+    def __str__(self):
+        return self.path
+    
+    def display(self, inline=False):
+        s = self.form.program.markdown.convert(self.text)
+        return mark_safe(remove_p(s))
+    
+    def display_inline(self): return self.display(inline=True)
+
 
 class FormDependency(models.Model):
     class Meta:
@@ -253,7 +278,7 @@ class FormDependency(models.Model):
     value = models.CharField(max_length=64)
     
     def __str__(self):
-        return f'{self.block}="{self.value}"'
+        return f'{self.block.dependence.name}="{self.value}"'
 
 
 class FormBlock(PolymorphicModel):
@@ -277,6 +302,7 @@ class FormBlock(PolymorphicModel):
                                    null=True, blank=True,
                                    related_name='dependents',
                                    related_query_name='dependent')
+    negate_dependencies = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -298,6 +324,9 @@ class FormBlock(PolymorphicModel):
     
     def fields(self):
         return self.stock.fields()
+
+    def show_in_review(self):
+        return True
 
 
 class CustomBlock(FormBlock):
@@ -404,8 +433,8 @@ class CollectionBlock(FormBlock):
     name1 = models.CharField(max_length=32, default='', blank=True)
     name2 = models.CharField(max_length=32, default='', blank=True)
     name3 = models.CharField(max_length=32, default='', blank=True)
-    type = models.CharField(max_length=16, choices=AlignType.choices,
-                            default=AlignType.HORIZONTAL)
+    align_type = models.CharField(max_length=16, choices=AlignType.choices,
+                                  default=AlignType.HORIZONTAL)
     
     def fields(self):
         return []
