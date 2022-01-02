@@ -13,7 +13,7 @@ import uuid
 import markdown
 
 from .stock import StockWidget
-from .utils import create_model, remove_p
+from .utils import create_model, remove_p, send_email
 
 
 class AutoSlugModel(models.Model):
@@ -458,6 +458,12 @@ class Submission(models.Model):
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
+
+    def _send_email(self, form, template, **kwargs):
+        path = 'apply/emails/' + template
+        return send_email(self, template=path, to=self._email,
+                          context={'form': form},
+                          context_object_name='submission', **kwargs)
     
     def _submit(self):
         self._submitted = timezone.now()

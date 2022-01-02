@@ -98,7 +98,11 @@ DATABASES = {
     }
 }
 
-EMAIL_HOST = env('EMAIL_HOST', default='localhost')
+EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
+CONTACT_EMAIL = env('CONTACT_EMAIL')
+SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
+
+SERVER_HOSTNAME = env('SERVER_HOSTNAME')
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

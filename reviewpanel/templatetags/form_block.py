@@ -40,10 +40,6 @@ def for_choice_value(labels, value):
     if value in labels: return closest_label(labels[value])
     return None
 
-@register.filter
-def underscore(obj, name):
-    return getattr(obj, '_' + name)
-
 @register.simple_tag(takes_context=True)
 def include_stock(context, block, labels, review=False):
     stock = block.stock

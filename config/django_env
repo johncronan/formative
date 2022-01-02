@@ -2,3 +2,4 @@ DJANGO_ENV=dev
 DJANGO_SU_NAME=admin
 DJANGO_SU_EMAIL=admin@example.org
 DJANGO_SU_PASSWORD=admin
+POSTFIX_HOST=postfix

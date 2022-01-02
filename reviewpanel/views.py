@@ -45,12 +45,12 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
                       generic.detail.SingleObjectTemplateResponseMixin):
     template_name = 'apply/form.html'
     form_class = OpenForm
+    context_object_name = 'program_form'
     
     def get_success_url(self):
-        return reverse('submission', kwargs={
+        return reverse('form_continue', kwargs={
             'program_slug': self.program_form.program.slug,
             'form_slug': self.program_form.slug,
-            'sid': self.object._id
         })
     
     def form_valid(self, form):
@@ -58,7 +58,9 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
         self.object, created = model.objects.get_or_create(
             _email=form.cleaned_data['email']
         )
-        # TODO: send the email
+
+        self.object._send_email(form=self.program_form,
+                                template='continue.html')
         return super().form_valid(form)
 
 

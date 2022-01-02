@@ -9,15 +9,16 @@
 
 {% block content %}
     <div class="rp-form-top mdc-layout-grid__cell
-                mdc-layout-grid__cell--span-9">
+                mdc-layout-grid__cell--span-8-tablet
+                mdc-layout-grid__cell--span-8-desktop">
       Enter your email address to create a new application, or to recover
       one that you've already started. We will email you a link that takes
       you to the next step.
     </div>
   {% for field in form.visible_fields %}
     <div class="rp-layout-cell-fill rp-layout-cell-text mdc-layout-grid__cell
-                mdc-layout-grid__cell--span-6-desktop
-                mdc-layout-grid__cell--span-6-tablet">
+                mdc-layout-grid__cell--span-6-tablet
+                mdc-layout-grid__cell--span-6-desktop">
       {% include "./stock/textfield.html" %}
     </div>
   {% endfor %}

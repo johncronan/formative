@@ -1,5 +1,8 @@
 from django.apps import apps
 from django.db import models
+from django.conf import settings
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from django.contrib import admin
 
 
@@ -30,3 +33,15 @@ def remove_p(text):
         if i + 3+1 == len(s): return s[3:-3-1]
     
     return text
+
+def send_email(instance, template, to, context={}, context_object_name='obj'):
+    new_context = { context_object_name: instance, 'settings': settings }
+    new_context.update(context)
+    context = new_context
+
+    subject_template = template[:template.index('.html')] + '_subject.html'
+    subject = ''.join(render_to_string(subject_template, context).splitlines())
+
+    message = render_to_string(template, context)
+    mail = EmailMessage(subject, message, settings.CONTACT_EMAIL, [to])
+    mail.send()
