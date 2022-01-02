@@ -454,7 +454,7 @@ class Submission(models.Model):
     
     _id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                            editable=False)
-    _valid = models.PositiveIntegerField(default=0) # up to page N
+    _valid = models.PositiveIntegerField(default=0, editable=False) # up to page
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
