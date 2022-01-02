@@ -49,9 +49,11 @@ em {
   @include mdc-layout-grid('phone', 16px);
 }
 
-.rp-layout-cell-fill {
+.rp-layout-cell-start {
   grid-column-start: 1;
+}
 
+.rp-layout-cell {
   & .mdc-text-field {
     width: 100%;
   }
@@ -61,17 +63,24 @@ em {
   }
 }
 
-.rp-layout-cell-text {
-  // TODO: change both of these to something that applies also to textarea?
-  // min-height: 75px;
-}
-
-.rp-label-cell,.rp-stock-cell-1 {
+.rp-stock-cell-1 {
   grid-column-start: 1;
 }
 
-.rp-label-cell {
+.rp-vertical-label-cell {
   margin-bottom: -8px;
+  
+  & label {
+    line-height: 20px;
+  }
+}
+
+.rp-horizontal-label-cell {
+  align-self: center;
+
+  & label {
+    line-height: 20px;
+  }
 }
 
 .rp-text-field {
@@ -80,6 +89,10 @@ em {
   & .mdc-text-field {
     width: 100%;
   }
+}
+
+.rp-choice-field.mdc-form-field,.rp-boolean-field.mdc-form-field {
+  font-size: inherit;
 }
 
 $maxlines: 100;

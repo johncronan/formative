@@ -6,7 +6,7 @@
 {% with hlabel=labels|get_by_style:styles.HORIZONTAL %}
 {% with wlabel=labels|get_by_style:styles.WIDGET %}
 {% if label %}
-  <div class="rp-label-cell mdc-layout-grid__cell
+  <div class="rp-vertical-label-cell rp-layout-cell-start mdc-layout-grid__cell
               mdc-layout-grid__cell--span-8-tablet
               mdc-layout-grid__cell--span-8-desktop">
     <label
@@ -18,15 +18,30 @@
   </div>
 {% endif %}
 
+{% if hlabel %}
+<div class="rp-horizontal-label-cell rp-layout-cell-start
+            mdc-layout-grid__cell--span-2
+            mdc-layout-grid__cell--span-2-tablet
+            mdc-layout-grid__cell--span-2-desktop">
+  <label {% if not wlabel %}for="{{ field.id_for_label }}"{% endif %}>
+    {{ hlabel.display_inline }}:
+  </label>
+</div>
+{% endif %}
+
 {% with types=form_block.InputType %}
-<div class="rp-layout-cell-fill 
-    {% if form_block.type == types.TEXT or form_block.type == types.NUMERIC %}
-            rp-layout-cell-text
-    {% endif %}
-            mdc-layout-grid__cell
-            mdc-layout-grid__cell--span-{{ form_block.span }}
-            mdc-layout-grid__cell--span-{{ form_block.tablet_span }}-tablet
-            mdc-layout-grid__cell--span-{{ form_block.desktop_span }}-desktop">
+{% with s=hlabel|yesno:"-2,0" %}
+{% with sp=form_block.span %}
+{% with tsp=form_block.tablet_span %}{% with dsp=form_block.desktop_span %}
+<div class="rp-layout-cell {% if not hlabel %}rp-layout-cell-start{% endif %}
+            rp-layout-cell-{{ form_block.type }} mdc-layout-grid__cell
+mdc-layout-grid__cell--span-{% if sp < 4 %}{{ sp }}{% else %}{{ sp|add:s }}{% endif %}
+mdc-layout-grid__cell--span-{% if sp < 4 %}{{ tsp }}{% else %}{{ tsp|add:s }}{% endif %}-tablet
+mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% endif %}-desktop
+">
+{% endwith %}{% endwith %}
+{% endwith %}
+{% endwith %}
 
 {% if form_block.type == types.TEXT or form_block.type == types.NUMERIC %}
   {% include "./custom_block_text.html" %}
