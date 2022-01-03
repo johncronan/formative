@@ -370,7 +370,7 @@ class CustomBlock(FormBlock):
         if self.type == self.InputType.TEXT:
             blank, max_chars = False, self.max_chars
             
-            if not self.max_chars and not self.max_words: blank = True
+            if not self.min_chars and not self.min_words: blank = True
             if not self.max_chars or self.max_chars > self.MAX_TEXT_MAXLEN:
                 max_chars = self.MAX_TEXT_MAXLEN
             
@@ -391,6 +391,11 @@ class CustomBlock(FormBlock):
     
     def fields(self):
         return [(self.name, self.field())]
+
+    def clean_field(self, data, field):
+        if self.type == self.InputType.TEXT:
+            pass
+        return None
     
     def span(self, media=None):
         width = 6

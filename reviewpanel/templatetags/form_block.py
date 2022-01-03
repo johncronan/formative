@@ -18,7 +18,7 @@ def block_labels(labels, block):
 
 @register.filter
 def get_by_style(labels, style):
-    if style in labels: return labels[style]
+    if labels and style in labels: return labels[style]
     return None
 
 @register.filter

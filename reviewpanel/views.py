@@ -77,7 +77,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return super().dispatch(request, *args, **kwargs)
     
     def get_form(self):
-        fields, widgets, radios = [], {}, []
+        fields, widgets, customs = [], {}, {}
 
         query = self.program_form.blocks.all()
         if self.page: query = query.filter(page=self.page)
@@ -88,19 +88,15 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 fields.append(name)
                 
                 if block.block_type() == 'custom':
+                    customs[name] = block
                     if block.type == CustomBlock.InputType.CHOICE:
                         widgets[name] = forms.RadioSelect
-                        radios.append(name)
         
         form_class = modelform_factory(self.program_form.model,
                                        form=SubmissionForm,
                                        fields=fields, widgets=widgets)
         
-        f = form_class(**self.get_form_kwargs())
-        for n in radios:
-            # TODO: use formfield_callback instead, to specify empty_label=None
-            f.fields[n].choices = f.fields[n].choices[1:]
-
+        f = form_class(custom_blocks=customs, **self.get_form_kwargs())
         return f
     
     def get_context_data(self, **kwargs):
