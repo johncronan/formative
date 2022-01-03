@@ -1,6 +1,7 @@
 import pytest
 
-from reviewpanel.models import Program, Form, FormBlock, CustomBlock, FormLabel
+from reviewpanel.models import Program, Form, FormBlock, CustomBlock, \
+    FormLabel, FormDependency
 
 
 # this is really just test-data creation, with a little testing on the side
@@ -44,7 +45,18 @@ def test_stock_email_block(stock_email_block):
     assert stock_email_block
 
 @pytest.fixture(scope='session')
-def custom_text_block(program_form, stock_email_block):
+def dependence_choice_block(program_form, stock_email_block):
+    b = CustomBlock(form=program_form, name='choice', rank=2,
+                    type=CustomBlock.InputType.CHOICE,
+                    options={'choices': ['foo', 'bar', 'baz', 'qux']})
+    b.save()
+    yield b
+
+def test_dependence_choice_block(dependence_choice_block):
+    assert dependence_choice_block
+    
+@pytest.fixture(scope='session')
+def custom_text_block(program_form, dependence_choice_block):
     b = CustomBlock(form=program_form, name='answer', page=2,
                     type=CustomBlock.InputType.TEXT, max_chars=1000)
     b.save()
@@ -65,21 +77,30 @@ def test_custom_textarea_block(custom_textarea_block):
     assert custom_textarea_block
 
 @pytest.fixture(scope='session')
-def custom_choice_block(program_form, custom_text_block):
+def custom_choice_block(program_form, dependence_choice_block,
+                        custom_text_block):
     b = CustomBlock(form=program_form, name='type', page=2, rank=2,
                     type=CustomBlock.InputType.CHOICE, required=True,
-                    options={'choices': ['foo', 'bar', 'baz']})
+                    options={'choices': ['foo', 'bar', 'baz']},
+                    dependence=dependence_choice_block)
     b.save()
+    FormDependency(block=b, value='foo').save()
+    FormDependency(block=b, value='baz').save()
     yield b
 
 def test_custom_choice_block(custom_choice_block):
     assert custom_choice_block
 
 @pytest.fixture(scope='session')
-def custom_numeric_block(program_form, custom_choice_block):
+def custom_numeric_block(program_form, dependence_choice_block,
+                         custom_choice_block):
     b = CustomBlock(form=program_form, name='numitems', page=2, rank=3,
-                    type=CustomBlock.InputType.NUMERIC)
+                    type=CustomBlock.InputType.NUMERIC,
+                    dependence=dependence_choice_block,
+                    negate_dependencies=True)
     b.save()
+    FormDependency(block=b, value='foo').save()
+    FormDependency(block=b, value='baz').save()
     yield b
 
 def test_custom_numeric_block(custom_numeric_block):

@@ -9,7 +9,8 @@ register = template.Library()
 # get the form field corresponding to the given block
 @register.simple_tag
 def block_field(form, block):
-    return form[block.name]
+    if block.name in form.fields: return form[block.name]
+    return None
 
 @register.simple_tag
 def block_labels(labels, block):
@@ -47,8 +48,11 @@ def include_stock(context, block, labels, review=False):
     name = review and stock.review_template_name or stock.template_name
     template = context.template.engine.get_template('apply/stock/' + name)
     
-    names = stock.widget_names()
-    fields = [ (n, context['form'][stock.field_name(n)]) for n in names ]
+    fields = []
+    for n in stock.widget_names():
+         field_name = stock.field_name(n)
+         if field_name not in context['form'].fields: return ''
+         fields.append((n, context['form'][field_name]))
     fields_dict = OrderedDict(fields)
     
     return template.render(context.new({

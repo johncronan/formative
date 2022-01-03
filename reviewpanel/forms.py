@@ -21,7 +21,8 @@ class SubmissionForm(forms.ModelForm):
                 stock = stock_blocks[name]
 
                 widget = None
-                if '_' in name[1:]: widget = name[1:][name[1:].index('_')+1:]
+                if len(stock.widget_names()) > 1:
+                    widget = name[1:][len(stock.name)+1:]
                 field.validators += stock.field_validators(widget)
 
                 if stock.field_required(widget): field.required = True

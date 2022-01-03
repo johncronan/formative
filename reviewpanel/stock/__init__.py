@@ -46,6 +46,10 @@ class StockWidget:
         return {
             self.name: (FormLabel.LabelStyle.WIDGET, self.default_label())
         }
+    
+    def conditional_value(self, **kwargs):
+        # default is to return a boolean that's True if we got some input
+        return bool([v for v in kwargs.values() if v])
 
 
 class CompositeStockWidget(StockWidget):

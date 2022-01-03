@@ -24,21 +24,23 @@
     
     {% if form_block.block_type == 'custom' %}
       {% block_field form form_block as field %}
-      {% with types=form_block.InputType %}
-      {% if form_block.type == types.CHOICE %}
-        {% with clabel=labels|for_choice_value:field.value %}
+      {% if field %}
+        {% with types=form_block.InputType %}
+        {% if form_block.type == types.CHOICE %}
+          {% with clabel=labels|for_choice_value:field.value %}
           {% include "./review_block.html" with value=clabel.display_inline %}
-        {% endwith %}
-      {% elif form_block.type == types.BOOLEAN %}
-        {% if field.value %}
-          {% include "./review_block.html" with value="Yes" %}
+          {% endwith %}
+        {% elif form_block.type == types.BOOLEAN %}
+          {% if field.value %}
+            {% include "./review_block.html" with value="Yes" %}
+          {% else %}
+            {% include "./review_block.html" with value="No" %}
+          {% endif %}
         {% else %}
-          {% include "./review_block.html" with value="No" %}
+          {% include "./review_block.html" %}
         {% endif %}
-      {% else %}
-        {% include "./review_block.html" %}
+        {% endwith %}
       {% endif %}
-      {% endwith %}
       
     {% elif form_block.block_type == 'collection' %}
     

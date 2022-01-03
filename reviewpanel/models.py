@@ -195,10 +195,11 @@ class Form(AutoSlugModel):
     def validation_block(self):
         return self.blocks.get(page=0, rank=0)
     
-    def visible_blocks(self, page=None):
-        if page and page > 0:
-            return self.blocks.filter(page=page)
-        return self.blocks.filter(page__gt=0)
+    def visible_blocks(self, page=None, skip=None):
+        query = self.blocks.all()
+        if skip: query = query.exclude(id__in=skip)
+        if page and page > 0: return query.filter(page=page)
+        return query.filter(page__gt=0)
 
     def field_labels(self):
         labels = {}
@@ -324,7 +325,18 @@ class FormBlock(PolymorphicModel):
     
     def fields(self):
         return self.stock.fields()
-
+    
+    def enabled_blocks(self, value, page=None):
+        # blocks on the given page that depend on self, and enabled given value
+        query = self.form.blocks.filter(dependence_id=self.id)
+        if page: query = query.filter(page=page)
+        
+        if value in (True, False): value = value and 'yes' or 'no'
+        
+        # try combining a case with annotation of a conditional on related
+        # return values_list('id')
+        return []
+    
     def show_in_review(self):
         return True
 
@@ -387,7 +399,7 @@ class CustomBlock(FormBlock):
                                     blank=(not self.required))
         
         elif self.type == self.InputType.BOOLEAN:
-            return models.BooleanField(default=False)
+            return models.BooleanField(null=True, default=False)
     
     def fields(self):
         return [(self.name, self.field())]
@@ -402,6 +414,13 @@ class CustomBlock(FormBlock):
     def clean_field(self, data, field):
         # currently, all are handled from validators set up on the form
         return None
+    
+    def conditional_value(self, value):
+        if self.type in (self.InputType.TEXT, self.InputType.NUMERIC):
+            # in this case, condition is whether the field was filled out
+            return bool(value)
+        
+        return value
     
     def span(self, media=None):
         width = 6
@@ -465,7 +484,10 @@ class Submission(models.Model):
     
     _id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                            editable=False)
-    _valid = models.PositiveIntegerField(default=0, editable=False) # up to page
+    # valid up to page N:
+    _valid = models.PositiveIntegerField(default=0, editable=False)
+    # an array of N block id arrays, those skipped for form dependency not met:
+    _skipped = models.JSONField(default=list, blank=True)
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)

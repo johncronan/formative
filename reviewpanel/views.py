@@ -4,8 +4,9 @@ from django.urls import reverse
 from django import forms
 from django.forms.models import modelform_factory
 from django.views import generic
+import itertools
 
-from .models import Program, Form, CustomBlock
+from .models import Program, Form, FormBlock, CustomBlock
 from .forms import OpenForm, SubmissionForm
 
 
@@ -73,17 +74,49 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         self.page = None
         if 'page' in self.kwargs: self.page = self.kwargs['page']
         if self.first_page: self.page = 1
+
+        self.skipped = {}
         
         return super().dispatch(request, *args, **kwargs)
     
+    def get_object(self):
+        submission = get_object_or_404(self.program_form.model,
+                                       _id=self.kwargs['sid'])
+        return submission
+
     def get_form(self):
         fields, widgets, customs, stocks = [], {}, {}, {}
 
         query = self.program_form.blocks.all()
         if self.page: query = query.filter(page=self.page)
         elif self.request.method == 'POST': query = query.none()
+
+        blocks_checked, enabled = {}, []
+        skipped_pages = self.object._skipped[:self.page or self.object._valid]
+        skipped_ids = dict.fromkeys(itertools.chain(*skipped_pages), True)
         
         for block in query:
+            d_id = block.dependence_id
+            if d_id and d_id not in blocks_checked:
+                # when we encounter a new block that some field is dependent on,
+                # if it isn't among the blocks that were already _skipped,
+                # enable this page's fields with a dependency matching the value
+                if d_id not in skipped_ids:
+                     b = FormBlock.objects.get(id=d_id)
+                     if b.block_type() == 'stock':
+                         values = { n: getattr(self.object, n)
+                                    for n in b.stock.field_names() }
+                         v = b.stock.conditional_value(**values)
+                     elif b.block_type() == 'custom':
+                         v = b.conditional_value(getattr(self.object, b.name))
+                     
+                     enabled += b.enabled_blocks(v, self.page)
+                blocks_checked[d_id] = True
+            
+            if d_id and block.id not in enabled:
+                self.skipped[block.id] = block
+                continue
+            
             for name, field in block.fields():
                 fields.append(name)
                 
@@ -112,22 +145,55 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = context['program_form']
-
+        
         context['field_labels'] = form.field_labels()
         if self.page:
             context.update({
                 'page': self.page,
                 'prev_page': self.page > 1 and self.page - 1 or None,
-                'visible_blocks': form.visible_blocks(page=self.page),
+                'visible_blocks': form.visible_blocks(page=self.page,
+                                                      skip=self.skipped.keys())
             })
         else: context['prev_page'] = form.num_pages()
         
         return context
     
-    def get_object(self):
-        submission = get_object_or_404(self.program_form.model,
-                                       _id=self.kwargs['sid'])
-        return submission
+    def reset_skipped(self):
+        for block in self.skipped.values():
+            for name, f in block.fields():
+                nullval = ''
+                if block.block_type() == 'custom':
+                    if block.type in (CustomBlock.InputType.NUMERIC,
+                                      CustomBlock.InputType.BOOLEAN):
+                        nullval = None
+                else:
+                    widget = None
+                    if len(block.stock.widget_names()) > 1:
+                        widget = name[1:][len(block.stock.name)+1:]
+                    nullval = block.stock.null_value(widget=widget)
+                
+                setattr(self.object, name, nullval)
+    
+    def form_valid(self, form):
+        if not self.page:
+            # the draft submission will now be marked as submitted
+            self.object._submit()
+            
+            return HttpResponseRedirect(reverse('thanks',
+                                                kwargs=self.url_args(id=False)))
+        
+        self.object = form.save(commit=False)
+        if self.object._valid < self.page: self.object._valid = self.page
+        # TODO: if page < valid: special behavior
+        # _valid = min(dependent blocks' page #, for changed blocks, if any) - 1
+        # form.changed_data => turn into ids list => aggregate query
+        
+        self.object._skipped = self.object._skipped[:self.object._valid-1]
+        self.object._skipped.append(list(self.skipped.keys()))
+        self.reset_skipped()
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def url_args(self, id=True):
         args = {
@@ -143,7 +209,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                                                 kwargs=self.url_args(id=False)))
         
         if (self.page and context['page'] <= self.object._valid + 1
-            or self.object._valid == self.program_form.num_pages()):
+         or self.object._valid == self.program_form.num_pages()):
             return super().render_to_response(context)
 
         # tried to skip ahead - go back to the last page that can be displayed
@@ -153,22 +219,6 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
 
         return HttpResponseRedirect(reverse(name, kwargs=args))
     
-    def form_valid(self, form):
-        if not self.page:
-            # the draft submission will now be marked as submitted
-            self.object._submit()
-            
-            return HttpResponseRedirect(reverse('thanks',
-                                                kwargs=self.url_args(id=False)))
-        
-        self.object = form.save(commit=False)
-        # TODO: state inconsistency possible if _valid > page - on later pages 
-        # we need to clear, ensure it happens for the blocks that we later skip
-        self.object._valid = self.page
-        self.object.save()
-
-        return HttpResponseRedirect(self.get_success_url())
-
     def get_success_url(self):
         kwargs = self.url_args() 
 
