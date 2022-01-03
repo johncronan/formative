@@ -18,8 +18,9 @@ class StockWidget:
     def default_options(cls):
         return { 'type': cls.TYPE }
     
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, required=False, **kwargs):
         self.name = name
+        self.required = required
     
     def widget_names(self):
         return (self.name,)
@@ -29,6 +30,12 @@ class StockWidget:
     
     def field_names(self):
         return (self.field_name(),)
+
+    def field_required(self, widget=None):
+        return self.required
+    
+    def field_validators(self, widget=None):
+        return []
 
     def default_label(self):
         return capfirst(self.name)

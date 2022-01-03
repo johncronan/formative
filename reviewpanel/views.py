@@ -77,7 +77,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return super().dispatch(request, *args, **kwargs)
     
     def get_form(self):
-        fields, widgets, customs = [], {}, {}
+        fields, widgets, customs, stocks = [], {}, {}, {}
 
         query = self.program_form.blocks.all()
         if self.page: query = query.filter(page=self.page)
@@ -91,6 +91,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                     customs[name] = block
                     if block.type == CustomBlock.InputType.CHOICE:
                         widgets[name] = forms.RadioSelect
+                elif block.block_type() == 'stock':
+                    stocks[name] = block.stock
 
         def callback(model_field, **kwargs):
             name = model_field.name
@@ -103,7 +105,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                                        formfield_callback=callback,
                                        fields=fields, widgets=widgets)
         
-        f = form_class(custom_blocks=customs, **self.get_form_kwargs())
+        f = form_class(custom_blocks=customs, stock_blocks=stocks,
+                       **self.get_form_kwargs())
         return f
     
     def get_context_data(self, **kwargs):

@@ -6,7 +6,7 @@ class NameWidget(CompositeStockWidget):
     TYPE = 'name'
     
     def __init__(self, name, **kwargs):
-        super().__init__(name)
+        super().__init__(name, **kwargs)
         
         self.template_name = 'name.html'
         self.review_template_name = 'name_review.html'

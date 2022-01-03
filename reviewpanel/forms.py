@@ -11,12 +11,21 @@ class SubmissionForm(forms.ModelForm):
     class Meta:
         pass
 
-    def __init__(self, custom_blocks=None, *args, **kwargs):
+    def __init__(self, custom_blocks=None, stock_blocks=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.custom_blocks = custom_blocks
+        self.stock_blocks = stock_blocks
         
         for name, field in self.fields.items():
-            if name not in custom_blocks: continue
+            if name in stock_blocks:
+                stock = stock_blocks[name]
+
+                widget = None
+                if '_' in name[1:]: widget = name[1:][name[1:].index('_')+1:]
+                field.validators += stock.field_validators(widget)
+
+                if stock.field_required(widget): field.required = True
+                continue
 
             block = custom_blocks[name]
             if type(field) == forms.TypedChoiceField:

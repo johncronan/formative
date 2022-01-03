@@ -400,8 +400,7 @@ class CustomBlock(FormBlock):
         return model_field.formfield(**kwargs)
     
     def clean_field(self, data, field):
-        if self.type == self.InputType.TEXT:
-            pass
+        # currently, all are handled from validators set up on the form
         return None
     
     def span(self, media=None):
