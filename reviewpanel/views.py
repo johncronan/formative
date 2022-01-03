@@ -91,9 +91,16 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                     customs[name] = block
                     if block.type == CustomBlock.InputType.CHOICE:
                         widgets[name] = forms.RadioSelect
+
+        def callback(model_field, **kwargs):
+            name = model_field.name
+            if name in customs:
+                return customs[name].form_field(model_field, **kwargs)
+            return model_field.formfield(**kwargs)
         
         form_class = modelform_factory(self.program_form.model,
                                        form=SubmissionForm,
+                                       formfield_callback=callback,
                                        fields=fields, widgets=widgets)
         
         f = form_class(custom_blocks=customs, **self.get_form_kwargs())

@@ -392,6 +392,13 @@ class CustomBlock(FormBlock):
     def fields(self):
         return [(self.name, self.field())]
 
+    def form_field(self, model_field, **kwargs):
+        if self.type == self.InputType.TEXT:
+            return model_field.formfield(min_length=self.min_chars, **kwargs)
+        
+        # or use the ModelForm factory's default:
+        return model_field.formfield(**kwargs)
+    
     def clean_field(self, data, field):
         if self.type == self.InputType.TEXT:
             pass
