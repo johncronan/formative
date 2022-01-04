@@ -133,7 +133,7 @@ def altered_labels(program_form, custom_numeric_block, custom_boolean_block):
     path = custom_numeric_block.name
     label2 = FormLabel.objects.get(form=program_form, path=path)
     
-    label2.text = 'Number of items'
+    label2.text = 'Number of items:'
     label2.save()
     
     yield [label1, label2]

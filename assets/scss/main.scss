@@ -198,3 +198,7 @@ $maxlines: 100;
 .rp-review-pre,.rp-review-post,.rp-review-label,.rp-review-value-wide {
   grid-column-start: 1;
 }
+
+.markdown-body label p:last-child {
+  margin-bottom: 0;
+}

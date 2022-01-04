@@ -230,12 +230,12 @@ class Form(AutoSlugModel):
     def review_pre(self):
         if 'review_pre' in self.options:
             md = self.program.markdown
-            return mark_safe(remove_p(md.convert(self.options['review_pre'])))
+            return mark_safe(md.convert(self.options['review_pre']))
     
     def review_post(self):
         if 'review_post' in self.options:
             md = self.program.markdown
-            return mark_safe(remove_p(md.convert(self.options['review_post'])))
+            return mark_safe(md.convert(self.options['review_post']))
 
 
 class FormLabel(models.Model):
@@ -262,9 +262,11 @@ class FormLabel(models.Model):
     
     def display(self, inline=False):
         s = self.form.program.markdown.convert(self.text)
-        return mark_safe(remove_p(s))
+        if inline: return mark_safe(remove_p(s))
+        return mark_safe(s)
     
-    def display_inline(self): return self.display(inline=True)
+    def display_inline(self):
+        return self.display(inline=True)
 
 
 class FormDependency(models.Model):

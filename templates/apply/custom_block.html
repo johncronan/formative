@@ -13,7 +13,7 @@
   {% if not hlabel and not wlabel %}
       for="{{ field.id_for_label }}"
   {% endif %}>
-      {{ label.display }}: {# TODO: i18n for colon #}
+      {{ label.display }}
     </label>
   </div>
 {% endif %}
@@ -24,7 +24,7 @@
             mdc-layout-grid__cell--span-2-tablet
             mdc-layout-grid__cell--span-2-desktop">
   <label {% if not wlabel %}for="{{ field.id_for_label }}"{% endif %}>
-    {{ hlabel.display_inline }}:
+    {{ hlabel.display_inline }}
   </label>
 </div>
 {% endif %}
