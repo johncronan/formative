@@ -83,6 +83,10 @@ em {
   }
 }
 
+.rp-choice-field.mdc-form-field,.rp-boolean-field.mdc-form-field {
+  font-size: inherit;
+}
+
 .rp-text-field {
   // min-height: 75px;
   
@@ -91,8 +95,13 @@ em {
   }
 }
 
-.rp-choice-field.mdc-form-field,.rp-boolean-field.mdc-form-field {
-  font-size: inherit;
+.rp-textarea {
+  & textarea.mdc-text-field__input {
+    resize: none;
+    margin-top: 13px;
+    line-height: 1.25rem;
+    height: auto;
+  }
 }
 
 $maxlines: 100;
@@ -100,13 +109,6 @@ $maxlines: 100;
   .rp-textarea-rows-#{$i} {
     @include textfield-mixins.outlined-height(20px * $i + 26px);
   }
-}
-
-.rp-textarea textarea.mdc-text-field__input {
-  resize: none;
-  margin-top: 13px;
-  line-height: 1.25rem;
-  height: auto;
 }
 
 .rp-program-card,.rp-form-card {
@@ -135,9 +137,6 @@ $maxlines: 100;
 
 .rp-program-card {
   padding-bottom: 16px;
-}
-
-.rp-form-card {
 }
 
 .rp-prevpage-button {
@@ -199,6 +198,10 @@ $maxlines: 100;
   grid-column-start: 1;
 }
 
-.markdown-body label p:last-child {
-  margin-bottom: 0;
+.markdown-body {
+  & label,.rp-review-pre,.rp-review-post {
+    & p:last-child {
+      margin-bottom: 0;
+    }
+  }
 }

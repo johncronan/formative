@@ -522,14 +522,14 @@ def file_path(instance, filename): return instance.slug + '/'
 class SubmissionItem(models.Model):
     class Meta:
         abstract = True
-        order_with_respect_to = '_submission'
+        order_with_respect_to = '_submission' # need _collection too?
     
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
     
-    # the item's collection name
+    # the item's collection name == the name of the CollectionBlock
     _collection = models.CharField(max_length=32)
     
-    # id of the collection block this item came from
+    # id of the collection block this item came from, as some may have same name
     _block = models.PositiveBigIntegerField()
     
     _file = models.FileField(upload_to=file_path, max_length=128, blank=True)

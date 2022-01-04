@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
-from django.db.models import Max
+from django.db.models import Min
 from django.forms.models import modelform_factory
 from django.views import generic
 import itertools
@@ -127,6 +127,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                     customs[name] = block
                     if block.type == CustomBlock.InputType.CHOICE:
                         widgets[name] = forms.RadioSelect
+                    elif block.type == CustomBlock.InputType.BOOLEAN:
+                        widgets[name] = forms.CheckboxInput
                 elif block.block_type() == 'stock':
                     stocks[name] = block.stock
 
@@ -176,10 +178,11 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if not changed: return self.object._valid # don't update _valid
         
         query = FormBlock.objects.filter(id__in=changed)
-        query = query.annotate(pagemax=Max('dependent__page'))
-        query = query.aggregate(max_pagemax=Max('pagemax'))
+        query = query.annotate(pagemin=Min('dependent__page'))
+        query = query.aggregate(min_pagemin=Min('pagemin'))
         
-        return query['max_pagemax'] - 1
+        if not query['min_pagemin']: return self.object._valid
+        return query['min_pagemin'] - 1
     
     def form_valid(self, form):
         if not self.page:
