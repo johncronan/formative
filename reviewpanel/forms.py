@@ -1,5 +1,6 @@
 from django import forms
 
+from .models import CustomBlock
 from .validators import MinWordsValidator, MaxWordsValidator
 
 
@@ -48,3 +49,8 @@ class SubmissionForm(forms.ModelForm):
 
                 err = block.clean_field(self.cleaned_data[name], field)
                 if err: self.add_error(name, err)
+                
+                if block.type == CustomBlock.InputType.CHOICE:
+                    # NULL for fields that're never seen; '' for no choice made
+                    if self.cleaned_data[name] is None:
+                        self.cleaned_data[name] = ''

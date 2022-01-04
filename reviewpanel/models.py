@@ -1,5 +1,6 @@
 from django.db import models, connection
-from django.db.models import Q, UniqueConstraint, Max
+from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
+    UniqueConstraint
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
@@ -331,11 +332,16 @@ class FormBlock(PolymorphicModel):
         query = self.form.blocks.filter(dependence_id=self.id)
         if page: query = query.filter(page=page)
         
-        if value in (True, False): value = value and 'yes' or 'no'
+        if type(value) == bool: value = value and 'yes' or 'no' # TODO: numeric
         
-        # try combining a case with annotation of a conditional on related
-        # return values_list('id')
-        return []
+        val = FormDependency.objects.filter(block_id=OuterRef('id'),
+                                            value=Value(value))
+        cond = Case(
+            When(negate_dependencies=False, then=Exists(val)),
+            When(negate_dependencies=True, then=~Exists(val))
+        )
+        query = query.annotate(en=cond).filter(en=True)
+        return query.values_list('id', flat=True)
     
     def show_in_review(self):
         return True
@@ -379,6 +385,9 @@ class CustomBlock(FormBlock):
         return self.options['choices']
     
     def field(self):
+        # fields are NULL when we haven't yet reached the page, or if their
+        # block had a dependency that wasn't met. non-required fields may
+        # have a different way to record that no input was made, usually ''
         if self.type == self.InputType.TEXT:
             blank, max_chars = False, self.max_chars
             
@@ -387,19 +396,21 @@ class CustomBlock(FormBlock):
                 max_chars = self.MAX_TEXT_MAXLEN
             
             if self.num_lines > 1 or self.max_chars > self.DEFAULT_TEXT_MAXLEN:
-                return models.TextField(max_length=max_chars, blank=blank)
-            return models.CharField(max_length=self.max_chars, blank=blank)
+                return models.TextField(null=True, max_length=max_chars,
+                                        blank=blank)
+            return models.CharField(null=True, max_length=self.max_chars,
+                                    blank=blank)
 
         elif self.type == self.InputType.NUMERIC:
             return models.IntegerField(null=True, blank=(not self.required))
 
         elif self.type == self.InputType.CHOICE:
-            return models.CharField(max_length=self.CHOICE_VAL_MAXLEN,
-                                    choices=[(c, c) for c in self.choices()],
-                                    blank=(not self.required))
+            return models.CharField(null=True, blank=(not self.required),
+                                    max_length=self.CHOICE_VAL_MAXLEN,
+                                    choices=[(c, c) for c in self.choices()])
         
         elif self.type == self.InputType.BOOLEAN:
-            return models.BooleanField(null=True, default=False)
+            return models.BooleanField(null=True)
     
     def fields(self):
         return [(self.name, self.field())]
@@ -418,6 +429,7 @@ class CustomBlock(FormBlock):
     def conditional_value(self, value):
         if self.type in (self.InputType.TEXT, self.InputType.NUMERIC):
             # in this case, condition is whether the field was filled out
+            # (and is non-zero for numeric)
             return bool(value)
         
         return value

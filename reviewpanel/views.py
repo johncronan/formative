@@ -2,6 +2,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
+from django.db.models import Max
 from django.forms.models import modelform_factory
 from django.views import generic
 import itertools
@@ -75,7 +76,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if 'page' in self.kwargs: self.page = self.kwargs['page']
         if self.first_page: self.page = 1
 
-        self.skipped = {}
+        self.skipped, self.blocks_by_name = {}, {}
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -119,6 +120,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             
             for name, field in block.fields():
                 fields.append(name)
+                if block.block_type != 'collection':
+                    self.blocks_by_name[name] = block
                 
                 if block.block_type() == 'custom':
                     customs[name] = block
@@ -158,21 +161,25 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         
         return context
     
-    def reset_skipped(self):
-        for block in self.skipped.values():
+    def reset_skipped(self, ids=None):
+        # when resetting the results of later pages that have been invalidated,
+        # we haven't yet encountered these blocks, so we have to look them up:
+        if ids: skipped = self.program_form.blocks.filter(id__in=ids)
+        else: skipped = self.skipped.values()
+        
+        for block in skipped:
             for name, f in block.fields():
-                nullval = ''
-                if block.block_type() == 'custom':
-                    if block.type in (CustomBlock.InputType.NUMERIC,
-                                      CustomBlock.InputType.BOOLEAN):
-                        nullval = None
-                else:
-                    widget = None
-                    if len(block.stock.widget_names()) > 1:
-                        widget = name[1:][len(block.stock.name)+1:]
-                    nullval = block.stock.null_value(widget=widget)
-                
-                setattr(self.object, name, nullval)
+                setattr(self.object, name, None)
+    
+    def new_page_valid(self, form):
+        changed = [ self.blocks_by_name[n].id for n in form.changed_data ]
+        if not changed: return self.object._valid # don't update _valid
+        
+        query = FormBlock.objects.filter(id__in=changed)
+        query = query.annotate(pagemax=Max('dependent__page'))
+        query = query.aggregate(max_pagemax=Max('pagemax'))
+        
+        return query['max_pagemax'] - 1
     
     def form_valid(self, form):
         if not self.page:
@@ -183,16 +190,21 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                                                 kwargs=self.url_args(id=False)))
         
         self.object = form.save(commit=False)
-        if self.object._valid < self.page: self.object._valid = self.page
-        # TODO: if page < valid: special behavior
-        # _valid = min(dependent blocks' page #, for changed blocks, if any) - 1
-        # form.changed_data => turn into ids list => aggregate query
         
-        self.object._skipped = self.object._skipped[:self.object._valid-1]
-        self.object._skipped.append(list(self.skipped.keys()))
+        if self.page <= self.object._valid:
+            self.object._valid = self.new_page_valid(form)
+        else: self.object._valid = self.page
+        
+        if self.object._valid < len(self.object._skipped):
+            self.object._skipped = self.object._skipped[:self.object._valid]
+        
+        if len(self.object._skipped) < self.page:
+            # assumes only by 1; TODO: skipping an entire page or multiple pages
+            self.object._skipped.append([])
+        self.object._skipped[self.page-1] = list(self.skipped.keys())
         self.reset_skipped()
+        
         self.object.save()
-
         return HttpResponseRedirect(self.get_success_url())
 
     def url_args(self, id=True):

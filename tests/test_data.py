@@ -66,11 +66,13 @@ def test_custom_text_block(custom_text_block):
     assert custom_text_block
 
 @pytest.fixture(scope='session')
-def custom_textarea_block(program_form, custom_text_block):
+def custom_textarea_block(program_form, stock_email_block, custom_text_block):
     b = CustomBlock(form=program_form, name='response', page=2, rank=1,
                     type=CustomBlock.InputType.TEXT,
-                    min_chars=1, max_chars=1000, num_lines=5)
+                    min_chars=1, max_chars=1000, num_lines=5, min_words=10,
+                    dependence=stock_email_block)
     b.save()
+    FormDependency(block=b, value='yes').save()
     yield b
 
 def test_custom_textarea_block(custom_textarea_block):
@@ -100,7 +102,7 @@ def custom_numeric_block(program_form, dependence_choice_block,
                     negate_dependencies=True)
     b.save()
     FormDependency(block=b, value='foo').save()
-    FormDependency(block=b, value='baz').save()
+    FormDependency(block=b, value='qux').save()
     yield b
 
 def test_custom_numeric_block(custom_numeric_block):
@@ -121,13 +123,20 @@ def test_publish_form(program_form, custom_boolean_block):
     assert program_form.status == Form.Status.ENABLED
 
 @pytest.fixture(scope='session')
-def altered_label(program_form, custom_boolean_block):
+def altered_labels(program_form, custom_numeric_block, custom_boolean_block):
     path = custom_boolean_block.name
-    label = FormLabel.objects.get(form=program_form, path=path)
+    label1 = FormLabel.objects.get(form=program_form, path=path)
 
-    label.text = 'Sign up for our mailing list'
-    label.save()
-    yield label
+    label1.text = 'Sign up for our mailing list'
+    label1.save()
+    
+    path = custom_numeric_block.name
+    label2 = FormLabel.objects.get(form=program_form, path=path)
+    
+    label2.text = 'Number of items'
+    label2.save()
+    
+    yield [label1, label2]
 
-def test_altered_label(altered_label):
-    assert altered_label
+def test_altered_labels(altered_labels):
+    assert altered_labels
