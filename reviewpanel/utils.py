@@ -28,9 +28,9 @@ def create_model(name, fields, app_label='reviewpanel', module='',
 
 def remove_p(text):
     s = text.strip()
-    if s[:3] == '<p>':
-        i = s.index('</p>')
-        if i + 3+1 == len(s): return s[3:-3-1]
+    if s[-3-1:] == '</p>':
+        i = s.rindex('<p>')
+        return s[i+3:-3-1]
     
     return text
 
