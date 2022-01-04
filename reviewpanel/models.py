@@ -277,7 +277,7 @@ class FormDependency(models.Model):
     block = models.ForeignKey('FormBlock', models.CASCADE,
                               related_name='dependencies',
                               related_query_name='dependency')
-    value = models.CharField(max_length=64)
+    value = models.CharField(max_length=64, blank=True)
     
     def __str__(self):
         return f'{self.block.dependence.name}="{self.value}"'
