@@ -17,13 +17,13 @@ class RankedModel(models.Model):
         self._initial_rank = self.rank
 
     def save(self, *args, **kwargs):
-        if not self.pk or self.rank is None:
+        if not self.pk or self.rank is None: # self.rank is None for pass-thru
             with transaction.atomic():
                 # newly created instance: it goes at the end
                 if self.rank is not None:
                     raise ValidationError('New RankedModel instance already'
                                           'ranked - this is not supported')
-                had_pk = self.pk
+                had_pk = self.pk # remember that we're just passing thru
                 # insert with NULL - in combination with atomic, acquires a lock
                 obj = super().save(*args, **kwargs)
                 if had_pk: return
