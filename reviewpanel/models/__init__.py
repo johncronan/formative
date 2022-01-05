@@ -13,8 +13,9 @@ from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
 
-from .stock import StockWidget
-from .utils import create_model, remove_p, send_email
+from ..stock import StockWidget
+from ..utils import create_model, remove_p, send_email
+from .ranked import RankedModel
 
 
 class AutoSlugModel(models.Model):
