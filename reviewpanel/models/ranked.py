@@ -23,7 +23,7 @@ class UnderscoredRankedModel(models.Model):
                     raise ValidationError('New RankedModel instance already'
                                           'ranked - this is not supported')
                 had_pk = self.pk # remember that we're just passing thru
-                # insert with NULL - in combination with atomic, acquires a lock
+                # insert with zero - in combination with atomic, acquires a lock
                 obj = super().save(*args, **kwargs)
                 if had_pk: return
                 
@@ -72,22 +72,25 @@ class UnderscoredRankedModel(models.Model):
                 section = group.filter(_rank__gt=new_rank-count,
                                        _rank__lte=new_rank)
                 # use the negatives as a temporary space, to avoid key conflicts
-                section.update(_rank=-F('_rank')+1)
-                section = group.filter(_rank__gt=-new_rank,
-                                       _rank__lte=-new_rank+count)
+                section.update(_rank=-F('_rank'))
+                increment = -1
+                section = group.filter(_rank__gte=-new_rank,
+                                       _rank__lt=-new_rank+count)
             else:
                 # they move out of the way in the other direction
                 section = group.filter(_rank__gte=new_rank,
                                        _rank__lt=new_rank+count)
-                section.update(_rank=-F('_rank')-1)
-                section = group.filter(_rank__gte=-new_rank-count,
-                                       _rank__lt=-new_rank)
+                section.update(_rank=-F('_rank'))
+                increment = 1
+                section = group.filter(_rank__gt=-new_rank-count,
+                                       _rank__lte=-new_rank)
             
             self._rank = new_rank
             super().save(*args, **kwargs)
             self._initial_rank = self._rank
             
-            section.update(_rank=-F('_rank')) # make positive again
+            # make the others positive again, with the increment applied
+            section.update(_rank=-F('_rank')+increment)
     
     @transaction.atomic
     def delete(self, *args, **kwargs):
