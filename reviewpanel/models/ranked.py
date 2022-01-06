@@ -13,7 +13,9 @@ class UnderscoredRankedModel(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self._initial_rank = self._rank
+        self._initial_rank = None
+        if '_rank' not in self.get_deferred_fields():
+            self._initial_rank = self._rank
 
     def save(self, *args, **kwargs):
         if not self.pk or not self._rank: # self._rank == 0 for pass-thru

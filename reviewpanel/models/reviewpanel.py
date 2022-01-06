@@ -118,13 +118,18 @@ class Form(AutoSlugModel):
             try:
                 block = self.custom_blocks().get(page=0, name=n)
             # otherwise, use the default text CustomBlock
-            except CustomBlock.DoesNotExist:
+            except FormBlock.DoesNotExist:
                 block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
         name = self.db_slug + '_item_'
+        class Meta(SubmissionItem.Meta):
+            constraints = [
+                UniqueConstraint(fields=['_submission', '_collection', '_rank'],
+                                 name=self.db_slug+'_unique_item_rank')
+            ]
         return create_model(name, fields, table_prefix=self.program.db_slug,
-                            base_class=SubmissionItem, meta=SubmissionItem.Meta)
+                            base_class=SubmissionItem, meta=Meta)
     
     def publish_model(self, model):
         with connection.schema_editor() as editor:
@@ -457,8 +462,8 @@ class CollectionBlock(FormBlock):
     block = models.OneToOneField(FormBlock, on_delete=models.CASCADE,
                                  parent_link=True, primary_key=True)
     fixed = models.BooleanField(default=False)
-    min_items = models.PositiveIntegerField(null=True, blank=True)
-    max_items = models.PositiveIntegerField(null=True, blank=True)
+    min_items = models.PositiveIntegerField(null=True, blank=True) # null if
+    max_items = models.PositiveIntegerField(null=True, blank=True) # fixed
     has_file = models.BooleanField(default=False)
     file_optional = models.BooleanField(default=False)
     # we don't need these references indexed or validated here, so no SlugField
@@ -473,9 +478,9 @@ class CollectionBlock(FormBlock):
     
     def collection_fields(self):
         fields = []
-        if self.name3: fields.insert(0, self.name3)
-        if self.name2: fields.insert(0, self.name2)
-        if self.name1: fields.insert(0, self.name1)
+        if self.name1: fields.append(self.name1)
+        if self.name2: fields.append(self.name2)
+        if self.name3: fields.append(self.name3)
         
         return fields
 
@@ -512,10 +517,7 @@ def file_path(instance, filename): return instance.slug + '/'
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:
         abstract = True
-        constraints = [
-            UniqueConstraint(fields=['_submission', '_collection', '_rank'],
-                             name='unique_rank'),
-        ]
+        ordering = ['_submission', '_collection', '_rank']
     
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
     

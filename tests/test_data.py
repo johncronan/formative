@@ -1,7 +1,7 @@
 import pytest
 
 from reviewpanel.models import Program, Form, FormBlock, CustomBlock, \
-    FormLabel, FormDependency
+    CollectionBlock, FormLabel, FormDependency
 
 
 # this is really just test-data creation, with a little testing on the side
@@ -78,8 +78,19 @@ def test_custom_textarea_block(custom_textarea_block):
     assert custom_textarea_block
 
 @pytest.fixture(scope='session')
+def collection_block_main(program_form, custom_textarea_block):
+    b = CollectionBlock(form=program_form, name='files', page=2,
+                        min_items=0, max_items=10, has_file=True,
+                        name1='caption')
+    b.save()
+    yield b
+
+def test_collection_block_main(collection_block_main):
+    assert collection_block_main
+
+@pytest.fixture(scope='session')
 def custom_choice_block(program_form, dependence_choice_block,
-                        custom_text_block):
+                        collection_block_main):
     b = CustomBlock(form=program_form, name='type', page=2,
                     type=CustomBlock.InputType.CHOICE, required=True,
                     options={'choices': ['foo', 'bar', 'baz']},
