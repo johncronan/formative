@@ -89,7 +89,7 @@ class Form(AutoSlugModel):
         if self.status == self.Status.DRAFT: return None
         
         fields = []
-        for block in self.blocks.exclude(page=0, _rank__gt=0):
+        for block in self.blocks.exclude(page=0, _rank__gt=1):
             fields += block.fields()
         
         name = self.db_slug
@@ -180,7 +180,7 @@ class Form(AutoSlugModel):
         return self.blocks.instance_of(CollectionBlock)
     
     def validation_block(self):
-        return self.blocks.get(page=0, _rank=0)
+        return self.blocks.get(page=0, _rank=1)
     
     def visible_blocks(self, page=None, skip=None):
         query = self.blocks.all()
@@ -271,13 +271,11 @@ class FormDependency(models.Model):
         return f'{self.block.dependence.name}="{self.value}"'
 
 
-class FormBlock(PolymorphicModel, UnderscoredRankedModel):
+class FormBlock(PolymorphicModel, RankedModel):
     class Meta(PolymorphicModel.Meta, RankedModel.Meta):
         constraints = [
             UniqueConstraint(fields=['form', 'page', '_rank'],
                              name='unique_rank'),
-            UniqueConstraint(fields=['form', 'page', '_negrank'],
-                             name='unique_negrank'),
 #            UniqueConstraint(fields=['form', 'name'], name='unique_name')
 #                             condition=~Q(instance_of=CollectionBlock))
         ]
@@ -517,8 +515,6 @@ class SubmissionItem(UnderscoredRankedModel):
         constraints = [
             UniqueConstraint(fields=['_submission', '_collection', '_rank'],
                              name='unique_rank'),
-            UniqueConstraint(fields=['_submission', '_collection', '_negrank'],
-                             name='unique_negrank')
         ]
     
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
