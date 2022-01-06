@@ -104,7 +104,7 @@ em {
   }
 }
 
-$maxlines: 100;
+$maxlines: 30;
 @for $i from 2 through $maxlines {
   .rp-textarea-rows-#{$i} {
     @include textfield-mixins.outlined-height(20px * $i + 26px);
