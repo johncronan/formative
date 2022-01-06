@@ -13,7 +13,7 @@ def form_post_save(sender, instance, created, **kwargs):
 
     form = instance
     if form.validation_type == Form.Validation.EMAIL:
-        b = FormBlock(form=form, page=0, rank=0, name='email',
+        b = FormBlock(form=form, page=0, name='email',
                       options=EmailWidget.default_options())
         b.save()
 

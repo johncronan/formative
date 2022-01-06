@@ -36,8 +36,7 @@ def test_stock_block(stock_name_block):
 
 @pytest.fixture(scope='session')
 def stock_email_block(program_form, stock_name_block):
-    b = FormBlock(form=program_form, name='contact', options={'type': 'email'},
-                  rank=1)
+    b = FormBlock(form=program_form, name='contact', options={'type': 'email'})
     b.save()
     yield b
 
@@ -46,7 +45,7 @@ def test_stock_email_block(stock_email_block):
 
 @pytest.fixture(scope='session')
 def dependence_choice_block(program_form, stock_email_block):
-    b = CustomBlock(form=program_form, name='choice', rank=2,
+    b = CustomBlock(form=program_form, name='choice',
                     type=CustomBlock.InputType.CHOICE,
                     options={'choices': ['foo', 'bar', 'baz', 'qux']})
     b.save()
@@ -67,7 +66,7 @@ def test_custom_text_block(custom_text_block):
 
 @pytest.fixture(scope='session')
 def custom_textarea_block(program_form, stock_email_block, custom_text_block):
-    b = CustomBlock(form=program_form, name='response', page=2, rank=1,
+    b = CustomBlock(form=program_form, name='response', page=2,
                     type=CustomBlock.InputType.TEXT,
                     min_chars=1, max_chars=1000, num_lines=5, min_words=10,
                     dependence=stock_email_block)
@@ -81,7 +80,7 @@ def test_custom_textarea_block(custom_textarea_block):
 @pytest.fixture(scope='session')
 def custom_choice_block(program_form, dependence_choice_block,
                         custom_text_block):
-    b = CustomBlock(form=program_form, name='type', page=2, rank=2,
+    b = CustomBlock(form=program_form, name='type', page=2,
                     type=CustomBlock.InputType.CHOICE, required=True,
                     options={'choices': ['foo', 'bar', 'baz']},
                     dependence=dependence_choice_block)
@@ -96,7 +95,7 @@ def test_custom_choice_block(custom_choice_block):
 @pytest.fixture(scope='session')
 def custom_numeric_block(program_form, dependence_choice_block,
                          custom_choice_block):
-    b = CustomBlock(form=program_form, name='numitems', page=2, rank=3,
+    b = CustomBlock(form=program_form, name='numitems', page=2,
                     type=CustomBlock.InputType.NUMERIC,
                     dependence=dependence_choice_block,
                     negate_dependencies=True)
@@ -110,7 +109,7 @@ def test_custom_numeric_block(custom_numeric_block):
 
 @pytest.fixture(scope='session')
 def custom_boolean_block(program_form, custom_numeric_block):
-    b = CustomBlock(form=program_form, name='optin', page=2, rank=4,
+    b = CustomBlock(form=program_form, name='optin', page=2,
                     type=CustomBlock.InputType.BOOLEAN)
     b.save()
     yield b
