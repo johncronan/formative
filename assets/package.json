@@ -30,6 +30,7 @@
     "axios": "^0.24.0",
     "es6-promise": "^4.2.8",
     "include-media": "^1.4.10",
-    "material-icons": "^1.10.4"
+    "material-icons": "^1.10.4",
+    "sortablejs": "^1.14.0"
   }
 }

@@ -7,6 +7,8 @@ import {MDCNotchedOutline} from '@material/notched-outline';
 import {MDCRadio} from '@material/radio';
 import {MDCCheckbox} from '@material/checkbox';
 
+import Sortable from 'sortablejs';
+
 import axios from 'axios';
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
