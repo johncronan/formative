@@ -46,6 +46,7 @@ module.exports = (env, argv) => {
   return {
     mode: argv.mode,
     entry: {
+      'es6-promise': './js/es6-promise.js',
       'apply': './apply.js',
       'review': './review.js',
     },

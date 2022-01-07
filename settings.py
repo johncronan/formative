@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = [ 'http://localhost' ]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS = [ f'http://{host}:8000' for host in csrf_hosts ]
 
+CSRF_COOKIE_NAME = 'XSRF-TOKEN'
 
 # Application definition
 

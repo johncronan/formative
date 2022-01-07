@@ -7,6 +7,9 @@ import {MDCNotchedOutline} from '@material/notched-outline';
 import {MDCRadio} from '@material/radio';
 import {MDCCheckbox} from '@material/checkbox';
 
+import axios from 'axios';
+axios.defaults.xsrfHeaderName = "X-CSRFToken";
+
 const texts = [];
 document.querySelectorAll('.mdc-text-field')
         .forEach(text => {
