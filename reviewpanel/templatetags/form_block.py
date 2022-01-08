@@ -14,6 +14,10 @@ def block_field(form, block):
 
 @register.simple_tag
 def block_labels(labels, block):
+    if block.block_type() == 'collection':
+        key = f'{block.name}{block.id}_'
+        if key in labels: return labels[key]
+    
     if block.name in labels: return labels[block.name]
     return {}
 

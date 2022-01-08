@@ -181,8 +181,10 @@ class Form(AutoSlugModel):
     def custom_blocks(self):
         return self.blocks.instance_of(CustomBlock)
     
-    def collections(self):
-        return self.blocks.instance_of(CollectionBlock)
+    def collections(self, name=None):
+        blocks = self.blocks.instance_of(CollectionBlock)
+        if name: return blocks.filter(name=name)
+        return blocks
     
     def validation_block(self):
         return self.blocks.get(page=0, _rank=1)
@@ -198,9 +200,11 @@ class Form(AutoSlugModel):
         for label in self.labels.all():
             key, target = label.path, labels
             if '.' in label.path:
-                stock, key = label.path.split('.')
-                if stock not in labels: labels[stock] = {}
-                target = labels[stock]
+                base, key = label.path.split('.')
+                if key[-1] == '_': base, key = base + '_', key[:-1]
+                
+                if base not in labels: labels[base] = {}
+                target = labels[base]
             if key not in target: target[key] = {}
             target[key][label.style] = label
 
@@ -528,6 +532,10 @@ class SubmissionItem(UnderscoredRankedModel):
     _block = models.PositiveBigIntegerField()
     
     _file = models.FileField(upload_to=file_path, max_length=128, blank=True)
+    _filesize = models.PositiveBigIntegerField(default=0)
+    _filemeta = models.JSONField(default=dict, blank=True)
+    _error = models.BooleanField(default=False)
+    _message = models.CharField(max_length=64, default='', blank=True)
     
     def rank_group(self):
         return self.__class__.objects.filter(_submission=self._submission,

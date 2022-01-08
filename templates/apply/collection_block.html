@@ -1,0 +1,12 @@
+{% load patched_widget_tweaks %}
+{% load form_block %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+{% with label=labels|get_by_style:styles.VERTICAL %}
+{% if label %}
+  {% include "./label_vertical.html" %}
+{% endif %}
+{% endwith %}
+{% endwith %}
+
+{# TODO #}

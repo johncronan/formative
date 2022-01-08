@@ -6,6 +6,7 @@ import {MDCTextFieldCharacterCounter}
 import {MDCNotchedOutline} from '@material/notched-outline';
 import {MDCRadio} from '@material/radio';
 import {MDCCheckbox} from '@material/checkbox';
+import {MDCDataTable} from '@material/data-table';
 
 import Sortable from 'sortablejs';
 
@@ -44,6 +45,10 @@ const formFields = [];
 //        .forEach(field => formFields.push(new MDCFormField('.mdc-form-field')))
 
 // TODO: set formField.input = radio, for ripple?
+
+//const dataTables = [];
+//document.querySelectorAll('.mdc-data-table')
+//        .forEach(table => dataTables.push(new MDCDataTable(table)));
 
 const ripples = [];
 document.querySelectorAll('.mdc-button,.mdc-button-icon')

@@ -17,6 +17,7 @@
 @use '@material/textfield/character-counter';
 @use '@material/radio/styles' as radio-styles;
 @use '@material/checkbox';
+@use '@material/data-table/data-table';
 
 @use 'include-media' as *;
 
@@ -33,6 +34,8 @@
 @include helper-text.helper-text-core-styles;
 @include character-counter.character-counter-core-styles;
 @include checkbox.core-styles;
+@include data-table.core-styles;
+@include data-table.theme-baseline;
 
 
 // TODO: grab these numeric values from the mdc defaults

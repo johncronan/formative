@@ -6,16 +6,11 @@
 {% with hlabel=labels|get_by_style:styles.HORIZONTAL %}
 {% with wlabel=labels|get_by_style:styles.WIDGET %}
 {% if label %}
-  <div class="rp-vertical-label-cell rp-layout-cell-start mdc-layout-grid__cell
-              mdc-layout-grid__cell--span-8-tablet
-              mdc-layout-grid__cell--span-8-desktop">
-    <label
   {% if not hlabel and not wlabel %}
-      for="{{ field.id_for_label }}"
-  {% endif %}>
-      {{ label.display }}
-    </label>
-  </div>
+    {% include "./label_vertical.html" with for_field=field %}
+  {% else %}
+    {% include "./label_vertical.html" %}
+  {% endif %}
 {% endif %}
 
 {% if hlabel %}

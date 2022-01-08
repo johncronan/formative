@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.utils.text import capfirst
 
-from .models import Form, FormBlock, CustomBlock, FormLabel
+from .models import Form, FormBlock, CustomBlock, CollectionBlock, FormLabel
 from .stock import EmailWidget
 
 
@@ -65,9 +65,25 @@ def formblock_post_save(sender, instance, created, **kwargs):
         l = FormLabel(form=block.form, path=path, style=style, text=text)
         l.save()
 
+@receiver(post_save, sender=CollectionBlock)
+def collectionblock_post_save(sender, instance, created, **kwargs):
+    if not created: return
+    
+    block = instance
+    text, style = capfirst(block.name) + ':', FormLabel.LabelStyle.VERTICAL
+    
+    l = FormLabel.objects.get_or_create(form=block.form, path=block.name,
+                                        defaults={'style': style, 'text': text})
+    
+    style = FormLabel.LabelStyle.WIDGET
+    for name in block.collection_fields():
+        text, path = capfirst(name), '.'.join((block.name, name))
+        l = FormLabel.objects.get_or_create(form=block.form, path=path,
+                                            defaults={'style': style,
+                                                      'text': text})
+
 def delete_block_labels(form, name):
-    labels = FormLabel.objects.filter(form=form)
-    labels.filter(Q(path=name) | Q(path__startswith=name+'.')).delete()
+    form.labels.filter(Q(path=name) | Q(path__startswith=name+'.')).delete()
 
 @receiver(post_delete, sender=CustomBlock)
 def customblock_post_delete(sender, instance, **kwargs):
@@ -76,3 +92,21 @@ def customblock_post_delete(sender, instance, **kwargs):
 @receiver(post_delete, sender=FormBlock)
 def formblock_post_delete(sender, instance, **kwargs):
     delete_block_labels(instance.form, instance.name)
+
+@receiver(post_delete, sender=CollectionBlock)
+def collectionblock_post_delete(sender, instance, **kwargs):
+    block = instance
+    
+    name_with_id = f'{block.name}{block.id}'
+    block.form.labels.filter(Q(path=name_with_id+'_') |
+                             Q(path__startswith=name_with_id+'.',
+                               path__endswith='_')).delete()
+    
+    blocks = block.form.collections(name=block.name)
+    if not blocks:
+        delete_block_labels(block.form, block.name)
+        return
+    
+    for name in block.collection_fields():
+        if not blocks.filter(Q(name1=name) | Q(name2=name) | Q(name3=name)):
+            block.form.labels.filter(path='.'.join((block.name, name))).delete()

@@ -21,6 +21,7 @@
     "@material/button": "^13.0.0",
     "@material/card": "^13.0.0",
     "@material/checkbox": "^13.0.0",
+    "@material/data-table": "^13.0.0",
     "@material/form-field": "^13.0.0",
     "@material/icon-button": "^13.0.0",
     "@material/layout-grid": "^13.0.0",

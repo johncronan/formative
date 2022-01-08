@@ -20,7 +20,7 @@ def create_model(name, fields, app_label='reviewpanel', module='',
     
     if not module: module = app_label
     attrs = {'__module__': module, 'Meta': Meta}
-    attrs.update(dict(fields)) # TODO: how do I keep the order
+    attrs.update(dict(fields))
 
     # Create the class, which automatically triggers ModelBase processing
     model = type(name, (base_class,), attrs)
