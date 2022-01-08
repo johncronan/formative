@@ -23,9 +23,9 @@
             
             </td>
           {% endif %}
-          {% for name in form_block.collection_fields %}
-            <td class="mdc-data-table__cell">
-              {{ name }}
+          {% for name, span in form_block.collection_fields_with_spans %}
+            <td class="mdc-data-table__cell" colspan="{{ span }}">
+              
             </td>
           {% endfor %}
           {% if form_block.has_file %}

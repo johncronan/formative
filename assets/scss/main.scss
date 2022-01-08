@@ -41,10 +41,6 @@
 // TODO: grab these numeric values from the mdc defaults
 $breakpoints: (phone: 480px, tablet: 600px, desktop: 840px, full: 1000px);
 
-em {
-  font-style: italic;
-}
-
 .rp-maxwidth-grid {
   // the 992px is the only one we're customizing
   @include mdc-layout-grid('desktop', 24px, 992px);
@@ -155,8 +151,16 @@ $maxlines: 30;
 .rp-collection-table {
   & .mdc-data-table__cell {
   	vertical-align: middle;
+  	
   	&.rp-sort-handle-cell,&.rp-file-cell {
   	  width: 80px;
+  	  @include media("<tablet") {
+  	  	width: 64px;
+  	  }
+  	}
+  	
+  	@include media("<tablet") {
+  	  padding: 0 8px 0 8px;
   	}
   }
 }

@@ -498,6 +498,15 @@ class CollectionBlock(FormBlock):
         
         return fields
     
+    def field_colspan(self, field):
+        if 'spans' in self.options:
+            if field in self.options['spans']:
+                return self.options['spans'][field]
+        return 1
+    
+    def collection_fields_with_spans(self):
+        return [ (n, self.field_colspan(n)) for n in self.collection_fields() ]
+    
     def items_sortable(self):
         return 'unsortable' not in self.options
     
