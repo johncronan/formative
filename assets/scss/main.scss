@@ -58,7 +58,7 @@ $breakpoints: (phone: 480px, tablet: 600px, desktop: 840px, full: 1000px);
   }
 
   & .mdc-form-field {
-  	width: 100%;
+    width: 100%;
   }
 }
 
@@ -150,18 +150,18 @@ $maxlines: 30;
 
 .rp-collection-table {
   & .mdc-data-table__cell {
-  	vertical-align: middle;
-  	
-  	&.rp-sort-handle-cell,&.rp-file-cell {
-  	  width: 80px;
-  	  @include media("<tablet") {
-  	  	width: 64px;
-  	  }
-  	}
-  	
-  	@include media("<tablet") {
-  	  padding: 0 8px 0 8px;
-  	}
+    vertical-align: middle;
+    
+    &.rp-sort-handle-cell,&.rp-file-cell {
+      width: 80px;
+      @include media("<tablet") {
+        width: 64px;
+      }
+    }
+    
+    @include media("<tablet") {
+      padding: 0 8px 0 8px;
+    }
   }
 }
 
@@ -170,10 +170,10 @@ $maxlines: 30;
   
   @include media("<tablet") {
     grid-column-start: 2;
-  	grid-column-end: span 1;
+    grid-column-end: span 1;
   }
   @include media(">=tablet") {
-  	grid-column-start: 4;
+    grid-column-start: 4;
   }
 }
 
@@ -181,7 +181,7 @@ $maxlines: 30;
   margin-top: 8px;
   
   @include media(">=tablet") {
-  	grid-column-end: span 3;
+    grid-column-end: span 3;
   }
 }
 
@@ -189,8 +189,8 @@ $maxlines: 30;
   grid-column-start: 3;
 
   @include media(">=tablet") {
-  	grid-column-start: 6;
-  	grid-column-end: span 3;
+    grid-column-start: 6;
+    grid-column-end: span 3;
   }
 }
 
