@@ -29,6 +29,7 @@
         {% include "./custom_block.html" %}
         
       {% elif form_block.block_type == 'collection' %}
+        {% collection_items visible_items form_block as items %}
         {% include "./collection_block.html" %}
         
       {% else %}

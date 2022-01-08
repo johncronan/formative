@@ -39,7 +39,7 @@
 
 
 // TODO: grab these numeric values from the mdc defaults
-$breakpoints: (phone: 480px, tablet: 600px, desktop: 840px);
+$breakpoints: (phone: 480px, tablet: 600px, desktop: 840px, full: 1000px);
 
 em {
   font-style: italic;
@@ -148,10 +148,23 @@ $maxlines: 30;
   top: 2px;
 }
 
+.rp-collection-button {
+  grid-column-start: 1;
+}
+
+.rp-collection-table {
+  & .mdc-data-table__cell {
+  	vertical-align: middle;
+  	&.rp-sort-handle-cell,&.rp-file-cell {
+  	  width: 80px;
+  	}
+  }
+}
+
 .rp-save-button {
   margin-top: 8px;
   
-  @include media ("<tablet") {
+  @include media("<tablet") {
     grid-column-start: 2;
   	grid-column-end: span 1;
   }

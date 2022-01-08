@@ -21,6 +21,11 @@ def block_labels(labels, block):
     if block.name in labels: return labels[block.name]
     return {}
 
+@register.simple_tag
+def collection_items(items, block):
+    if block.pk in items: return items[block.pk]
+    return None
+
 @register.filter
 def get_by_style(labels, style):
     if labels and style in labels: return labels[style]

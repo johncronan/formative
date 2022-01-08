@@ -57,7 +57,7 @@ def test_dependence_choice_block(dependence_choice_block):
 @pytest.fixture(scope='session')
 def custom_text_block(program_form, dependence_choice_block):
     b = CustomBlock(form=program_form, name='answer', page=2,
-                    type=CustomBlock.InputType.TEXT, max_chars=1000)
+                    type=CustomBlock.InputType.TEXT, max_chars=50)
     b.save()
     yield b
 

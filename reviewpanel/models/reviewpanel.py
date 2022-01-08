@@ -1,6 +1,6 @@
 from django.db import models, connection
 from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
-    UniqueConstraint
+    UniqueConstraint, Subquery
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.utils.functional import cached_property
@@ -194,6 +194,14 @@ class Form(AutoSlugModel):
         if skip: query = query.exclude(id__in=skip)
         if page and page > 0: return query.filter(page=page)
         return query.filter(page__gt=0)
+    
+    def visible_items(self, page=None, skip=None):
+        query = self.item_model.objects.all()
+        if skip: query = query.exclude(_block__in=skip)
+        if page and page > 0:
+            block_ids = Subquery(self.blocks.filter(page=page).values('pk'))
+            query = query.filter(_block__in=block_ids)
+        return query
 
     def field_labels(self):
         labels = {}
@@ -435,7 +443,9 @@ class CustomBlock(FormBlock):
     
     def span(self, media=None):
         width = 6
+        if self.max_chars and self.max_chars > 50: width = 8
         if self.num_lines > 1: width = 8
+        if self.num_lines > 4: width = 10
         if self.type in (self.InputType.CHOICE, self.InputType.BOOLEAN):
             width = 8
         elif self.type == self.InputType.NUMERIC: width = 2
@@ -487,6 +497,15 @@ class CollectionBlock(FormBlock):
         if self.name3: fields.append(self.name3)
         
         return fields
+    
+    def items_sortable(self):
+        return 'unsortable' not in self.options
+    
+    def button_text(self):
+        if 'button_text' in self.options: return self.options['button_text']
+        
+        if self.has_file and not self.file_optional: return _('add file')
+        return _('add item')
 
 
 # abstract classes, used as templates for the dynamic models:
