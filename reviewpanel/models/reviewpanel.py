@@ -110,7 +110,9 @@ class Form(AutoSlugModel):
         
         fields = [
             # the first column links submission items to the submission
-            ('_submission', models.ForeignKey(self.model, models.CASCADE))
+            ('_submission', models.ForeignKey(self.model, models.CASCADE,
+                                              related_name='_items',
+                                              related_query_name='_item'))
         ]
         
         for n in names:
@@ -452,7 +454,7 @@ class CustomBlock(FormBlock):
 
         if 'span_tablet' in self.options:
             if not media: return min(width, self.options['span_tablet'], 4)
-        if not media: return min(width, 4)
+        elif not media: return min(width, 4)
         
         if media == 'tablet' and 'span_tablet' in self.options:
             return self.options['span_tablet']
@@ -498,14 +500,33 @@ class CollectionBlock(FormBlock):
         
         return fields
     
-    def field_colspan(self, field):
-        if 'spans' in self.options:
-            if field in self.options['spans']:
-                return self.options['spans'][field]
+    def span(self, media=None):
+        width = 10
+        if media == 'tablet': width = 8
+
+        if not media: return 4
+        
+        if media == 'tablet' and 'span_tablet' in self.options:
+            return max(4, self.options['span_tablet'])
+        if media == 'desktop' and 'span_desktop' in self.options:
+            return max(4, self.options['span_desktop'])
+        
+        return width
+    
+    def tablet_span(self): return self.span(media='tablet')
+    def desktop_span(self): return self.span(media='desktop')
+    
+    def horizontal_colspan(self, field=None):
+        if 'wide' in self.options:
+            if not field:
+                return len(self.options['wide']) + len(self.collection_fields())
+            if field in self.options['wide']: return 2
+        if not field: return len(self.collection_fields())
         return 1
     
     def collection_fields_with_spans(self):
-        return [ (n, self.field_colspan(n)) for n in self.collection_fields() ]
+        fields = self.collection_fields()
+        return [ (n, self.horizontal_colspan(n)) for n in fields ]
     
     def items_sortable(self):
         return 'unsortable' not in self.options

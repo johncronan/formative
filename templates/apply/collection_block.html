@@ -1,5 +1,6 @@
 {% load patched_widget_tweaks %}
 {% load form_block %}
+{% load utils %}
 
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with label=labels|get_by_style:styles.VERTICAL %}
@@ -10,29 +11,61 @@
 {% endwith %}
 
 {% if items %}
+  {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
   <div class="rp-collection-table mdc-data-table mdc-layout-grid__cell
-              mdc-layout-grid__cell--span-8-tablet
-              mdc-layout-grid__cell--span-10-desktop">
+              mdc-layout-grid__cell--span-{{ tsp }}-tablet
+              mdc-layout-grid__cell--span-{{ dsp }}-desktop">
+  {% endwith %}
     <div class="mdc-data-table__table-container">
       <table class="mdc-data-table__table">
-        <tbody class="mdc-data-table__content">
+        <tbody class="rp-collection-table-body mdc-data-table__content">
         {% for item in items %}
           <tr class="mdc-data-table__row">
           {% if form_block.items_sortable %}
             <td class="rp-sort-handle-cell mdc-data-table__cell">
-            
+              <button type="button" class="mdc-icon-button material-icons">
+                <div class="mdc-icon-button__ripple"></div>
+                unfold_more
+              </button>
             </td>
           {% endif %}
+      {% with error=item|underscore:'error' file=item|underscore:'file' %}
+      {% item_extra_action item form_block as extra %}
+        {% with hide=error|yesno:' style="display: none;",'|safe %}
           {% for name, span in form_block.collection_fields_with_spans %}
-            <td class="mdc-data-table__cell" colspan="{{ span }}">
-              
+            <td class="mdc-data-table__cell"
+              {% if extra and forloop.counter == 1 %}
+                colspan="{{ span }}"
+              {% else %}
+                colspan="{{ span|add:1 }}"
+              {% endif %}{{ hide }}>
+              {{ file }}
             </td>
           {% endfor %}
-          {% if form_block.has_file %}
-            <td class="rp-file-cell mdc-data-table__cell">
-              file
+        {% endwith %}
+        {% with hide=error|yesno:', style="display: none;"'|safe %}
+            <td class="rp-item-message-cell mdc-data-table__cell"
+                colspan="{{ form_block.horizontal_colspan }}"{{ hide }}>
+            {% if not hide %}
+              <span class="rp-item-error">{{ item|underscore:'message' }}</span>
+            {% endif %}
+            </td>
+        {% endwith %}
+          {% if extra %}
+            <td class="rp-item-action-cell mdc-data-table__cell">
+              <button type="button" class="mdc-icon-button material-icons">
+                <div class="mdc-icon-button__ripple"></div>
+                upload
+              </button>
             </td>
           {% endif %}
+            <td class="rp-item-action-cell mdc-data-table__cell">
+              <button type="button" class="mdc-icon-button material-icons">
+                <div class="mdc-icon-button__ripple"></div>
+                clear
+              </button>
+            </td>
+      {% endwith %}
           </tr>
         {% endfor %}
         </tbody>

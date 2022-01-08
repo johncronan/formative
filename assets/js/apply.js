@@ -42,7 +42,7 @@ document.querySelectorAll('.mdc-checkbox')
 
 const formFields = [];
 //document.querySelectorAll('.mdc-form-field')
-//        .forEach(field => formFields.push(new MDCFormField('.mdc-form-field')))
+//       .forEach(field => formFields.push(new MDCFormField('.mdc-form-field')))
 
 // TODO: set formField.input = radio, for ripple?
 
@@ -53,6 +53,16 @@ const formFields = [];
 const ripples = [];
 document.querySelectorAll('.mdc-button,.mdc-button-icon')
         .forEach(button => ripples.push(new MDCRipple(button)));
+
+document.addEventListener('dragover', function(e) { e.preventDefault() });
+
+document.querySelectorAll('.rp-collection-table-body')
+        .forEach(tbody => Sortable.create(tbody, {
+          handle: '.rp-sort-handle-cell',
+          animation: 120,
+          onEnd: evt => {
+          }
+        }));
 
 window.addEventListener("pageshow", function() {
   document.querySelectorAll('.rp-text-field--invalid')

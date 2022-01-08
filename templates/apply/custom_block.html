@@ -25,16 +25,14 @@
 {% endif %}
 
 {% with types=form_block.InputType %}
-{% with s=hlabel|yesno:"-2,0" %}
-{% with sp=form_block.span %}
-{% with tsp=form_block.tablet_span %}{% with dsp=form_block.desktop_span %}
+{% with s=hlabel|yesno:"-2,0" sp=form_block.span %}
+{% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
 <div class="rp-layout-cell {% if not hlabel %}rp-layout-cell-start{% endif %}
             rp-layout-cell-{{ form_block.type }} mdc-layout-grid__cell
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ sp }}{% else %}{{ sp|add:s }}{% endif %}
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ tsp }}{% else %}{{ tsp|add:s }}{% endif %}-tablet
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% endif %}-desktop
 ">
-{% endwith %}{% endwith %}
 {% endwith %}
 {% endwith %}
 

@@ -26,6 +26,11 @@ def collection_items(items, block):
     if block.pk in items: return items[block.pk]
     return None
 
+@register.simple_tag
+def item_extra_action(item, block):
+    if block.has_file and (item._error or not item._file): return 1
+    return 0
+
 @register.filter
 def get_by_style(labels, style):
     if labels and style in labels: return labels[style]

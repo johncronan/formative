@@ -43,10 +43,11 @@
       {% endif %}
       
     {% elif form_block.block_type == 'collection' %}
+      
     
     {% else %}
-	  {% include_stock_review form_block labels %}
-	  
+      {% include_stock_review form_block labels %}
+    
     {% endif %}
   {% endif %}
   {% endfor %}

@@ -7,8 +7,8 @@
         {% if form_block.num_lines > 1 %}
               rp-textarea rp-textarea-rows-{{ form_block.num_lines }}
         {% endif %}
-		      {% if field.errors %}rp-text-field--invalid{% endif %}
-			  mdc-text-field--outlined">
+              {% if field.errors %}rp-text-field--invalid{% endif %}
+              mdc-text-field--outlined">
   {% if form_block.num_lines == 1 or not form_block.num_lines %}
     {% render_field field class+="mdc-text-field__input" %}
   {% endif %}

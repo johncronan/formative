@@ -1,6 +1,9 @@
 @use 'libs/reset';
 
 @use '@material/typography/mdc-typography';
+@use '@material/layout-grid' with (
+  $breakpoints: (desktop: 940px, tablet: 600px, phone: 0px)
+);
 @use '@material/layout-grid/mdc-layout-grid';
 @use '@material/button/mdc-button';
 @use '@material/button';
@@ -38,14 +41,19 @@
 @include data-table.theme-baseline;
 
 
-// TODO: grab these numeric values from the mdc defaults
-$breakpoints: (phone: 480px, tablet: 600px, desktop: 840px, full: 1000px);
+$breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
 
+:root {
+  --mdc-layout-grid-gutter-tablet: 20px;
+}
 .rp-maxwidth-grid {
-  // the 992px is the only one we're customizing
+  // the 992px is the only one we're really customizing
   @include mdc-layout-grid('desktop', 24px, 992px);
-  @include mdc-layout-grid('tablet', 16px);
+  @include mdc-layout-grid('tablet', 20px);
   @include mdc-layout-grid('phone', 16px);
+  @include media(">=desktop") {
+    padding: 32px;
+  }
 }
 
 .rp-layout-cell-start {
@@ -126,7 +134,7 @@ $maxlines: 30;
 }
 
 .rp-form-top {
-  padding-top: 16px;
+  padding-top: 8px;
   padding-bottom: 8px;
 }
 
@@ -152,13 +160,39 @@ $maxlines: 30;
   & .mdc-data-table__cell {
     vertical-align: middle;
     
-    &.rp-sort-handle-cell,&.rp-file-cell {
-      width: 80px;
+    &.rp-sort-handle-cell {
+      width: 72px;
+      padding: 0 16px 0 8px;
       @include media("<tablet") {
-        width: 64px;
+        width: 56px;
+        padding: 0 8px 0 0;
       }
     }
     
+    &.rp-item-action-cell {
+      width: 1px;
+      white-space: nowrap;
+      padding: 0 8px 0 16px;
+      @include media("<tablet") {
+        padding: 0 0 0 8px;
+      }
+      
+      &:nth-last-child(2) { // extra item action when upload/replace is enabled
+        padding: 0;
+        overflow: visible;
+        & button {
+          position: relative;
+          left: 20px;
+          @include media("<tablet") {
+            left: 12px;
+          }
+        }
+      }
+    }
+    
+    & .rp-item-error {
+      color: #af0109;
+    }
     @include media("<tablet") {
       padding: 0 8px 0 8px;
     }
