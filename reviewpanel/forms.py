@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import CustomBlock
+from .models import CustomBlock, SubmissionItem as Item
 from .validators import MinWordsValidator, MaxWordsValidator
 
 
@@ -54,3 +54,15 @@ class SubmissionForm(forms.ModelForm):
                     # NULL for fields that're never seen; '' for no choice made
                     if self.cleaned_data[name] is None:
                         self.cleaned_data[name] = ''
+
+
+class SubmissionItemForm(forms.Form):
+    file = forms.FileField(max_length=Item._meta.get_field('_file').max_length)
+    
+    def __init__(self, block=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.block = block
+        if block.file_optional: self.fields['file'].allow_empty_file = True
+    
+    

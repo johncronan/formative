@@ -572,6 +572,7 @@ class SubmissionItem(UnderscoredRankedModel):
         abstract = True
         ordering = ['_submission', '_collection', '_rank']
     
+#    _id = models.BigAutoField(primary_key=True, editable=False)
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
     
     # the item's collection name == the name of the CollectionBlock

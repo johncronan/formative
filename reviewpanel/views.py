@@ -1,4 +1,5 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, \
+    HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
@@ -8,7 +9,7 @@ from django.views import generic
 import itertools
 
 from .models import Program, Form, FormBlock, CustomBlock
-from .forms import OpenForm, SubmissionForm
+from .forms import OpenForm, SubmissionForm, SubmissionItemForm
 
 
 class ProgramIndexView(generic.ListView):
@@ -44,7 +45,7 @@ class ProgramFormMixin(generic.edit.FormMixin):
 
 
 class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
-                      generic.detail.SingleObjectTemplateResponseMixin):
+                      generic.base.TemplateResponseMixin):
     template_name = 'apply/form.html'
     form_class = OpenForm
     context_object_name = 'program_form'
@@ -252,3 +253,33 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             else: kwargs['page'] = self.page
         
         return reverse(name, kwargs=kwargs)
+
+
+class SubmissionItemView(ProgramFormMixin, generic.edit.ProcessFormView,
+                         generic.base.TemplateResponseMixin):
+    template_name = 'apply/collection_item.html'
+    http_method_names = ['post']
+    upload = False
+    
+    def get_form(self):
+        if not self.program_form.item_model: raise Http404
+        
+        self.submission = get_object_or_404(self.program_form.model,
+                                            _id=self.kwargs['sid'])
+#        item = get_object_or_404(self.program_form.item_model,
+#                                 _submission=self.kwargs['program_slug'],
+#                                 _id=self.kwargs['id'])
+        if 'block_id' not in self.request.POST: return HttpResponseBadRequest()
+        self.block = get_object_or_404(CollectionBlock, form=self.program_form,
+                                       pk=self.request.POST[''])
+        
+        return SubmissionItemForm(block=self.block, **self.get_form_kwargs())
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context['item'] = self.item
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        if not self.upload: return super().post(self, request, *args, **kwargs)
