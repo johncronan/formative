@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 
-from .models import CustomBlock, SubmissionItem as Item
+from .models import CustomBlock, SubmissionItem
 from .validators import MinWordsValidator, MaxWordsValidator
 
 
@@ -60,7 +60,7 @@ class SubmissionForm(forms.ModelForm):
 
 class ItemFileForm(forms.Form):
     # TODO: validate that there's an extension
-    name = forms.CharField(max_length=Item._meta.get_field('_file').max_length,
+    name = forms.CharField(max_length=SubmissionItem.filename_maxlen(),
                            error_messages={
         'max_length': _('File name cannot exceed %(limit_value)d characters')
     })

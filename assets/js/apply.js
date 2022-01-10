@@ -56,8 +56,7 @@ document.querySelectorAll('.mdc-button,.mdc-button-icon')
 
 function itemMove(rowEl, rank) {
   var itemId = rowEl.dataset.id;
-  var href = document.location.href;
-  var url = href.substring(0, href.lastIndexOf('/'));
+  var url = postUrlBase();
   
   var data = new FormData();
   data.append('item_id', itemId);
@@ -81,25 +80,72 @@ document.querySelectorAll('.rp-collection-table-body')
           }
         }));
 
-function uploadFile() {
+function postUrlBase() {
+  var href = document.location.href;
+  var url = href.substring(0, href.lastIndexOf('/'));
+  return url;
+}
+
+function postFile(itemId, file) {
+  var url = postUrlBase();
+  var data = new FormData();
+  data.append('item_id', itemId);
+  data.append('file', file);
+  
   var config = {
     onUploadProgress: event => {
       var percentCompleted = Math.round((event.loaded * 100) / event.total);
-      
+      console.log(percentCompleted);
     }
   };
+  
+  axios.post(url + '/file', data, config)
+    .then(res => {
+      console.log('done');
+    });
+//    .catch(err => {
+//      
+//    });
+}
+
+var filesQueue = [];
+var simultaneous = 4;
+
+function processQueue() {
+  for (let i=0; i < filesQueue.length; i++) {
+    if (i >= simultaneous) break;
+    if (!filesQueue[i][0]) {
+      filesQueue[i][0] = true;
+      postFile(filesQueue[i][1], filesQueue[i][2]);
+    }
+  }
+}
+
+function uploadFile(rowEl, file) {
+  filesQueue.push([false, rowEl.dataset.id, file]);
+}
+
+function rowStatus(rowEl) {
+  if (rowEl.querySelector('td.rp-item-progress-cell').style.display != 'none')
+    return 'upload';
+  if (rowEl.querySelector('td.rp-item-message-cell').style.display != 'none')
+    return 'error';
+  return 'normal';
 }
 
 function newItems(blockId, files, itemId) {
-  var href = document.location.href;
-  var url = href.substring(0, href.lastIndexOf('/'));
+  var url = postUrlBase();
   
   var data = new FormData();
   data.append('block_id', blockId);
   if (itemId) data.append('item_id', itemId);
   
+  var haveFile;
+  var filesArray = [];
   if (files) for (let i=0; i < files.length; i++) {
     data.append('filesize' + files[i].size, files[i].name);
+    filesArray.push(files[i]);
+    haveFile = true;
   }
   
   axios.post(url + '/item', data)
@@ -107,31 +153,43 @@ function newItems(blockId, files, itemId) {
       var table = document.querySelector('#collection' + blockId);
       var tablediv = table.parentElement.parentElement;
       var tbody = table.firstElementChild;
+      var rows = [];
       if (itemId) {
         var itemEl = tbody.querySelector('tr[data-id="' + itemId + '"]');
         itemEl.innerHTML = res.data.trim();
-        // if no error, call the upload func
+        rows = [itemEl];
       } else {
         var tablePos = tbody.querySelector('tr:last-child');
         var html = res.data.trim();
         if (!tablePos) {
           tbody.innerHTML = html;
           tablediv.style.display = 'flex';
-        } else tablePos.insertAdjacentHTML('afterend', html);
+          rows = tbody.querySelectorAll('tr');
+        } else {
+          tablePos.insertAdjacentHTML('afterend', html);
+          let element = tablePos;
+          while (element = element.nextElementSibling) {
+            rows.push(element);
+          }
+        }
         var numRows = tbody.children.length;
         var maxItems = table.dataset.maxItems;
         var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
         if (numRows >= maxItems) document.querySelector(sel).disabled = true;
-        //  if there's a file (and no error), call the upload func
       }
+      
+      if (haveFile) for (let i=0; i < rows.length; i++) {
+        if (rowStatus(rows[i]) == 'upload') uploadFile(rows[i], filesArray[i]);
+      }
+      processQueue();
       document.querySelectorAll('.rp-item-upload')
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')
               .forEach(button => button.onclick = removeClick);
-    })
-    .catch(err => {
-      
     });
+//    .catch(err => {
+//      
+//    });
   
 }
 
@@ -170,8 +228,7 @@ document.querySelectorAll('.rp-item-upload')
         .forEach(button => button.onclick = uploadClick);
 
 function removeClick(event) {
-  var href = document.location.href;
-  var url = href.substring(0, href.lastIndexOf('/'));
+  var url = postUrlBase();
   var rowEl = event.target.parentElement.parentElement;
   var blockId = rowEl.dataset.blockId;
   var id = rowEl.dataset.id;

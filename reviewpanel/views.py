@@ -10,6 +10,7 @@ import itertools
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
 from .forms import OpenForm, SubmissionForm, ItemFileForm
+from .utils import delete_file
 
 
 class ProgramIndexView(generic.ListView):
@@ -274,103 +275,118 @@ class SubmissionBase(generic.View):
         return super().dispatch(request, *args, **kwargs)
 
 
-class SubmissionItemView(SubmissionBase, generic.base.TemplateResponseMixin):
+class SubmissionItemCreateView(SubmissionBase,
+                               generic.base.TemplateResponseMixin):
     template_name = 'apply/collection_items_new.html'
     http_method_names = ['post']
-    upload = False
     
     def get_form(self, **kwargs):
         if not self.block.has_file: return forms.Form(data={})
         return ItemFileForm(block=self.block, data=kwargs)
     
     def post(self, request, *args, **kwargs):
-        if not self.upload:
-            if 'block_id' not in self.request.POST:
-                return HttpResponseBadRequest()
-            
-            self.block = get_object_or_404(CollectionBlock,
-                                           form=self.program_form,
-                                           pk=self.request.POST['block_id'])
+        if 'block_id' not in self.request.POST:
+            return HttpResponseBadRequest()
+        
+        self.block = get_object_or_404(CollectionBlock,
+                                       form=self.program_form,
+                                       pk=self.request.POST['block_id'])
 
-            nitems = self.submission._items.filter(_block=self.block.pk).count()
-            
-            files, new_file = [], True
-            for key, val in self.request.POST.items():
-                if not key.startswith('filesize'): continue
-                sizeval = key[len('filesize'):]
-                size = None
-                if sizeval.isdigit(): size = int(sizeval)
-                if size is None: return HttpResponseBadRequest()
-                files.append((val, size))
+        nitems = self.submission._items.filter(_block=self.block.pk).count()
+        
+        files, new_file = [], True
+        for key, val in self.request.POST.items():
+            if not key.startswith('filesize'): continue
+            sizeval = key[len('filesize'):]
+            size = None
+            if sizeval.isdigit(): size = int(sizeval)
+            if size is None: return HttpResponseBadRequest()
+            files.append((val, size))
 
-            if len(files) == 1 and nitems >= self.block.max_items:
-                if 'item_id' not in self.request.POST:
-                    return HttpResponseBadRequest()
-            if 'item_id' in self.request.POST and len(files) != 1:
+        if len(files) == 1 and nitems >= self.block.max_items:
+            if 'item_id' not in self.request.POST:
                 return HttpResponseBadRequest()
-            if not files:
-                files.append((None, None))
-                new_file = False
+        if 'item_id' in self.request.POST and len(files) != 1:
+            return HttpResponseBadRequest()
+        if not files:
+            files.append((None, None))
+            new_file = False
+        
+        items = []
+        for name, size in files:
+            form = self.get_form(name=name, size=size)
+            item = self.program_form.item_model(_submission=self.submission,
+                                                _collection=self.block.name,
+                                                _block=self.block.pk)
+            if 'item_id' in self.request.POST:
+                item = get_object_or_404(self.program_form.item_model,
+                                         _submission=self.submission.pk,
+                                         _id=self.request.POST['item_id'])
+            else:
+                nitems += 1
+            if nitems > self.block.max_items: break
             
-            items = []
-            for name, size in files:
-                form = self.get_form(name=name, size=size)
-                item = self.program_form.item_model(_submission=self.submission,
-                                                    _collection=self.block.name,
-                                                    _block=self.block.pk)
-                if 'item_id' in self.request.POST:
-                    item = get_object_or_404(self.program_form.item_model,
-                                             _submission=self.submission.pk,
-                                             _id=self.request.POST['item_id'])
-                else:
-                    nitems += 1
-                if nitems > self.block.max_items: break
-                
-                if not form.is_valid():
-                    item._error = True
-                    if form.has_error('name'):
-                        msg = form.errors['name'][0]
-                    elif form.has_error('size'):
-                        msg = form.errors['size'][0]
-                    else: msg = form.non_field_errors()[0]
-                    item._message = msg
-                else:
-                    if name: item._file, item._filesize = '', size # TODO:
+            if not form.is_valid():
+                item._error = True
+                if form.has_error('name'):
+                    msg = form.errors['name'][0]
+                elif form.has_error('size'):
+                    msg = form.errors['size'][0]
+                else: msg = form.non_field_errors()[0]
+                item._message = msg
+            else:
+                if item._file: delete_file(item._file)
+                if name: item._file, item._filesize = '', size # TODO:
     # don't display failed (or in-progress) uploads - delete them on form save
-                    item._error, item._message = False, ''
-                item.save()
-                items.append(item)
-            
-            context = self.get_context_data(items=items, new_file=new_file)
-            return self.render_to_response(context)
+                item._error, item._message = False, ''
+            item.save()
+            items.append(item)
+        
+        context = self.get_context_data(items=items, new_file=new_file)
+        return self.render_to_response(context)
 
 
-class SubmissionItemRemoveView(SubmissionBase):
+class SubmissionItemBase(SubmissionBase):
+    def get_item(self):
+        if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
+        return get_object_or_404(self.program_form.item_model,
+                                 _submission=self.submission.pk,
+                                 _id=self.request.POST['item_id'])
+
+        
+class SubmissionItemUploadView(SubmissionItemBase):
     http_method_names = ['post']
     
     def post(self, request, *args, **kwargs):
-        if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
-        item = get_object_or_404(self.program_form.item_model,
-                                 _submission=self.submission.pk,
-                                 _id=self.request.POST['item_id'])
+        item = self.get_item()
+        if 'file' not in self.request.FILES: return HttpResponseBadRequest()
+        item._file = self.request.FILES['file']
+        
+        item.save()
+        return HttpResponse('')
+
+
+class SubmissionItemRemoveView(SubmissionItemBase):
+    http_method_names = ['post']
+    
+    def post(self, request, *args, **kwargs):
+        item = self.get_item()
+        if item._file: delete_file(item._file)
+        
         item.delete()
         return HttpResponse('')
 
 
-class SubmissionItemMoveView(SubmissionBase):
+class SubmissionItemMoveView(SubmissionItemBase):
     http_method_names = ['post']
     
     def post(self, request, *args, **kwargs):
-        if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
-        item = get_object_or_404(self.program_form.item_model,
-                                 _submission=self.submission.pk,
-                                 _id=self.request.POST['item_id'])
-        
         if 'rank' not in self.request.POST: return HttpResponseBadRequest()
         rank = self.request.POST['rank']
         if not rank.isdigit() or int(rank) <= 0:
             return HttpResponseBadRequest()
         
+        item = self.get_item()
         item._rank = int(rank)
         
         item.save()

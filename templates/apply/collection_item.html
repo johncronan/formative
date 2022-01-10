@@ -57,6 +57,7 @@
         </td>
       {% endif %}
     {% endif %}
+    {% if not form_block.fixed %}
         <td class="rp-item-action-cell mdc-data-table__cell">
           <button class="rp-item-remove mdc-icon-button material-icons"
                   type="button">
@@ -64,5 +65,6 @@
             clear
           </button>
         </td>
+    {% endif %}
 {% endwith %}
       </tr>

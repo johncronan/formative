@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.contrib import admin
+import os
 
 
 def create_model(name, fields, app_label='reviewpanel', module='',
@@ -45,3 +46,6 @@ def send_email(instance, template, to, context={}, context_object_name='obj'):
     message = render_to_string(template, context)
     mail = EmailMessage(subject, message, settings.CONTACT_EMAIL, [to])
     mail.send()
+
+def delete_file(file):
+    if os.path.isfile(file.path): os.remove(file.path)

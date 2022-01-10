@@ -588,11 +588,16 @@ class SubmissionItem(UnderscoredRankedModel):
     # id of the collection block this item came from, as some may have same name
     _block = models.PositiveBigIntegerField()
     
-    _file = models.FileField(upload_to=file_path, max_length=128, blank=True)
+    _file = models.FileField(upload_to=file_path, max_length=172, blank=True)
     _filesize = models.PositiveBigIntegerField(default=0)
     _filemeta = models.JSONField(default=dict, blank=True)
     _error = models.BooleanField(default=False)
     _message = models.CharField(max_length=64, default='', blank=True)
+    
+    @classmethod
+    def filename_maxlen(cls):
+        # use 37 for directory uuid, 8 for possible alt name, 7 for order prefix
+        return cls._meta.get_field('_file').max_length - 37 - 8 - 7
     
     def rank_group(self):
         return self.__class__.objects.filter(_submission=self._submission,
