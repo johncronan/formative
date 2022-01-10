@@ -80,7 +80,7 @@ def test_custom_textarea_block(custom_textarea_block):
 @pytest.fixture(scope='session')
 def collection_block_main(program_form, custom_textarea_block):
     b = CollectionBlock(form=program_form, name='files', page=2,
-                        min_items=0, max_items=10, has_file=True,
+                        min_items=1, max_items=10, has_file=True,
                         name1='caption')
     b.save()
     yield b
@@ -89,8 +89,19 @@ def test_collection_block_main(collection_block_main):
     assert collection_block_main
 
 @pytest.fixture(scope='session')
+def collection_block_optional(program_form, collection_block_main):
+    b = CollectionBlock(form=program_form, name='files', page=2,
+                        min_items=0, max_items=1, has_file=True,
+                        file_optional=True)
+    b.save()
+    yield b
+
+def test_collection_block_optional(collection_block_optional):
+    assert collection_block_optional
+
+@pytest.fixture(scope='session')
 def custom_choice_block(program_form, dependence_choice_block,
-                        collection_block_main):
+                        collection_block_optional):
     b = CustomBlock(form=program_form, name='type', page=2,
                     type=CustomBlock.InputType.CHOICE, required=True,
                     options={'choices': ['foo', 'bar', 'baz']},

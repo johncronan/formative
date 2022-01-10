@@ -287,18 +287,30 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
             self.block = get_object_or_404(CollectionBlock,
                                            form=self.program_form,
                                            pk=self.request.POST['block_id'])
-            items = []
+            files, new_file = [], True
             for key, val in self.request.POST.items():
                 if not key.startswith('filesize'): continue
                 sizeval = key[len('filesize'):]
                 size = None
                 if sizeval.isdigit(): size = int(sizeval)
                 if size is None: return HttpResponseBadRequest()
-                
-                form = self.get_form(name=val, size=size)
+                files.append((val, size))
+
+            if 'item_id' in self.request.POST and len(files) != 1:
+                return HttpResponseBadRequest()
+            if not files:
+                files.append((None, None))
+                new_file = False
+            
+            items = []
+            for name, size in files:
+                form = self.get_form(name=name, size=size)
                 item = self.program_form.item_model(_submission=self.submission,
                                                     _collection=self.block.name,
                                                     _block=self.block.pk)
+                if 'item_id' in self.request.POST:
+                    item = get_object_or_404(self.program_form.item_model,
+                                             _id=self.request.POST['item_id'])
                 if not form.is_valid():
                     item._error = True
                     if form.has_error('name'):
@@ -307,7 +319,9 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
                         msg = form.errors['size'][0]
                     else: msg = form.non_field_errors()[0]
                     item._message = msg
+                elif name: item._file, item._filesize = name, size
                 item.save()
                 items.append(item)
             
-            return self.render_to_response(self.get_context_data(items=items))
+            context = self.get_context_data(items=items, new_file=new_file)
+            return self.render_to_response(context)

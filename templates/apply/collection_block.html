@@ -18,7 +18,7 @@
       <table id="collection{{ form_block.pk }}" class="mdc-data-table__table">
         <tbody class="mdc-data-table__content">
         {% for item in items %}
-          {% include "./collection_item.html" with new=False notnew=True %}
+          {% include "./collection_item.html" with new_file=False %}
         {% endfor %}
         </tbody>
       </table>
@@ -42,5 +42,5 @@
   {% if form_block.has_file %}
   <input type="file" name="file{{ form_block.pk }}"
          {% if form_block.max_items > 1 %}multiple{% endif %}
-         style="visibility: hidden;"/>
+         style="visibility: hidden; width: 0;"/>
   {% endif %}

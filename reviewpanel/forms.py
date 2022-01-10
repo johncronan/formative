@@ -74,6 +74,10 @@ class ItemFileForm(forms.Form):
         
         self.block = block
         
+        if block.file_optional:
+            self.fields['name'].required = False
+            self.fields['size'].required = False
+        
         maxsize = block.file_maxsize()
         if maxsize:
             self.fields['size'].validators.append(MaxValueValidator(maxsize))

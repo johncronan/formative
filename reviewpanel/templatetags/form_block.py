@@ -27,11 +27,13 @@ def collection_items(items, block):
     return None
 
 @register.simple_tag
-def item_extra_action(item, block, new):
-    if new:
-        if block.has_file and item._error: return 1
-    elif block.has_file and (item._error or not item._file): return 1
-    return 0
+def item_columns(item, block, new_file):
+    return {
+        'fields': not item._error and not new_file,
+        'progress': not item._error and new_file,
+        'message': item._error,
+        'upload': item._error or (not new_file and block.file_optional)
+    }
 
 @register.filter
 def get_by_style(labels, style):

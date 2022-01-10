@@ -157,6 +157,10 @@ $maxlines: 30;
 }
 
 .rp-collection-table {
+  position: relative;
+  & .mdc-data-table__table {
+    white-space: normal;
+  }
   & .mdc-data-table__cell {
     vertical-align: middle;
     

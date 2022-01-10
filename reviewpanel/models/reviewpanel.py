@@ -525,7 +525,7 @@ class CollectionBlock(FormBlock):
             if not field:
                 return len(self.options['wide']) + len(self.collection_fields())
             if field in self.options['wide']: return 2
-        if not field: return len(self.collection_fields())
+        if not field: return max(len(self.collection_fields()), 1)
         return 1
     
     def collection_fields_with_spans(self):

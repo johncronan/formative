@@ -80,12 +80,14 @@ function uploadFile() {
   };
 }
 
-function newItems(blockId, files) {
+function newItems(blockId, files, itemId) {
   var href = document.location.href;
   var url = href.substring(0, href.lastIndexOf('/'));
   
   var data = new FormData();
   data.append('block_id', blockId);
+  if (itemId) data.append('item_id', itemId);
+  
   if (files) for (let i=0; i < files.length; i++) {
     data.append('filesize' + files[i].size, files[i].name);
   }
@@ -95,13 +97,21 @@ function newItems(blockId, files) {
       var table = document.querySelector('#collection' + blockId);
       var tablediv = table.parentElement.parentElement;
       var tbody = table.firstElementChild;
-      var tablePos = tbody.querySelector('tr:last-child');
-      var html = res.data.trim();
-      if (!tablePos) {
-        tbody.innerHTML = html;
-        tablediv.style.display = 'flex';
-      } else tablePos.insertAdjacentHTML('afterend', html);
-      //  if there's a file (and no error), call the upload func
+      if (itemId) {
+        var itemEl = tbody.querySelector('tr[data-id="' + itemId + '"]');
+        itemEl.innerHTML = res.data.trim();
+        // if no error, call the upload func
+      } else {
+        var tablePos = tbody.querySelector('tr:last-child');
+        var html = res.data.trim();
+        if (!tablePos) {
+          tbody.innerHTML = html;
+          tablediv.style.display = 'flex';
+        } else tablePos.insertAdjacentHTML('afterend', html);
+        //  if there's a file (and no error), call the upload func
+      }
+      document.querySelectorAll('.rp-item-upload')
+              .forEach(button => button.onclick = uploadClick);
     })
     .catch(err => {
       
@@ -109,9 +119,9 @@ function newItems(blockId, files) {
   
 }
 
-function filesSelected(event, blockId) {
+function filesSelected(event, blockId, itemId) {
   var fileInput = event.target;
-  newItems(blockId, fileInput.files);
+  newItems(blockId, fileInput.files, itemId);
   fileInput.value = '';
 }
 
@@ -130,3 +140,15 @@ function collectionClick(event) {
 
 document.querySelectorAll('.rp-collection-button')
         .forEach(button => button.onclick = collectionClick);
+
+function uploadClick(event) {
+  var rowEl = event.target.parentElement.parentElement;
+  var blockId = rowEl.dataset.blockId;
+  var id = rowEl.dataset.id;
+  var fileInput = document.querySelector('input[name="itemfile' + id + '"]');
+  fileInput.onchange = event => filesSelected(event, blockId, id);
+  fileInput.click();
+}
+
+document.querySelectorAll('.rp-item-upload')
+        .forEach(button => button.onclick = uploadClick);

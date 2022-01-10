@@ -2,10 +2,10 @@
 {% load form_block %}
 {% load utils %}
 
-      <tr id="item{{ item|underscore:'id' }} class="mdc-data-table__row"
-      {% with rank=item|underscore:'rank' %}
-          data-rank="{{ rank }}">
-      {% endwith %}
+      <tr class="mdc-data-table__row"
+          data-block-id="{{ form_block.pk }}"
+          data-id="{{ item|underscore:'id' }}"
+          data-rank="{{ item|underscore:'rank' }}">
       {% if form_block.items_sortable %}
         <td class="rp-sort-handle-cell mdc-data-table__cell">
           <button type="button" class="mdc-icon-button material-icons">
@@ -15,9 +15,8 @@
         </td>
       {% endif %}
 {% with error=item|underscore:'error' file=item|underscore:'file' %}
-  {% item_extra_action item form_block new as extra %}
-    {% with input_hidden=error|default:new %}
-    {% with hide=input_hidden|yesno:' style="display: none;",'|safe %}
+  {% item_columns item form_block new_file as columns %}
+    {% with hide=columns.fields|yesno:', style="display: none;"'|safe %}
       {% for name, span in form_block.collection_fields_with_spans %}
         <td class="mdc-data-table__cell"
           {% if not extra and forloop.counter == 1 %}
@@ -27,34 +26,41 @@
           {% endif %}{{ hide }}>
           {{ forloop.counter }}
         </td>
+      {% empty %}
+        <td class="rp-item-nofields-cell mdc-data-table__cell"{{ hide }}>
+          {{ file }}
+        </td>
       {% endfor %}
     {% endwith %}
-    {% endwith %}
-    {% with progress_hidden=error|default:notnew %}
-      {% with hide=progress_hidden|yesno:' style="display: none;",'|safe %}
+    {% if form_block.has_file %}
+      {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan|add:1 }}"{{ hide }}>
         </td>
       {% endwith %}
-    {% endwith %}
-    {% with hide=error|yesno:', style="display: none;"'|safe %}
+      {% with hide=columns.message|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-message-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan }}"{{ hide }}>
         {% if not hide %}
           <span class="rp-item-error">{{ item|underscore:'message' }}</span>
         {% endif %}
         </td>
-    {% endwith %}
-      {% if extra %}
+      {% endwith %}
+      {% if columns.upload %}
         <td class="rp-item-action-cell mdc-data-table__cell">
-          <button type="button" class="mdc-icon-button material-icons">
+          <button class="rp-item-upload mdc-icon-button material-icons"
+                  type="button">
             <div class="mdc-icon-button__ripple"></div>
             upload
           </button>
+          <input type="file" name="itemfile{{ item|underscore:'id' }}"
+                 style="visibility: hidden; width: 0;"/>
         </td>
       {% endif %}
+    {% endif %}
         <td class="rp-item-action-cell mdc-data-table__cell">
-          <button type="button" class="mdc-icon-button material-icons">
+          <button class="rp-item-clear mdc-icon-button material-icons"
+                  type="button">
             <div class="mdc-icon-button__ripple"></div>
             clear
           </button>
