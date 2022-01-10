@@ -1,5 +1,6 @@
 @use 'libs/reset';
 
+@use '@material/theme';
 @use '@material/typography/mdc-typography';
 @use '@material/layout-grid' with (
   $breakpoints: (desktop: 940px, tablet: 600px, phone: 0px)
@@ -31,6 +32,7 @@
 
 @import 'material-icons/iconfont/filled.css';
 
+@include theme.core-styles;
 @include card.core-styles;
 @include form-field.core-styles;
 @include textfield.core-styles;
@@ -156,6 +158,29 @@ $maxlines: 30;
   user-select: none;
   position: relative;
   top: 7px; // TODO: where is this coming from?
+}
+
+.rp-progress-rounded {
+  border-radius: 4px;
+}
+
+.rp-progress-bar {
+  width: 200px;
+  background: #aaaaaa;
+  position: relative;
+  & .rp-progress-percentage {
+    padding: 4px 0px;
+    color: #fff;
+    text-align: center;
+    height: 20px;
+    
+    & span {
+      display: inline-block;
+      position: absolute;
+      width: 100%;
+      left: 0;
+    }
+  }
 }
 
 .rp-collection-button {

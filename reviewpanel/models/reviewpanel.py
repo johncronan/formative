@@ -204,6 +204,8 @@ class Form(AutoSlugModel):
         if page and page > 0:
             block_ids = Subquery(self.blocks.filter(page=page).values('pk'))
             query = query.filter(_block__in=block_ids)
+        
+        query = query.exclude(_file='', _filesize__gt=0) # upload in progress
         return query.order_by('_collection', '_block', '_rank')
 
     def field_labels(self):

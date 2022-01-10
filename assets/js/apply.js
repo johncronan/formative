@@ -96,13 +96,23 @@ function postFile(rowEl, file) {
   var config = {
     onUploadProgress: event => {
       var percentCompleted = Math.round((event.loaded * 100) / event.total);
-      console.log(percentCompleted);
+      var progress = rowEl.querySelector('.rp-progress-bar');
+      var bar = progress.firstElementChild;
+      bar.style.width = percentCompleted + '%';
+      bar.firstElementChild.innerHTML = percentCompleted.toFixed(0) + '%';
     }
   };
   
   axios.post(url + '/file', data, config)
     .then(res => {
       setStatus(rowEl, 'normal');
+      for (let i=0; i < filesQueue.length; i++) {
+        if (filesQueue[i][1].dataset.id == rowEl.dataset.id) {
+          filesQueue.splice(i, 1);
+          break;
+        }
+      }
+      processQueue();
     });
 //    .catch(err => {
 //      
@@ -138,10 +148,10 @@ function setStatus(rowEl, status) {
   var hide, show;
   if (status == 'normal') {
     hide = 'td.rp-item-progress-cell,td.rp-item-message-cell';
-    show = 'td.rp-item-field-cell';
+    show = 'td.rp-item-field-cell,td.rp-item-upload-action';
   } else if (status == 'error') {
     hide = 'td.rp-item-progress-cell,td.rp-item-field-cell';
-    show = 'td.rp-item-message-cell';
+    show = 'td.rp-item-message-cell,td.rp-item-upload-action';
   }
   rowEl.querySelectorAll(hide).forEach(row => row.style.display = 'none');
   rowEl.querySelectorAll(show).forEach(row => row.style.display = 'table-cell');

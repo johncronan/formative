@@ -338,8 +338,8 @@ class SubmissionItemCreateView(SubmissionBase,
                 if item._file: delete_file(item._file)
                 if name:
                     # TODO: option to init field with name
-                    item._file, item._filesize = '', size # TODO:
-    # don't display failed (or in-progress) uploads - delete them on form save
+                    item._file, item._filesize = '', size
+            # TODO: failed (or in-progress) uploads - delete them on form submit
                 item._error, item._message = False, ''
             item.save()
             items.append(item)

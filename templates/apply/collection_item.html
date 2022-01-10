@@ -27,12 +27,14 @@
         </td>
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"{{ hide }}>
+        {% if item|underscore:'filesize' %}
           <span class="rp-done-icon material-icons">
             download_done
           </span>
           <span style="line-height: 48px;">
             ({{ item|underscore:'filesize' }} bytes)
           </span>
+        {% endif %}
         </td>
       {% endfor %}
     {% endwith %}
@@ -40,6 +42,12 @@
       {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan|add:1 }}"{{ hide }}>
+          <div class="rp-progress-bar rp-progress-rounded">
+            <div class="rp-progress-percentage rp-progress-rounded
+                        mdc-theme--primary-bg" style="width: 0;">
+              <span>0%</span>
+            </div>
+          </div>
         </td>
       {% endwith %}
       {% with hide=columns.message|yesno:', style="display: none;"'|safe %}
@@ -50,16 +58,19 @@
         {% endif %}
         </td>
       {% endwith %}
-      {% if columns.upload %}
-        <td class="rp-item-action-cell mdc-data-table__cell">
+      {% if error or form_block.file_optional %}
+        {% with hide=columns.upload|yesno:', style="display: none;"'|safe %}
+        <td class="rp-item-action-cell rp-item-upload-action
+                   mdc-data-table__cell"{{ hide }}>
           <button class="rp-item-upload mdc-icon-button material-icons"
                   type="button">
             <div class="mdc-icon-button__ripple"></div>
             upload
           </button>
           <input type="file" name="itemfile{{ item|underscore:'id' }}"
-                 style="visibility: hidden; width: 0; user-select: none;"/>
+                 style="display: none;"/>
         </td>
+        {% endwith %}
       {% endif %}
     {% endif %}
     {% if not form_block.fixed %}

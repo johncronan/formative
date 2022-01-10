@@ -47,6 +47,6 @@
   {% if form_block.has_file %}
   <input type="file" name="file{{ form_block.pk }}"
          {% if form_block.max_items > 1 %}multiple{% endif %}
-         style="visibility: hidden; width: 0; user-select: none;"/>
+         style="display: none;"/>
   {% endif %}
 {% endif %}
