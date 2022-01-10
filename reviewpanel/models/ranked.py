@@ -100,8 +100,9 @@ class UnderscoredRankedModel(models.Model):
         self._rank = 0
         if rank:
             self.save(update_fields=['_rank']) # get the same lock
-            section = self.rank_group().filter(_rank__gt=rank)
-            section.update(_rank=F('_rank')-1)
+            group = self.rank_group()
+            group.filter(_rank__gt=rank).update(_rank=-F('_rank'))
+            group.filter(_rank__lt=-rank).update(_rank=-F('_rank')-1)
         
         super().delete(*args, **kwargs)
     

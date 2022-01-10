@@ -255,22 +255,14 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return reverse(name, kwargs=kwargs)
 
 
-class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
-    template_name = 'apply/collection_items_new.html'
-    http_method_names = ['post']
-    upload = False
-    
-    def get_form(self, **kwargs):
-        if not self.block.has_file: return forms.Form(data={})
-        return ItemFileForm(block=self.block, data=kwargs)
-    
+class SubmissionBase(generic.View):
     def get_context_data(self, **kwargs):
         context = kwargs
         
         context['form_block'] = self.block
         return context
     
-    def post(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         form = get_object_or_404(Form,
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
@@ -279,7 +271,19 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
         
         self.submission = get_object_or_404(self.program_form.model,
                                             _id=self.kwargs['sid'])
-        
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SubmissionItemView(SubmissionBase, generic.base.TemplateResponseMixin):
+    template_name = 'apply/collection_items_new.html'
+    http_method_names = ['post']
+    upload = False
+    
+    def get_form(self, **kwargs):
+        if not self.block.has_file: return forms.Form(data={})
+        return ItemFileForm(block=self.block, data=kwargs)
+    
+    def post(self, request, *args, **kwargs):
         if not self.upload:
             if 'block_id' not in self.request.POST:
                 return HttpResponseBadRequest()
@@ -287,6 +291,9 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
             self.block = get_object_or_404(CollectionBlock,
                                            form=self.program_form,
                                            pk=self.request.POST['block_id'])
+
+            nitems = self.submission._items.filter(_block=self.block.pk).count()
+            
             files, new_file = [], True
             for key, val in self.request.POST.items():
                 if not key.startswith('filesize'): continue
@@ -296,6 +303,8 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
                 if size is None: return HttpResponseBadRequest()
                 files.append((val, size))
 
+            if len(files) == 1 and nitems >= self.block.max_items:
+                return HttpResponseBadRequest()
             if 'item_id' in self.request.POST and len(files) != 1:
                 return HttpResponseBadRequest()
             if not files:
@@ -310,7 +319,12 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
                                                     _block=self.block.pk)
                 if 'item_id' in self.request.POST:
                     item = get_object_or_404(self.program_form.item_model,
+                                             _submission=self.submission.pk,
                                              _id=self.request.POST['item_id'])
+                else:
+                    nitems += 1
+                if nitems > self.block.max_items: break
+                
                 if not form.is_valid():
                     item._error = True
                     if form.has_error('name'):
@@ -319,9 +333,27 @@ class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
                         msg = form.errors['size'][0]
                     else: msg = form.non_field_errors()[0]
                     item._message = msg
-                elif name: item._file, item._filesize = name, size
+                else:
+                    if name: item._file, item._filesize = '', size # TODO:
+    # don't display failed (or in-progress) uploads - delete them on form save
+                    item._error, item._message = False, ''
                 item.save()
                 items.append(item)
             
             context = self.get_context_data(items=items, new_file=new_file)
             return self.render_to_response(context)
+
+
+class SubmissionItemRemoveView(SubmissionBase):
+    http_method_names = ['post']
+    
+    def post(self, request, *args, **kwargs):
+        if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
+        item = get_object_or_404(self.program_form.item_model,
+                                 _submission=self.submission.pk,
+                                 _id=self.request.POST['item_id'])
+        item.delete()
+        return HttpResponse('')
+
+
+# class SubmissionItemReorderView(SubmissionBase):

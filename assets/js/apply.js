@@ -108,10 +108,13 @@ function newItems(blockId, files, itemId) {
           tbody.innerHTML = html;
           tablediv.style.display = 'flex';
         } else tablePos.insertAdjacentHTML('afterend', html);
+        // if count of rows >= max_items, disable collection add button
         //  if there's a file (and no error), call the upload func
       }
       document.querySelectorAll('.rp-item-upload')
               .forEach(button => button.onclick = uploadClick);
+      document.querySelectorAll('.rp-item-remove')
+              .forEach(button => button.onclick = removeClick);
     })
     .catch(err => {
       
@@ -152,3 +155,23 @@ function uploadClick(event) {
 
 document.querySelectorAll('.rp-item-upload')
         .forEach(button => button.onclick = uploadClick);
+
+function removeClick(event) {
+  var href = document.location.href;
+  var url = href.substring(0, href.lastIndexOf('/'));
+  var rowEl = event.target.parentElement.parentElement;
+  var id = rowEl.dataset.id;
+  
+  var data = new FormData();
+  data.append('item_id', id);
+  axios.post(url + '/removeitem', data)
+    .then(res => {
+      console.log(res);
+      rowEl.parentElement.removeChild(rowEl);
+      // if number of rows == 0, make the tablediv have visibility none
+      // if number of rows < max_items, reenable collection add button
+    });
+}
+
+document.querySelectorAll('.rp-item-remove')
+        .forEach(button => button.onclick = removeClick);
