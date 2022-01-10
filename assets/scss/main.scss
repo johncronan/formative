@@ -152,6 +152,12 @@ $maxlines: 30;
   top: 2px;
 }
 
+.rp-done-icon {
+  user-select: none;
+  position: relative;
+  top: 7px; // TODO: where is this coming from?
+}
+
 .rp-collection-button {
   grid-column-start: 1;
 }

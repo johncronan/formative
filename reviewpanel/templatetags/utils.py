@@ -5,4 +5,6 @@ register = template.Library()
 
 @register.filter
 def underscore(obj, name):
-    return getattr(obj, '_' + name)
+    attr = getattr(obj, '_' + name)
+    if callable(attr): return attr()
+    return attr

@@ -86,7 +86,8 @@ function postUrlBase() {
   return url;
 }
 
-function postFile(itemId, file) {
+function postFile(rowEl, file) {
+  var itemId = rowEl.dataset.id
   var url = postUrlBase();
   var data = new FormData();
   data.append('item_id', itemId);
@@ -101,7 +102,7 @@ function postFile(itemId, file) {
   
   axios.post(url + '/file', data, config)
     .then(res => {
-      console.log('done');
+      setStatus(rowEl, 'normal');
     });
 //    .catch(err => {
 //      
@@ -122,7 +123,7 @@ function processQueue() {
 }
 
 function uploadFile(rowEl, file) {
-  filesQueue.push([false, rowEl.dataset.id, file]);
+  filesQueue.push([false, rowEl, file]);
 }
 
 function rowStatus(rowEl) {
@@ -131,6 +132,19 @@ function rowStatus(rowEl) {
   if (rowEl.querySelector('td.rp-item-message-cell').style.display != 'none')
     return 'error';
   return 'normal';
+}
+
+function setStatus(rowEl, status) {
+  var hide, show;
+  if (status == 'normal') {
+    hide = 'td.rp-item-progress-cell,td.rp-item-message-cell';
+    show = 'td.rp-item-field-cell';
+  } else if (status == 'error') {
+    hide = 'td.rp-item-progress-cell,td.rp-item-field-cell';
+    show = 'td.rp-item-message-cell';
+  }
+  rowEl.querySelectorAll(hide).forEach(row => row.style.display = 'none');
+  rowEl.querySelectorAll(show).forEach(row => row.style.display = 'table-cell');
 }
 
 function newItems(blockId, files, itemId) {

@@ -603,3 +603,7 @@ class SubmissionItem(UnderscoredRankedModel):
         return self.__class__.objects.filter(_submission=self._submission,
                                              _collection=self._collection,
                                              _block=self._block)
+    
+    def _file_name(self):
+        if not self._file: return None
+        return self._file.name[self._file.name.index('/')+1:]
