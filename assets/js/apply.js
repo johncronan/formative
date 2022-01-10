@@ -54,6 +54,20 @@ const ripples = [];
 document.querySelectorAll('.mdc-button,.mdc-button-icon')
         .forEach(button => ripples.push(new MDCRipple(button)));
 
+function itemMove(rowEl, rank) {
+  var itemId = rowEl.dataset.id;
+  var href = document.location.href;
+  var url = href.substring(0, href.lastIndexOf('/'));
+  
+  var data = new FormData();
+  data.append('item_id', itemId);
+  data.append('rank', rank);
+  axios.post(url + '/moveitem', data)
+    .then(res => {
+    }).catch(err => {
+    });
+}
+
 document.addEventListener('dragover', function(e) { e.preventDefault() });
 
 document.querySelectorAll('.rp-collection-table-body')
@@ -61,15 +75,11 @@ document.querySelectorAll('.rp-collection-table-body')
           handle: '.rp-sort-handle-cell',
           animation: 120,
           onEnd: event => {
+            var itemRow = event.item;
+            if (event.oldIndex != event.newIndex)
+                itemMove(itemRow, event.newIndex + 1);
           }
         }));
-
-window.addEventListener("pageshow", function() {
-  document.querySelectorAll('.rp-text-field--invalid')
-          .forEach(text => text.classList.add('mdc-text-field--invalid'));
-  
-  texts.forEach(text => { if (text.value) text.value = text.value; });
-});
 
 function uploadFile() {
   var config = {
@@ -108,7 +118,10 @@ function newItems(blockId, files, itemId) {
           tbody.innerHTML = html;
           tablediv.style.display = 'flex';
         } else tablePos.insertAdjacentHTML('afterend', html);
-        // if count of rows >= max_items, disable collection add button
+        var numRows = tbody.children.length;
+        var maxItems = table.dataset.maxItems;
+        var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
+        if (numRows >= maxItems) document.querySelector(sel).disabled = true;
         //  if there's a file (and no error), call the upload func
       }
       document.querySelectorAll('.rp-item-upload')
@@ -160,18 +173,36 @@ function removeClick(event) {
   var href = document.location.href;
   var url = href.substring(0, href.lastIndexOf('/'));
   var rowEl = event.target.parentElement.parentElement;
+  var blockId = rowEl.dataset.blockId;
   var id = rowEl.dataset.id;
   
   var data = new FormData();
   data.append('item_id', id);
   axios.post(url + '/removeitem', data)
     .then(res => {
-      console.log(res);
-      rowEl.parentElement.removeChild(rowEl);
-      // if number of rows == 0, make the tablediv have visibility none
-      // if number of rows < max_items, reenable collection add button
+      var tbody = rowEl.parentElement;
+      tbody.removeChild(rowEl);
+      var numRows = tbody.children.length;
+      var table = tbody.parentElement;
+      if (!numRows) {
+        var tablediv = table.parentElement.parentElement;
+        tablediv.style.display = 'none';
+      }
+      var maxItems = table.dataset.maxItems;
+      if (numRows < maxItems) {
+        var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
+        document.querySelector(sel).disabled = false;
+      }
+    }).catch(err => {
     });
 }
 
 document.querySelectorAll('.rp-item-remove')
         .forEach(button => button.onclick = removeClick);
+
+window.addEventListener("pageshow", function() {
+  document.querySelectorAll('.rp-text-field--invalid')
+          .forEach(text => text.classList.add('mdc-text-field--invalid'));
+  
+  texts.forEach(text => { if (text.value) text.value = text.value; });
+});

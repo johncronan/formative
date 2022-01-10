@@ -23,4 +23,6 @@ urlpatterns = [
          views.SubmissionItemView.as_view(upload=True), name='item_file'),
     path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/removeitem',
          views.SubmissionItemRemoveView.as_view(), name='item_remove'),
+    path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/moveitem',
+         views.SubmissionItemMoveView.as_view(), name='item_move'),
 ]

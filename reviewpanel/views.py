@@ -155,7 +155,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         context['field_labels'] = form.field_labels()
         if self.page:
             args, items = {'page': self.page, 'skip': self.skipped.keys()}, {}
-            for item in form.visible_items(**args):
+            for item in form.visible_items(self.object, **args):
                 if item._block not in items: items[item._block] = []
                 items[item._block].append(item)
             
@@ -304,7 +304,8 @@ class SubmissionItemView(SubmissionBase, generic.base.TemplateResponseMixin):
                 files.append((val, size))
 
             if len(files) == 1 and nitems >= self.block.max_items:
-                return HttpResponseBadRequest()
+                if 'item_id' not in self.request.POST:
+                    return HttpResponseBadRequest()
             if 'item_id' in self.request.POST and len(files) != 1:
                 return HttpResponseBadRequest()
             if not files:
@@ -356,4 +357,21 @@ class SubmissionItemRemoveView(SubmissionBase):
         return HttpResponse('')
 
 
-# class SubmissionItemReorderView(SubmissionBase):
+class SubmissionItemMoveView(SubmissionBase):
+    http_method_names = ['post']
+    
+    def post(self, request, *args, **kwargs):
+        if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
+        item = get_object_or_404(self.program_form.item_model,
+                                 _submission=self.submission.pk,
+                                 _id=self.request.POST['item_id'])
+        
+        if 'rank' not in self.request.POST: return HttpResponseBadRequest()
+        rank = self.request.POST['rank']
+        if not rank.isdigit() or int(rank) <= 0:
+            return HttpResponseBadRequest()
+        
+        item._rank = int(rank)
+        
+        item.save()
+        return HttpResponse('')

@@ -4,8 +4,7 @@
 
       <tr class="mdc-data-table__row"
           data-block-id="{{ form_block.pk }}"
-          data-id="{{ item|underscore:'id' }}"
-          data-rank="{{ item|underscore:'rank' }}">
+          data-id="{{ item|underscore:'id' }}">
       {% if form_block.items_sortable %}
         <td class="rp-sort-handle-cell mdc-data-table__cell">
           <button type="button" class="mdc-icon-button material-icons">

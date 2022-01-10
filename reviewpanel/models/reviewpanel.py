@@ -127,7 +127,8 @@ class Form(AutoSlugModel):
         name = self.db_slug + '_item_'
         class Meta(SubmissionItem.Meta):
             constraints = [
-                UniqueConstraint(fields=['_submission', '_collection', '_rank'],
+                UniqueConstraint(fields=['_submission', '_collection',
+                                         '_block', '_rank'],
                                  name=self.db_slug+'_unique_item_rank')
             ]
         return create_model(name, fields, table_prefix=self.program.db_slug,
@@ -197,13 +198,13 @@ class Form(AutoSlugModel):
         if page and page > 0: return query.filter(page=page)
         return query.filter(page__gt=0)
     
-    def visible_items(self, page=None, skip=None):
-        query = self.item_model.objects.all()
+    def visible_items(self, submission, page=None, skip=None):
+        query = self.item_model.objects.filter(_submission=submission)
         if skip: query = query.exclude(_block__in=skip)
         if page and page > 0:
             block_ids = Subquery(self.blocks.filter(page=page).values('pk'))
             query = query.filter(_block__in=block_ids)
-        return query
+        return query.order_by('_collection', '_block', '_rank')
 
     def field_labels(self):
         labels = {}
@@ -577,7 +578,6 @@ def file_path(instance, filename):
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:
         abstract = True
-        ordering = ['_submission', '_collection', '_rank']
     
     _id = models.BigAutoField(primary_key=True, editable=False)
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
@@ -596,4 +596,5 @@ class SubmissionItem(UnderscoredRankedModel):
     
     def rank_group(self):
         return self.__class__.objects.filter(_submission=self._submission,
-                                             _collection=self._collection)
+                                             _collection=self._collection,
+                                             _block=self._block)
