@@ -8,7 +8,7 @@ from django.forms.models import modelform_factory
 from django.views import generic
 import itertools
 
-from .models import Program, Form, FormBlock, CustomBlock
+from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
 from .forms import OpenForm, SubmissionForm, SubmissionItemForm
 
 
@@ -255,31 +255,47 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return reverse(name, kwargs=kwargs)
 
 
-class SubmissionItemView(ProgramFormMixin, generic.edit.ProcessFormView,
+class SubmissionItemView(ProgramFormMixin, generic.View,
                          generic.base.TemplateResponseMixin):
-    template_name = 'apply/collection_item.html'
+    template_name = 'apply/collection_items_new.html'
     http_method_names = ['post']
     upload = False
     
-    def get_form(self):
+    def get_form(self, file):
+        if not self.block.has_file: return forms.Form()
+        return SubmissionItemForm(block=self.block, files={'file': file})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(form=None, **kwargs)
+        
+        context['form_block'] = self.block
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
         if not self.program_form.item_model: raise Http404
         
         self.submission = get_object_or_404(self.program_form.model,
                                             _id=self.kwargs['sid'])
-#        item = get_object_or_404(self.program_form.item_model,
-#                                 _submission=self.kwargs['program_slug'],
-#                                 _id=self.kwargs['id'])
-        if 'block_id' not in self.request.POST: return HttpResponseBadRequest()
-        self.block = get_object_or_404(CollectionBlock, form=self.program_form,
-                                       pk=self.request.POST[''])
         
-        return SubmissionItemForm(block=self.block, **self.get_form_kwargs())
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        context['item'] = self.item
-        return context
-    
-    def post(self, request, *args, **kwargs):
-        if not self.upload: return super().post(self, request, *args, **kwargs)
+        if not self.upload:
+            if 'block_id' not in self.request.POST:
+                return HttpResponseBadRequest()
+            
+            self.block = get_object_or_404(CollectionBlock,
+                                           form=self.program_form,
+                                           pk=self.request.POST['block_id'])
+            items = []
+            for val in self.request.FILES.getlist('file'):
+                form = self.get_form(val)
+                item = self.program_form.item_model(_submission=self.submission,
+                                                    _collection=self.block.name,
+                                                    _block=self.block.pk)
+                if not form.is_valid():
+                    item._error = True
+                    msg = form.errors['file'] and form.errors['file'][0] or ''
+                    item._message = msg
+                item.save()
+                items.append(item)
+            
+            return  self.render_to_response(self.get_context_data(items=items))

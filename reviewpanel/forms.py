@@ -64,5 +64,3 @@ class SubmissionItemForm(forms.Form):
         
         self.block = block
         if block.file_optional: self.fields['file'].allow_empty_file = True
-    
-    

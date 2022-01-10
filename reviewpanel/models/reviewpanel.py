@@ -534,7 +534,9 @@ class CollectionBlock(FormBlock):
     def button_text(self):
         if 'button_text' in self.options: return self.options['button_text']
         
-        if self.has_file and not self.file_optional: return _('add file')
+        if self.has_file and not self.file_optional:
+            if self.max_items > 1: return _('add files')
+            return _('add file')
         return _('add item')
 
 
@@ -565,14 +567,15 @@ class Submission(models.Model):
         self.save()
 
 
-def file_path(instance, filename): return instance.slug + '/'
+def file_path(instance, filename):
+    return str(instance._submission_id) + '/' + filename
 
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:
         abstract = True
         ordering = ['_submission', '_collection', '_rank']
     
-#    _id = models.BigAutoField(primary_key=True, editable=False)
+    _id = models.BigAutoField(primary_key=True, editable=False)
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
     
     # the item's collection name == the name of the CollectionBlock

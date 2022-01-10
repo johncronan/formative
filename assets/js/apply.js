@@ -60,7 +60,7 @@ document.querySelectorAll('.rp-collection-table-body')
         .forEach(tbody => Sortable.create(tbody, {
           handle: '.rp-sort-handle-cell',
           animation: 120,
-          onEnd: evt => {
+          onEnd: event => {
           }
         }));
 
@@ -70,3 +70,65 @@ window.addEventListener("pageshow", function() {
   
   texts.forEach(text => { if (text.value) text.value = text.value; });
 });
+
+function newItems(blockId, files) {
+  var array = [];
+  if (files) {
+    for (let i=0; i < files.length; i++) {
+      array.push(files[i]);
+    }
+  } else array.push(null);
+  var href = document.location.href;
+  var url = href.substring(0, href.lastIndexOf('/'));
+  var data = new FormData();
+  data.append('block_id', blockId);
+  for (let i=0; i < array.length; i++) {
+    data.append('file', array[i]);
+  }
+  
+  var config = {
+    onUploadProgress: event => {
+      var percentCompleted = Math.round((event.loaded * 100) / event.total);
+      
+    }
+  };
+  axios.post(url + '/item', data, config)
+    .then(res => {
+      var table = document.querySelector('#collection' + blockId);
+      var tablediv = table.parentElement.parentElement;
+      var tbody = table.firstElementChild;
+      var tablePos = tbody.querySelector('tr:last-child');
+      var html = res.data.trim();
+      if (!tablePos) {
+        tbody.innerHTML = html;
+        tablediv.style.display = 'flex';
+      } else tablePos.insertAdjacentHTML('afterend', html);
+      //  if there's a file (and no error), call the upload func
+    })
+    .catch(err => {
+      
+    });
+  
+}
+
+function filesSelected(event, blockId) {
+  var fileInput = event.target;
+  newItems(blockId, fileInput.files);
+  fileInput.value = '';
+}
+
+function collectionClick(event) {
+  var buttonEl = event.target.parentElement;
+  var blockId = buttonEl.dataset.blockId;
+  
+  if (buttonEl.dataset.needsFile) {
+    var fileInput = document.querySelector('input[name="file' + blockId + '"]');
+    fileInput.onchange = event => filesSelected(event, blockId);
+    fileInput.click();
+  } else {
+    newItems(blockId);
+  }
+}
+
+document.querySelectorAll('.rp-collection-button')
+        .forEach(button => button.onclick = collectionClick);

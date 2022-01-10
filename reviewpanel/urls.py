@@ -19,6 +19,6 @@ urlpatterns = [
          name='submission_review'),
     path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/item',
          views.SubmissionItemView.as_view(), name='item'),
-    path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/<int:id>',
+    path('<slug:program_slug>/<slug:form_slug>/<uuid:sid>/file',
          views.SubmissionItemView.as_view(upload=True), name='item_file'),
 ]
