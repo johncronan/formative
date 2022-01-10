@@ -71,28 +71,26 @@ window.addEventListener("pageshow", function() {
   texts.forEach(text => { if (text.value) text.value = text.value; });
 });
 
-function newItems(blockId, files) {
-  var array = [];
-  if (files) {
-    for (let i=0; i < files.length; i++) {
-      array.push(files[i]);
-    }
-  } else array.push(null);
-  var href = document.location.href;
-  var url = href.substring(0, href.lastIndexOf('/'));
-  var data = new FormData();
-  data.append('block_id', blockId);
-  for (let i=0; i < array.length; i++) {
-    data.append('file', array[i]);
-  }
-  
+function uploadFile() {
   var config = {
     onUploadProgress: event => {
       var percentCompleted = Math.round((event.loaded * 100) / event.total);
       
     }
   };
-  axios.post(url + '/item', data, config)
+}
+
+function newItems(blockId, files) {
+  var href = document.location.href;
+  var url = href.substring(0, href.lastIndexOf('/'));
+  
+  var data = new FormData();
+  data.append('block_id', blockId);
+  if (files) for (let i=0; i < files.length; i++) {
+    data.append('filesize' + files[i].size, files[i].name);
+  }
+  
+  axios.post(url + '/item', data)
     .then(res => {
       var table = document.querySelector('#collection' + blockId);
       var tablediv = table.parentElement.parentElement;

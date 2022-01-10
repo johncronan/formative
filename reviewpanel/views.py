@@ -9,7 +9,7 @@ from django.views import generic
 import itertools
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
-from .forms import OpenForm, SubmissionForm, SubmissionItemForm
+from .forms import OpenForm, SubmissionForm, ItemFileForm
 
 
 class ProgramIndexView(generic.ListView):
@@ -255,24 +255,26 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return reverse(name, kwargs=kwargs)
 
 
-class SubmissionItemView(ProgramFormMixin, generic.View,
-                         generic.base.TemplateResponseMixin):
+class SubmissionItemView(generic.View, generic.base.TemplateResponseMixin):
     template_name = 'apply/collection_items_new.html'
     http_method_names = ['post']
     upload = False
     
-    def get_form(self, file):
-        if not self.block.has_file: return forms.Form()
-        return SubmissionItemForm(block=self.block, files={'file': file})
+    def get_form(self, **kwargs):
+        if not self.block.has_file: return forms.Form(data={})
+        return ItemFileForm(block=self.block, data=kwargs)
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(form=None, **kwargs)
+        context = kwargs
         
         context['form_block'] = self.block
-        
         return context
     
     def post(self, request, *args, **kwargs):
+        form = get_object_or_404(Form,
+                                 program__slug=self.kwargs['program_slug'],
+                                 slug=self.kwargs['form_slug'])
+        self.program_form = form
         if not self.program_form.item_model: raise Http404
         
         self.submission = get_object_or_404(self.program_form.model,
@@ -286,16 +288,26 @@ class SubmissionItemView(ProgramFormMixin, generic.View,
                                            form=self.program_form,
                                            pk=self.request.POST['block_id'])
             items = []
-            for val in self.request.FILES.getlist('file'):
-                form = self.get_form(val)
+            for key, val in self.request.POST.items():
+                if not key.startswith('filesize'): continue
+                sizeval = key[len('filesize'):]
+                size = None
+                if sizeval.isdigit(): size = int(sizeval)
+                if size is None: return HttpResponseBadRequest()
+                
+                form = self.get_form(name=val, size=size)
                 item = self.program_form.item_model(_submission=self.submission,
                                                     _collection=self.block.name,
                                                     _block=self.block.pk)
                 if not form.is_valid():
                     item._error = True
-                    msg = form.errors['file'] and form.errors['file'][0] or ''
+                    if form.has_error('name'):
+                        msg = form.errors['name'][0]
+                    elif form.has_error('size'):
+                        msg = form.errors['size'][0]
+                    else: msg = form.non_field_errors()[0]
                     item._message = msg
                 item.save()
                 items.append(item)
             
-            return  self.render_to_response(self.get_context_data(items=items))
+            return self.render_to_response(self.get_context_data(items=items))

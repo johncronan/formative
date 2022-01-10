@@ -28,8 +28,9 @@ def collection_items(items, block):
 
 @register.simple_tag
 def item_extra_action(item, block, new):
-    if new: return 0
-    if block.has_file and (item._error or not item._file): return 1
+    if new:
+        if block.has_file and item._error: return 1
+    elif block.has_file and (item._error or not item._file): return 1
     return 0
 
 @register.filter

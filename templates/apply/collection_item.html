@@ -20,21 +20,23 @@
     {% with hide=input_hidden|yesno:' style="display: none;",'|safe %}
       {% for name, span in form_block.collection_fields_with_spans %}
         <td class="mdc-data-table__cell"
-          {% if extra and forloop.counter == 1 %}
-            colspan="{{ span }}"
-          {% else %}
+          {% if not extra and forloop.counter == 1 %}
             colspan="{{ span|add:1 }}"
+          {% else %}
+            colspan="{{ span }}"
           {% endif %}{{ hide }}>
-          {{ file }}
+          {{ forloop.counter }}
         </td>
       {% endfor %}
     {% endwith %}
     {% endwith %}
-      {% with hide=new|yesno:', style="display: none;"'|safe %}
+    {% with progress_hidden=error|default:notnew %}
+      {% with hide=progress_hidden|yesno:' style="display: none;",'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan|add:1 }}"{{ hide }}>
         </td>
       {% endwith %}
+    {% endwith %}
     {% with hide=error|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-message-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan }}"{{ hide }}>

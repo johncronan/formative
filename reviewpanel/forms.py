@@ -1,4 +1,6 @@
 from django import forms
+from django.core.validators import MaxValueValidator
+from django.utils.translation import gettext_lazy as _
 
 from .models import CustomBlock, SubmissionItem as Item
 from .validators import MinWordsValidator, MaxWordsValidator
@@ -56,11 +58,24 @@ class SubmissionForm(forms.ModelForm):
                         self.cleaned_data[name] = ''
 
 
-class SubmissionItemForm(forms.Form):
-    file = forms.FileField(max_length=Item._meta.get_field('_file').max_length)
+class ItemFileForm(forms.Form):
+    # TODO: validate that there's an extension
+    name = forms.CharField(max_length=Item._meta.get_field('_file').max_length,
+                           error_messages={
+        'max_length': _('File name cannot exceed %(limit_value)d characters')
+    })
+    size = forms.IntegerField(error_messages={
+        # TODO: human readable
+        'max_value': _('Maximum file size is %(limit_value)d bytes.')
+    })
     
     def __init__(self, block=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         self.block = block
-        if block.file_optional: self.fields['file'].allow_empty_file = True
+        
+        maxsize = block.file_maxsize()
+        if maxsize:
+            self.fields['size'].validators.append(MaxValueValidator(maxsize))
+        
+        # TODO: maxsize by file type

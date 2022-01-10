@@ -500,6 +500,10 @@ class CollectionBlock(FormBlock):
         
         return fields
     
+    def file_maxsize(self):
+        if 'maxsize' in self.options: return self.options['maxsize']
+        return None
+    
     def span(self, media=None):
         width = 10
         if media == 'tablet': width = 8

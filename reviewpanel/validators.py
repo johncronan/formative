@@ -11,7 +11,7 @@ class WordValidator(BaseValidator):
 
 
 class MinWordsValidator(WordValidator):
-    message = _('Ensure this value has at least %(limit_value)d words' +
+    message = _('Ensure this text has at least %(limit_value)d words' +
                 ' (it has %(show_value)d).')
     code = 'min_words'
 
@@ -20,7 +20,7 @@ class MinWordsValidator(WordValidator):
 
 
 class MaxWordsValidator(WordValidator):
-    message = _('Ensure this value has at most %(limit_value)d words' +
+    message = _('Ensure this text has at most %(limit_value)d words' +
                 ' (it has %(show_value)d).')
     code = 'max_words'
 

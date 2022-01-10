@@ -18,7 +18,7 @@
       <table id="collection{{ form_block.pk }}" class="mdc-data-table__table">
         <tbody class="mdc-data-table__content">
         {% for item in items %}
-          {% include "./collection_item.html" with new=False %}
+          {% include "./collection_item.html" with new=False notnew=True %}
         {% endfor %}
         </tbody>
       </table>
