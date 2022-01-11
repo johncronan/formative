@@ -29,7 +29,7 @@ class UnderscoredRankedModel(models.Model):
                 obj = super().save(*args, **kwargs)
                 if had_pk: return
                 
-                group = self.rank_group()
+                group = self._rank_group()
                 query = group.aggregate(max_rank=Max('_rank'))
                 if query['max_rank'] is not None:
                     self._rank = query['max_rank'] + 1
@@ -45,7 +45,7 @@ class UnderscoredRankedModel(models.Model):
             super().save(*args, **kwargs)
             return
         
-        group = self.rank_group()
+        group = self._rank_group()
         
         # start from where we _really_ are, not where we thought we were;
         # otherwise we're not actually locking the correct rows
@@ -100,13 +100,16 @@ class UnderscoredRankedModel(models.Model):
         self._rank = 0
         if rank:
             self.save(update_fields=['_rank']) # get the same lock
-            group = self.rank_group()
+            group = self._rank_group()
             group.filter(_rank__gt=rank).update(_rank=-F('_rank'))
             group.filter(_rank__lt=-rank).update(_rank=-F('_rank')-1)
         
         super().delete(*args, **kwargs)
     
-    def rank_group(self):
+    def _rank_group(self):
+        if hasattr(self, 'rank_group') and callable(self.rank_group):
+            return self.rank_group()
+        
         return self.__class__.objects.all()
 
 
@@ -121,4 +124,6 @@ class RankedModel(UnderscoredRankedModel):
     @rank.setter
     def rank(self, value):
         self._rank = value
-        
+    
+    def rank_group(self):
+        return self.__class__.objects.all()

@@ -605,7 +605,7 @@ class SubmissionItem(UnderscoredRankedModel):
         # use 37 for directory uuid, 8 for possible alt name, 7 for order prefix
         return cls._meta.get_field('_file').max_length - 37 - 8 - 7
     
-    def rank_group(self):
+    def _rank_group(self):
         return self.__class__.objects.filter(_submission=self._submission,
                                              _collection=self._collection,
                                              _block=self._block)

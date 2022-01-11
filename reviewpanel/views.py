@@ -112,7 +112,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                          v = b.stock.conditional_value(**values)
                      elif b.block_type() == 'custom':
                          v = b.conditional_value(getattr(self.object, b.name))
-                     
+                     else: # collection
+                         v = bool(self.object._items.filter(_block=b.pk))
                      enabled += b.enabled_blocks(v, self.page)
                 blocks_checked[d_id] = True
             
