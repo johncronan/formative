@@ -207,6 +207,23 @@ $maxlines: 30;
       }
     }
     
+    & .rp-item-field {
+      height: 44px;
+      width: 100%;
+      padding: 0 8px;
+      
+      & input {
+        position: relative;
+        bottom: 6px;
+      }
+      & .mdc-floating-label {
+        font-size: 0.93rem;
+        @include media("<tablet") {
+          left: 8px;
+        }
+      }
+    }
+    
     &.rp-item-action-cell {
       width: 1px;
       white-space: nowrap;

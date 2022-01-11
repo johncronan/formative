@@ -81,7 +81,8 @@ def test_custom_textarea_block(custom_textarea_block):
 def collection_block_main(program_form, custom_textarea_block):
     b = CollectionBlock(form=program_form, name='files', page=2,
                         min_items=1, max_items=10, has_file=True,
-                        name1='caption')
+                        name1='caption', name2='timecode',
+                        options={'wide': ['caption']})
     b.save()
     yield b
 

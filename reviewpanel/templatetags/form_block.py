@@ -59,6 +59,11 @@ def for_choice_value(labels, value):
     if value in labels: return closest_label(labels[value])
     return None
 
+@register.filter
+def for_item_field(labels, field):
+    if field in labels: return labels[field]
+    return None
+
 @register.simple_tag(takes_context=True)
 def include_stock(context, block, labels, review=False):
     stock = block.stock

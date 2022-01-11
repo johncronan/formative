@@ -527,17 +527,18 @@ class CollectionBlock(FormBlock):
     def tablet_span(self): return self.span(media='tablet')
     def desktop_span(self): return self.span(media='desktop')
     
-    def horizontal_colspan(self, field=None):
-        if 'wide' in self.options:
-            if not field:
-                return len(self.options['wide']) + len(self.collection_fields())
-            if field in self.options['wide']: return 2
-        if not field: return max(len(self.collection_fields()), 1)
-        return 1
+    def total_colspan(self):
+        return len(self.collection_fields())
+    
+    def horizontal_width(self, field):
+        total = self.total_colspan() + len(self.options['wide'])
+        if 'wide' in self.options and field in self.options['wide']:
+            return 200.0 / total
+        return 100.0 / total
     
     def collection_fields_with_spans(self):
         fields = self.collection_fields()
-        return [ (n, self.horizontal_colspan(n)) for n in fields ]
+        return [ (n, self.horizontal_width(n)) for n in fields ]
     
     def items_sortable(self):
         return 'unsortable' not in self.options
