@@ -142,6 +142,9 @@ $maxlines: 30;
 
 .rp-form-bottom {
   grid-column-start: 1;
+  & .rp-error {
+    color: #af0109;
+  }
 }
 
 .rp-program-card {

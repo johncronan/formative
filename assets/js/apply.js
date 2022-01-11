@@ -54,6 +54,28 @@ const ripples = [];
 document.querySelectorAll('.mdc-button,.mdc-button-icon')
         .forEach(button => ripples.push(new MDCRipple(button)));
 
+
+function errorMessage(err, msg) {
+  if (err.response.status >= 500)
+    return (msg ? msg + ': ' : '') + 'server error';
+  return (msg ? msg + ': ' : '') + 'communication error';
+}
+
+function pageError() {
+  var bottom = document.querySelector('#rp-page-error');
+  bottom.style.display = 'block';
+  bottom.firstElementChild.innerHTML = 'Page needs to be reloaded.';
+  document.querySelectorAll('button').forEach(b => b.disabled = true);
+  for (let i=0; i < sortables.length; i++) sortables[i].option('sort', false);
+}
+
+function setError(rowEl, err, msg) {
+  setStatus(rowEl, 'error');
+  var td = rowEl.querySelector('td.rp-item-message-cell');
+  td.firstElementChild.innerHTML = errorMessage(err, msg);
+  pageError();
+}
+
 function itemMove(rowEl, rank) {
   var itemId = rowEl.dataset.id;
   var url = postUrlBase();
@@ -61,16 +83,17 @@ function itemMove(rowEl, rank) {
   var data = new FormData();
   data.append('item_id', itemId);
   data.append('rank', rank);
-  axios.post(url + '/moveitem', data)
-    .then(res => {
-    }).catch(err => {
+  axios.post(url + '/moveitem', data, { timeout: 10000 })
+    .catch(err => {
+        setError(rowEl, err);
     });
 }
 
 document.addEventListener('dragover', function(e) { e.preventDefault() });
 
+const sortables = [];
 document.querySelectorAll('.rp-collection-table-body')
-        .forEach(tbody => Sortable.create(tbody, {
+        .forEach(tbody => sortables.push(Sortable.create(tbody, {
           handle: '.rp-sort-handle-cell',
           animation: 120,
           onEnd: event => {
@@ -78,7 +101,7 @@ document.querySelectorAll('.rp-collection-table-body')
             if (event.oldIndex != event.newIndex)
                 itemMove(itemRow, event.newIndex + 1);
           }
-        }));
+        })));
 
 function postUrlBase() {
   var href = document.location.href;
@@ -86,8 +109,8 @@ function postUrlBase() {
   return url;
 }
 
-var filesQueue = [];
-var simultaneous = 4;
+const filesQueue = [];
+const simultaneous = 4;
 
 function postFile(rowEl, file) {
   var itemId = rowEl.dataset.id
@@ -119,10 +142,10 @@ function postFile(rowEl, file) {
         document.querySelectorAll('.rp-save-button,.rp-continue-button')
                 .forEach(button => button.disabled = false);
       processQueue();
+    })
+    .catch(err => {
+      setError(rowEl, err, 'upload failed');
     });
-//    .catch(err => {
-//      
-//    });
 }
 
 function processQueue() {
@@ -177,7 +200,7 @@ function newItems(blockId, files, itemId) {
     haveFile = true;
   }
   
-  axios.post(url + '/item', data)
+  axios.post(url + '/item', data, { timeout: 20000 })
     .then(res => {
       var table = document.querySelector('#collection' + blockId);
       var tablediv = table.parentElement.parentElement;
@@ -215,10 +238,29 @@ function newItems(blockId, files, itemId) {
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')
               .forEach(button => button.onclick = removeClick);
+    })
+    .catch(err => {
+      var table = document.querySelector('#collection' + blockId);
+      var tbody = table.firstElementChild;
+      var tr = tbody.firstElementChild;
+      var span = 0;
+      if (tr) {
+        let element = tr.firstElementChild;
+        span = element.colSpan;
+        while (element = element.nextElementSibling) {
+          span += element.colSpan;
+        }
+      }
+      if (!span) span = 1;
+      var errRow = document.createElement('tr');
+      var msg = errorMessage(err);
+      errRow.innerHTML = '<td class="mdc-data-table__cell" ' +
+        'style="height: 48px;"></td><td class="mdc-data-table__cell" ' +
+        'colspan="' + span + '"><span class="rp-item-error">' + msg +
+        '</span></td>';
+      tbody.appendChild(errRow);
+      pageError();
     });
-//    .catch(err => {
-//      
-//    });
   
 }
 
@@ -264,7 +306,7 @@ function removeClick(event) {
   
   var data = new FormData();
   data.append('item_id', id);
-  axios.post(url + '/removeitem', data)
+  axios.post(url + '/removeitem', data, { timeout: 10000 })
     .then(res => {
       var tbody = rowEl.parentElement;
       tbody.removeChild(rowEl);
@@ -279,12 +321,15 @@ function removeClick(event) {
         var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
         document.querySelector(sel).disabled = false;
       }
-    }).catch(err => {
+    })
+    .catch(err => {
+      setError(rowEl, err);
     });
 }
 
 document.querySelectorAll('.rp-item-remove')
         .forEach(button => button.onclick = removeClick);
+
 
 window.addEventListener("pageshow", function() {
   document.querySelectorAll('.rp-text-field--invalid')

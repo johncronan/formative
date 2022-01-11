@@ -18,7 +18,7 @@
     {% with hide=columns.fields|yesno:', style="display: none;"'|safe %}
       {% for name, span in form_block.collection_fields_with_spans %}
         <td class="rp-item-field-cell mdc-data-table__cell"
-          {% if not extra and forloop.counter == 1 %}
+          {% if not columns.upload and forloop.counter == 1 %}
             colspan="{{ span|add:1 }}"
           {% else %}
             colspan="{{ span }}"
@@ -26,7 +26,12 @@
           {{ forloop.counter }}
         </td>
       {% empty %}
-        <td class="rp-item-field-cell mdc-data-table__cell"{{ hide }}>
+        <td class="rp-item-field-cell mdc-data-table__cell"
+          {% if not columns.upload %}
+            colspan="{{ form_block.horizontal_colspan|add:1 }}"
+          {% else %}
+            colspan="{{ form_block.horizontal_colspan }}"
+          {% endif %}{{ hide }}>
         {% if item|underscore:'filesize' %}
           <span class="rp-done-icon material-icons">
             download_done
@@ -53,9 +58,9 @@
       {% with hide=columns.message|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-message-cell mdc-data-table__cell"
             colspan="{{ form_block.horizontal_colspan }}"{{ hide }}>
-        {% if not hide %}
-          <span class="rp-item-error">{{ item|underscore:'message' }}</span>
-        {% endif %}
+          <span class="rp-item-error">
+            {% if not hide %}{{ item|underscore:'message' }}{% endif %}
+          </span>
         </td>
       {% endwith %}
       {% if error or form_block.file_optional %}

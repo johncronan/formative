@@ -39,10 +39,14 @@
     {% endfor %}
     
     {% if 0 and program_form.num_pages > 1 %}
-      <div class="rp-form-bottom mdc-layout-grid__cell">
+      <div class="rp-form- mdc-layout-grid__cell">
         Page {{ page }} of {{ program_form.num_pages }}
       </div>
     {% endif %}
+    <div {% if not form.non_field_errors %}style="display: none;"{% endif %}
+         id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell">
+      <span class="rp-error">{{ form.non_field_errors }}</span>
+    </div>
   
   {% with program_form as form %}
   {% with submission|underscore:'id' as id %}
@@ -77,7 +81,6 @@
     <span class="mdc-button__label">continue</span>
   </button>
   
-  {{ form.non_field_errors }}
 {% endblock %}
 
 {% block post_layout %}

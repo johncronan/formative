@@ -105,16 +105,17 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 # if it isn't among the blocks that were already _skipped,
                 # enable this page's fields with a dependency matching the value
                 if d_id not in skipped_ids:
-                     b = FormBlock.objects.get(id=d_id)
-                     if b.block_type() == 'stock':
-                         values = { n: getattr(self.object, n)
-                                    for n in b.stock.field_names() }
-                         v = b.stock.conditional_value(**values)
-                     elif b.block_type() == 'custom':
-                         v = b.conditional_value(getattr(self.object, b.name))
-                     else: # collection
-                         v = bool(self.object._items.filter(_block=b.pk))
-                     enabled += b.enabled_blocks(v, self.page)
+                    b = FormBlock.objects.get(id=d_id)
+                    if b.block_type() == 'stock':
+                        values = { n: getattr(self.object, n)
+                                   for n in b.stock.field_names() }
+                        v = b.stock.conditional_value(**values)
+                    elif b.block_type() == 'custom':
+                        v = b.conditional_value(getattr(self.object, b.name))
+                    else: # collection
+                        v = bool(self.object._items.filter(_block=b.pk))
+                    
+                    enabled += b.enabled_blocks(v, self.page)
                 blocks_checked[d_id] = True
             
             if d_id and block.id not in enabled:
@@ -365,6 +366,8 @@ class SubmissionItemUploadView(SubmissionItemBase):
         if 'file' not in self.request.FILES: return HttpResponseBadRequest()
         item._file = self.request.FILES['file']
         
+        # check _filesize is still correct
+        # process meta, check for errors
         item.save()
         return HttpResponse('')
 
