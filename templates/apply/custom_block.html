@@ -13,9 +13,10 @@
   {% endif %}
 {% endif %}
 
+{% with s=hlabel|yesno:"-2,0" sp=form_block.span %}
 {% if hlabel %}
 <div class="rp-horizontal-label-cell rp-layout-cell-start
-            mdc-layout-grid__cell--span-2
+            mdc-layout-grid__cell--span-{% if sp == 1 %}1{% else %}2{% endif %}
             mdc-layout-grid__cell--span-2-tablet
             mdc-layout-grid__cell--span-2-desktop">
   <label {% if not wlabel %}for="{{ field.id_for_label }}"{% endif %}>
@@ -25,7 +26,6 @@
 {% endif %}
 
 {% with types=form_block.InputType %}
-{% with s=hlabel|yesno:"-2,0" sp=form_block.span %}
 {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
 <div class="rp-layout-cell {% if not hlabel %}rp-layout-cell-start{% endif %}
             rp-layout-cell-{{ form_block.type }} mdc-layout-grid__cell
@@ -33,7 +33,6 @@ mdc-layout-grid__cell--span-{% if sp < 4 %}{{ sp }}{% else %}{{ sp|add:s }}{% en
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ tsp }}{% else %}{{ tsp|add:s }}{% endif %}-tablet
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% endif %}-desktop
 ">
-{% endwith %}
 {% endwith %}
 
 {% if form_block.type == types.TEXT or form_block.type == types.NUMERIC %}
@@ -85,8 +84,9 @@ mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% 
 {% endwith %}
 
 {% endwith %}
-{% endwith %}
-{% endwith %}
 
+{% endwith %}
+{% endwith %}
+{% endwith %}
 {% endwith %}
 </div>

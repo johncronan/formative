@@ -3,12 +3,16 @@
 
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with wlabel=labels|get_by_style:'widget' %}
-  <div class="mdc-text-field
-        {% if form_block.num_lines > 1 %}
+  {% with types=form_block.InputType %}
+  <div class="mdc-text-field rp-text-field
+        {% if form_block.type == types.NUMERIC %}
+              rp-text-field-numeric
+        {% elif form_block.num_lines > 1 %}
               rp-textarea rp-textarea-rows-{{ form_block.num_lines }}
         {% endif %}
               {% if field.errors %}rp-text-field--invalid{% endif %}
               mdc-text-field--outlined">
+  {% endwith %}
   {% if form_block.num_lines == 1 or not form_block.num_lines %}
     {% render_field field class+="mdc-text-field__input" %}
   {% endif %}

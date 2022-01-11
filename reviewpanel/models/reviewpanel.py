@@ -454,6 +454,10 @@ class CustomBlock(FormBlock):
         if self.type in (self.InputType.CHOICE, self.InputType.BOOLEAN):
             width = 8
         elif self.type == self.InputType.NUMERIC: width = 2
+        
+        if self.type == self.InputType.NUMERIC:
+            if 'span_phone' in self.options:
+                return min(self.options['span_phone'], 4)
 
         if 'span_tablet' in self.options:
             if not media: return min(width, self.options['span_tablet'], 4)
