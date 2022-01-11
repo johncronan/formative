@@ -86,6 +86,9 @@ function postUrlBase() {
   return url;
 }
 
+var filesQueue = [];
+var simultaneous = 4;
+
 function postFile(rowEl, file) {
   var itemId = rowEl.dataset.id
   var url = postUrlBase();
@@ -112,15 +115,15 @@ function postFile(rowEl, file) {
           break;
         }
       }
+      if (!filesQueue.length)
+        document.querySelectorAll('.rp-save-button,.rp-continue-button')
+                .forEach(button => button.disabled = false);
       processQueue();
     });
 //    .catch(err => {
 //      
 //    });
 }
-
-var filesQueue = [];
-var simultaneous = 4;
 
 function processQueue() {
   for (let i=0; i < filesQueue.length; i++) {
@@ -134,6 +137,8 @@ function processQueue() {
 
 function uploadFile(rowEl, file) {
   filesQueue.push([false, rowEl, file]);
+  document.querySelectorAll('.rp-save-button,.rp-continue-button')
+          .forEach(button => button.disabled = true);
 }
 
 function rowStatus(rowEl) {
