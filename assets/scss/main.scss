@@ -218,9 +218,7 @@ $maxlines: 30;
       }
       & .mdc-floating-label {
         font-size: 0.93rem;
-        @include media("<tablet") {
-          left: 8px;
-        }
+        left: 8px;
       }
     }
     

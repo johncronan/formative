@@ -536,9 +536,13 @@ class CollectionBlock(FormBlock):
             return 200.0 / total
         return 100.0 / total
     
-    def collection_fields_with_spans(self):
+    def collection_fields_as_blocks(self):
+        class ColFieldBlock:
+            def __init__(self, name, width):
+                self.name, self.width = name, width
+        
         fields = self.collection_fields()
-        return [ (n, self.horizontal_width(n)) for n in fields ]
+        return [ ColFieldBlock(n, self.horizontal_width(n)) for n in fields ]
     
     def items_sortable(self):
         return 'unsortable' not in self.options

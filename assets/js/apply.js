@@ -56,7 +56,7 @@ document.querySelectorAll('.mdc-button,.mdc-button-icon')
 
 
 function errorMessage(err, msg) {
-  if (err.response.status >= 500)
+  if (err.response && err.response.status >= 500)
     return (msg ? msg + ': ' : '') + 'server error';
   return (msg ? msg + ': ' : '') + 'communication error';
 }
@@ -185,6 +185,13 @@ function setStatus(rowEl, status) {
   rowEl.querySelectorAll(show).forEach(row => row.style.display = 'table-cell');
 }
 
+function updateTotal(blockId, incr) {
+  var prefix = 'input[name="items' + blockId;
+  var n = parseInt(document.querySelector(prefix + '-TOTAL_FORMS"]').value);
+  document.querySelector(prefix + '-TOTAL_FORMS"]').value = n + incr;
+  document.querySelector(prefix + '-INITIAL_FORMS"]').value = n + incr;
+}
+
 function newItems(blockId, files, itemId) {
   var url = postUrlBase();
   
@@ -213,6 +220,7 @@ function newItems(blockId, files, itemId) {
       } else {
         var tablePos = tbody.querySelector('tr:last-child');
         var html = res.data.trim();
+        var prevNum = tbody.children.length;
         if (!tablePos) {
           tbody.innerHTML = html;
           tablediv.style.display = 'flex';
@@ -224,7 +232,10 @@ function newItems(blockId, files, itemId) {
             rows.push(element);
           }
         }
+        
         var numRows = tbody.children.length;
+        updateTotal(blockId, numRows - prevNum);
+        
         var maxItems = table.dataset.maxItems;
         var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
         if (numRows >= maxItems) document.querySelector(sel).disabled = true;
@@ -238,6 +249,14 @@ function newItems(blockId, files, itemId) {
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')
               .forEach(button => button.onclick = removeClick);
+      document.querySelectorAll('.mdc-text-field')
+              .forEach(text => {
+        var t = new MDCTextField(text);
+        if (text.classList.contains('rp-text-field--invalid')) {
+          t.useNativeValidation = false;
+          t.valid = false;
+        }
+      });
     })
     .catch(err => {
       var table = document.querySelector('#collection' + blockId);
@@ -259,6 +278,7 @@ function newItems(blockId, files, itemId) {
         'colspan="' + span + '"><span class="rp-item-error">' + msg +
         '</span></td>';
       tbody.appendChild(errRow);
+      table.parentElement.parentElement.style.display = 'flex';
       pageError();
     });
   
@@ -310,6 +330,8 @@ function removeClick(event) {
     .then(res => {
       var tbody = rowEl.parentElement;
       tbody.removeChild(rowEl);
+      /* updateTotal(blockId, 1); you'd think so! see forms.ItemsFormSet */
+      
       var numRows = tbody.children.length;
       var table = tbody.parentElement;
       if (!numRows) {

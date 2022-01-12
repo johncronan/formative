@@ -83,3 +83,21 @@ class ItemFileForm(forms.Form):
             self.fields['size'].validators.append(MaxValueValidator(maxsize))
         
         # TODO: maxsize by file type
+
+
+class ItemsFormSet(forms.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    # we can have sparse form indices in the request kwarg data (due to deletes)
+    # so the total form count that we get is actually a max possible index.
+    # this is where we filter out invalid forms in the formset that result
+    def is_valid(self):
+        if not self.is_bound: return False
+        
+        self.errors # triggers a full clean the first time only
+        
+        forms_valid = all([ form.is_valid() for i, form in enumerate(self.forms)
+                            if self.prefix + f'-{i}-_id' in form.data])
+        
+        return forms_valid and not self.non_form_errors()

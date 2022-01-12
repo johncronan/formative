@@ -4,12 +4,12 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
 from django.db.models import Min
-from django.forms.models import modelform_factory
+from django.forms.models import modelform_factory, inlineformset_factory
 from django.views import generic
 import itertools
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
-from .forms import OpenForm, SubmissionForm, ItemFileForm
+from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet
 from .utils import delete_file
 
 
@@ -78,27 +78,28 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if 'page' in self.kwargs: self.page = self.kwargs['page']
         if self.first_page: self.page = 1
 
-        self.skipped, self.blocks_by_name = {}, {}
+        self.skipped, self.blocks_by_name, self.formsets = {}, {}, None
         
         return super().dispatch(request, *args, **kwargs)
     
     def get_object(self):
         submission = get_object_or_404(self.program_form.model,
                                        _id=self.kwargs['sid'])
+        
         return submission
 
     def get_form(self):
         fields, widgets, customs, stocks = [], {}, {}, {}
 
-        query = self.program_form.blocks.all()
-        if self.page: query = query.filter(page=self.page)
-        elif self.request.method == 'POST': query = query.none()
+        self.query = self.program_form.blocks.all()
+        if self.page: self.query = self.query.filter(page=self.page)
+        elif self.request.method == 'POST': self.query = self.query.none()
 
         blocks_checked, enabled = {}, []
         skipped_pages = self.object._skipped[:self.page or self.object._valid]
         skipped_ids = dict.fromkeys(itertools.chain(*skipped_pages), True)
         
-        for block in query:
+        for block in self.query:
             d_id = block.dependence_id
             if d_id and d_id not in blocks_checked:
                 # when we encounter a new block that some field is dependent on,
@@ -135,7 +136,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                         widgets[name] = forms.CheckboxInput
                 elif block.block_type() == 'stock':
                     stocks[name] = block.stock
-
+        
+        # this reuses self.query:
+        self.formsets = self.get_formsets()
+        
         def callback(model_field, **kwargs):
             name = model_field.name
             if name in customs:
@@ -150,6 +154,31 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         f = form_class(custom_blocks=customs, stock_blocks=stocks,
                        **self.get_form_kwargs())
         return f
+    
+    def get_formsets(self):
+        kwargs = self.get_form_kwargs()
+        kwargs.pop('prefix')
+
+        formsets = {}
+        for block in self.query:
+            if block.block_type() != 'collection': continue
+            
+            FormSet = inlineformset_factory(self.program_form.model,
+                                            self.program_form.item_model,
+                                            formset=ItemsFormSet,
+                                            fields=block.collection_fields(),
+                                            # TODO: use edit_only once available
+                                            max_num=0, can_delete=False,
+                                            validate_max=False)
+            
+            queryset = self.object._items.filter(_block=block.pk)
+            queryset = queryset.exclude(_file='', _filesize__gt=0)
+            
+            formset = FormSet(prefix=f'items{block.pk}', queryset=queryset,
+                              **kwargs)
+            formsets[block.pk] = formset
+        
+        return formsets
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -166,7 +195,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 'page': self.page,
                 'prev_page': self.page > 1 and self.page - 1 or None,
                 'visible_blocks': form.visible_blocks(**args),
-                'visible_items': items
+                'visible_items': items,
+                'formsets': self.formsets
             })
         else: context['prev_page'] = form.num_pages()
         
@@ -216,9 +246,20 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         self.object._skipped[self.page-1] = list(self.skipped.keys())
         self.reset_skipped()
         
+        for formset in self.formsets.values(): formset.save()
+        
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
-
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        
+        form, formsets = self.get_form(), self.formsets
+        if form.is_valid() and all(f.is_valid() for f in formsets.values()):
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+    
     def url_args(self, id=True):
         args = {
             'program_slug': self.program_form.program.slug,
@@ -286,6 +327,19 @@ class SubmissionItemCreateView(SubmissionBase,
         if not self.block.has_file: return forms.Form(data={})
         return ItemFileForm(block=self.block, data=kwargs)
     
+    def get_formset(self):
+        FormSet = inlineformset_factory(self.program_form.model,
+                                        self.program_form.item_model,
+                                        formset=ItemsFormSet,
+                                        fields=self.block.collection_fields(),
+                                        max_num=0, can_delete=False)
+        
+        queryset = self.submission._items.filter(_block=self.block.pk)
+        
+        formset = FormSet(prefix=f'items{self.block.pk}',
+                          queryset=queryset, instance=self.submission)
+        return formset
+    
     def post(self, request, *args, **kwargs):
         if 'block_id' not in self.request.POST:
             return HttpResponseBadRequest()
@@ -296,7 +350,7 @@ class SubmissionItemCreateView(SubmissionBase,
 
         nitems = self.submission._items.filter(_block=self.block.pk).count()
         
-        files, new_file = [], True
+        files, uploading = [], True
         for key, val in self.request.POST.items():
             if not key.startswith('filesize'): continue
             sizeval = key[len('filesize'):]
@@ -312,7 +366,7 @@ class SubmissionItemCreateView(SubmissionBase,
             return HttpResponseBadRequest()
         if not files:
             files.append((None, None))
-            new_file = False
+            uploading = False
         
         items = []
         for name, size in files:
@@ -346,7 +400,8 @@ class SubmissionItemCreateView(SubmissionBase,
             item.save()
             items.append(item)
         
-        context = self.get_context_data(items=items, new_file=new_file)
+        context = self.get_context_data(items=items, uploading=uploading,
+                                        formset=self.get_formset())
         return self.render_to_response(context)
 
 
@@ -363,11 +418,14 @@ class SubmissionItemUploadView(SubmissionItemBase):
     
     def post(self, request, *args, **kwargs):
         item = self.get_item()
-        if 'file' not in self.request.FILES: return HttpResponseBadRequest()
-        item._file = self.request.FILES['file']
         
+        if 'file' not in self.request.FILES: return HttpResponseBadRequest()
+        if item._error: return HttpResponseBadRequest()
+        
+        item._file = self.request.FILES['file']
         # check _filesize is still correct
         # process meta, check for errors
+        
         item.save()
         return HttpResponse('')
 

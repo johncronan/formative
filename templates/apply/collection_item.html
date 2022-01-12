@@ -2,6 +2,8 @@
 {% load form_block %}
 {% load utils %}
 
+{% item_form formset item as item_form %}
+
 {% with styles=form_block.form.label_class.LabelStyle %}
       <tr class="mdc-data-table__row"
           data-block-id="{{ form_block.pk }}"
@@ -14,27 +16,35 @@
           </button>
         </td>
       {% endif %}
-{% with error=item|underscore:'error' file=item|underscore:'file' %}
-  {% item_columns item form_block new_file as columns %}
-    {% with hide=columns.fields|yesno:', style="display: none;"'|safe %}
-      {% for name, span in form_block.collection_fields_with_spans %}
+  {% with error=item|underscore:'error' file=item|underscore:'file' %}
+    {% item_columns item form_block uploading as columns %}
+      {% form_hidden item_form 'id' as hidden_id %}
+
+      {% for field in form_block.collection_fields_as_blocks %}
+        {% block_field item_form field as form_field %}
+        
         <td class="rp-item-field-cell mdc-data-table__cell"
-          style="width: {{ span }}%;"
+          {% with fw=field.width h=' display: none;' %}
+          style="width: {{ fw }}%;{% if not columns.fields %}{{ h }}{% endif %}"
+          {% endwith %}
           {% if not columns.upload and forloop.counter == 1 %}
             colspan="2"
           {% else %}
             colspan="1"
-          {% endif %}{{ hide }}>
+          {% endif %}>
           <label class="rp-item-field mdc-text-field mdc-text-field--filled">
             <span class="mdc-text-field__ripple"></span>
-        {% with flabels=labels|for_item_field:name %}
-          {% with wl=flabels|get_by_style:styles.WIDGET %}
-            <span class="mdc-floating-label">{{ wl.text|default:name }}</span>
+        {% with flabels=labels|for_item_field:field.name %}
+          {% with label=flabels|get_by_style:styles.WIDGET %}
+            <span class="mdc-floating-label">
+              {{ label.text|default:field.name }}
+            </span>
           {% endwith %}
         {% endwith %}
-            <input class="mdc-text-field__input" type="text" name="test" />
+            {% render_field form_field class+="mdc-text-field__input" %}
             <span class="mdc-line-ripple"></span>
           </label>
+          {% if forloop.counter == 1 %}{{ hidden_id }}{% endif %}
         </td>
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"
@@ -48,9 +58,10 @@
             ({{ item|underscore:'filesize' }} bytes)
           </span>
         {% endif %}
+        {{ hidden_id }}
         </td>
       {% endfor %}
-    {% endwith %}
+    
     {% if form_block.has_file %}
       {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
@@ -95,6 +106,6 @@
           </button>
         </td>
     {% endif %}
-{% endwith %}
+  {% endwith %}
       </tr>
 {% endwith %}

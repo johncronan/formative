@@ -12,6 +12,12 @@ def block_field(form, block):
     if block.name in form.fields: return form[block.name]
     return None
 
+# get the inline formset corresponding to the given collection block
+@register.simple_tag
+def block_formset(formsets, block):
+    if block.pk in formsets: return formsets[block.pk]
+    return None
+
 @register.simple_tag
 def block_labels(labels, block):
     if block.block_type() == 'collection':
@@ -27,13 +33,24 @@ def collection_items(items, block):
     return None
 
 @register.simple_tag
-def item_columns(item, block, new_file):
+def item_columns(item, block, uploading):
     return {
-        'fields': not item._error and not new_file,
-        'progress': not item._error and new_file,
+        'fields': not item._error and not uploading,
+        'progress': not item._error and uploading,
         'message': item._error,
-        'upload': item._error or (not new_file and block.file_optional)
+        'upload': item._error or (not uploading and block.file_optional)
     }
+
+@register.simple_tag
+def item_form(formset, item):
+    for form in formset:
+        if form.instance == item: return form
+    return None
+
+@register.simple_tag
+def form_hidden(form, name):
+    if form: return form['_' + name]
+    return None
 
 @register.filter
 def get_by_style(labels, style):

@@ -1,5 +1,7 @@
 {% load form_block %}
 
+{% block_formset formsets form_block as formset %}
+
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with label=labels|get_by_style:styles.VERTICAL %}
 {% if label %}
@@ -49,4 +51,6 @@
          {% if form_block.max_items > 1 %}multiple{% endif %}
          style="display: none;"/>
   {% endif %}
+  
+  {{ formset.management_form }}
 {% endif %}
