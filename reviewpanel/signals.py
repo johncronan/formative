@@ -1,10 +1,11 @@
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef
 from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.utils.text import capfirst
 
 from .models import Form, FormBlock, CustomBlock, CollectionBlock, FormLabel
 from .stock import EmailWidget
+from .utils import any_name_field
 
 
 @receiver(post_save, sender=Form)
@@ -30,6 +31,7 @@ def customblock_post_save(sender, instance, created, **kwargs):
     if not created: return
 
     block = instance
+    if not block.page: return # no autocreated labels for autocreated fields
 
     # set up default labels for the block
     style = FormLabel.LabelStyle.WIDGET
@@ -67,11 +69,28 @@ def formblock_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=CollectionBlock)
 def collectionblock_post_save(sender, instance, created, **kwargs):
+    block = instance
+    
+    fields = block.collection_fields()
+    collections = block.form.collections()
+    
+    if created:
+        existing = collections.filter(any_name_field(__in=fields), page=0)
+        existing_names = existing.values_list('name', flat=True)
+        for name in fields:
+            if name in existing_names: continue
+        
+            item_field = CustomBlock.text_create(form=block.form, name=name,
+                                                 page=0)
+            item_field.save()
+    
+    refs = CollectionBlock.objects.filter(any_name_field(_=OuterRef('name')),
+                                          form=block.form)
+    collections.filter(~Exists(refs), page=0, _rank__gt=1).delete()
+    
     if not created: return
     
-    block = instance
     text, style = capfirst(block.name) + ':', FormLabel.LabelStyle.VERTICAL
-    
     l = FormLabel.objects.get_or_create(form=block.form, path=block.name,
                                         defaults={'style': style, 'text': text})
     
@@ -108,5 +127,5 @@ def collectionblock_post_delete(sender, instance, **kwargs):
         return
     
     for name in block.collection_fields():
-        if not blocks.filter(Q(name1=name) | Q(name2=name) | Q(name3=name)):
+        if not blocks.filter(any_name_field(_=name)):
             block.form.labels.filter(path='.'.join((block.name, name))).delete()

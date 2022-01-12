@@ -91,8 +91,9 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_form(self):
         fields, widgets, customs, stocks = [], {}, {}, {}
 
-        self.query = self.program_form.blocks.all()
+        self.query = self.program_form.visible_blocks()
         if self.page: self.query = self.query.filter(page=self.page)
+        # having the form for the final GET simplifies templates for review step
         elif self.request.method == 'POST': self.query = self.query.none()
 
         blocks_checked, enabled = {}, []

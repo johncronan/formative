@@ -115,13 +115,13 @@ class Form(AutoSlugModel):
                                               related_query_name='_item'))
         ]
         
+        field_blocks = { b.name: b for b in
+                         self.custom_blocks().filter(page=0, _rank__gt=1) }
         for n in names:
             # look for a CustomBlock with the same name on page 0 (hidden)
-            try:
-                block = self.custom_blocks().get(page=0, name=n)
+            if n in field_blocks: block = field_blocks[n]
             # otherwise, use the default text CustomBlock
-            except FormBlock.DoesNotExist:
-                block = CustomBlock.text_create()
+            else: block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
         name = self.db_slug + '_item_'
@@ -182,12 +182,12 @@ class Form(AutoSlugModel):
         return self.blocks.aggregate(Max('page'))['page__max']
     
     def custom_blocks(self):
-        return self.blocks.instance_of(CustomBlock)
+        return CustomBlock.objects.filter(form=self).non_polymorphic()
     
     def collections(self, name=None):
-        blocks = self.blocks.instance_of(CollectionBlock)
-        if name: return blocks.filter(name=name)
-        return blocks
+        blocks = CollectionBlock.objects.filter(form=self)
+        if name: return blocks.filter(name=name).non_polymorphic()
+        return blocks.non_polymorphic()
     
     def validation_block(self):
         return self.blocks.get(page=0, _rank=1)
@@ -196,6 +196,7 @@ class Form(AutoSlugModel):
         query = self.blocks.all()
         if skip: query = query.exclude(id__in=skip)
         if page and page > 0: return query.filter(page=page)
+        else: return query.exclude(page=0, _rank__gt=0)
         return query.filter(page__gt=0)
     
     def visible_items(self, submission, page=None, skip=None):

@@ -1,5 +1,5 @@
 from django.apps import apps
-from django.db import models
+from django.db.models import Model, Q
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
@@ -8,7 +8,7 @@ import os
 
 
 def create_model(name, fields, app_label='reviewpanel', module='',
-                 table_prefix=None, meta=None, base_class=models.Model):
+                 table_prefix=None, meta=None, base_class=Model):
     class Meta:
         pass
 
@@ -49,3 +49,8 @@ def send_email(instance, template, to, context={}, context_object_name='obj'):
 
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)
+
+def any_name_field(**kwargs):
+    Qs = [ Q(**{ namen + (k != '_' and k or ''): v for k, v in kwargs.items() })
+           for namen in ('name1', 'name2', 'name3') ]
+    return Qs[0] | Qs[1] | Qs[2]
