@@ -532,9 +532,10 @@ class CollectionBlock(FormBlock):
         return len(self.collection_fields())
     
     def horizontal_width(self, field):
-        total = self.total_colspan() + len(self.options['wide'])
-        if 'wide' in self.options and field in self.options['wide']:
-            return 200.0 / total
+        total = self.total_colspan()
+        if 'wide' in self.options:
+            total += len(self.options['wide'])
+            if field in self.options['wide']: return 200.0 / total
         return 100.0 / total
     
     def collection_fields_as_blocks(self):
