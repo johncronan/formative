@@ -213,6 +213,7 @@ function newItems(blockId, files, itemId) {
       var tablediv = table.parentElement.parentElement;
       var tbody = table.firstElementChild;
       var rows = [];
+      
       if (itemId) {
         var itemEl = tbody.querySelector('tr[data-id="' + itemId + '"]');
         itemEl.innerHTML = res.data.trim();
@@ -226,15 +227,19 @@ function newItems(blockId, files, itemId) {
           tablediv.style.display = 'flex';
           rows = tbody.querySelectorAll('tr');
         } else {
-          tablePos.insertAdjacentHTML('afterend', html);
-          let element = tablePos;
+          var isErr = tablePos.classList.contains('rp-collection-field-errors');
+          if (isErr) prevNum -= 1;
+          var prevPos = isErr ? tablePos.previousElementSibling : tablePos;
+          tablePos.insertAdjacentHTML(isErr ? 'beforebegin' : 'afterend', html);
+          let element = prevPos || tbody.querySelector('tr:first-child');
           while (element = element.nextElementSibling) {
-            rows.push(element);
+            if (!element.classList.contains('rp-collection-field-errors'))
+                rows.push(element);
           }
         }
         
-        var numRows = tbody.children.length;
-        updateTotal(blockId, numRows - prevNum);
+        updateTotal(blockId, rows.length);
+        var numRows = prevNum + rows.length;
         
         var maxItems = table.dataset.maxItems;
         var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
@@ -245,6 +250,7 @@ function newItems(blockId, files, itemId) {
         if (rowStatus(rows[i]) == 'upload') uploadFile(rows[i], filesArray[i]);
       }
       processQueue();
+      
       document.querySelectorAll('.rp-item-upload')
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')

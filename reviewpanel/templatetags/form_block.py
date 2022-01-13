@@ -53,6 +53,12 @@ def form_hidden(form, name):
     return None
 
 @register.filter
+def get_by_field(errors, name):
+    for form_errors in errors:
+        if name in form_errors: return form_errors[name][0]
+    return ''
+
+@register.filter
 def get_by_style(labels, style):
     if labels and style in labels: return labels[style]
     return None

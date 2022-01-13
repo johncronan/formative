@@ -27,12 +27,9 @@
           {% with fw=field.width h=' display: none;' %}
           style="width: {{ fw }}%;{% if not columns.fields %}{{ h }}{% endif %}"
           {% endwith %}
-          {% if not columns.upload and forloop.counter == 1 %}
-            colspan="2"
-          {% else %}
-            colspan="1"
-          {% endif %}>
-          <label class="rp-item-field mdc-text-field mdc-text-field--filled">
+          {% if not columns.upload and forloop.last %}colspan="2"{% endif %}>
+          <label class="rp-item-field mdc-text-field mdc-text-field--filled
+            {% if form_field.errors %}rp-text-field--invalid{% endif %}">
             <span class="mdc-text-field__ripple"></span>
         {% with flabels=labels|for_item_field:field.name %}
           {% with label=flabels|get_by_style:styles.WIDGET %}
@@ -48,7 +45,7 @@
         </td>
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"
-          {% if not columns.upload %}colspan="2"{% else %}colspan="1"{% endif %}
+          {% if not columns.upload %}colspan="2"{% endif %}
             {{ hide }}>
         {% if item|underscore:'filesize' %}
           <span class="rp-done-icon material-icons">

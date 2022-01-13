@@ -25,6 +25,33 @@
         {% for item in items %}
           {% include "./collection_item.html" with new_file=False %}
         {% endfor %}
+        
+        {% if formset.errors %}
+          <tr class="rp-collection-field-errors mdc-data-table__row">
+            {% if form_block.items_sortable %}<td></td>{% endif %}
+            {% for field in form_block.collection_fields_as_blocks %}
+              <td class="rp-collection-field-error mdc-data-table__cell"
+                {% if not form_block.file_optional and forloop.last %}
+                  colspan="2"
+                {% endif %}>
+                <div class="mdc-text-field-helper-text
+                            mdc-text-field-helper-text--persistent
+                            mdc-text-field-helper-text--validation-msg"
+                     role="alert">
+                  {{ formset.errors|get_by_field:field.name }}
+                </div>
+              </td>
+            {% empty %}
+              <td{% if not form_block.file_optional %}colspan="2"{% endif %}>
+              </td>
+            {% endfor %}
+            {% if form_block.has_file %}
+              <td colspan="2"></td>
+              {% if error or form_block.file_optional %}<td></td>{% endif %}
+            {% endif %}
+            {% if not form_block.fixed %}<td></td>{% endif %}
+          </tr>
+        {% endif %}
         </tbody>
       </table>
     </div>

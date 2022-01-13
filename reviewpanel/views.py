@@ -328,7 +328,7 @@ class SubmissionItemCreateView(SubmissionBase,
         if not self.block.has_file: return forms.Form(data={})
         return ItemFileForm(block=self.block, data=kwargs)
     
-    def get_formset(self):
+    def get_formset(self, ids):
         FormSet = inlineformset_factory(self.program_form.model,
                                         self.program_form.item_model,
                                         formset=ItemsFormSet,
@@ -336,6 +336,7 @@ class SubmissionItemCreateView(SubmissionBase,
                                         max_num=0, can_delete=False)
         
         queryset = self.submission._items.filter(_block=self.block.pk)
+        queryset = queryset.filter(_id__in=ids)
         
         formset = FormSet(prefix=f'items{self.block.pk}',
                           queryset=queryset, instance=self.submission)
@@ -369,7 +370,7 @@ class SubmissionItemCreateView(SubmissionBase,
             files.append((None, None))
             uploading = False
         
-        items = []
+        items, ids = [], []
         for name, size in files:
             form = self.get_form(name=name, size=size)
             item = self.program_form.item_model(_submission=self.submission,
@@ -399,11 +400,13 @@ class SubmissionItemCreateView(SubmissionBase,
             # TODO: failed (or in-progress) uploads - delete them on form submit
                 item._error, item._message = False, ''
             item.save()
+            ids.append(item._id)
             items.append(item)
         
-        context = self.get_context_data(items=items, uploading=uploading,
-                                        formset=self.get_formset())
-        return self.render_to_response(context)
+        c = self.get_context_data(items=items, uploading=uploading,
+                                  formset=self.get_formset(ids),
+                                  field_labels=self.program_form.field_labels())
+        return self.render_to_response(c)
 
 
 class SubmissionItemBase(SubmissionBase):
