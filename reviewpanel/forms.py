@@ -99,7 +99,7 @@ class ItemsForm(forms.ModelForm):
                 f.validators.append(MaxWordsValidator(field_block.max_words))
 
 
-class ItemsFormSet(forms.BaseInlineFormSet):
+class ItemsFormSet(forms.BaseModelFormSet):
     def __init__(self, block=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.block = block
@@ -117,7 +117,7 @@ class ItemsFormSet(forms.BaseInlineFormSet):
     
     # the way Django formsets index forms in POST data doesn't work well when
     # there's AJAX on the page that can do insertions and deletions.
-    # we assume here that the forms in the formset always have an instance.
+    # we assume here that the forms in the formset always have a pk'd instance.
     @cached_property
     def forms(self):
         args_list, objects = [], { str(o.pk): o for o in self.get_queryset() }
@@ -147,7 +147,7 @@ class ItemsFormSet(forms.BaseInlineFormSet):
                     kwargs['files'] = self.files
                     args_list.append(kwargs)
         else:
-            for i, instance in enumerate(self.get_queryset()):
+            for instance in self.get_queryset():
                 kwargs = self.get_form_kwargs(None)
                 kwargs.update(defaults)
                 

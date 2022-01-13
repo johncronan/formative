@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
 from django.db.models import Min
-from django.forms.models import modelform_factory, inlineformset_factory
+from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
 import itertools
 
@@ -160,19 +160,18 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_formsets(self):
         kwargs = self.get_form_kwargs()
         kwargs.pop('prefix')
+        kwargs.pop('instance')
 
         formsets = {}
         for block in self.query:
             if block.block_type() != 'collection': continue
             
-            FormSet = inlineformset_factory(self.program_form.model,
-                                            self.program_form.item_model,
-                                            formset=ItemsFormSet,
-                                            form=ItemsForm,
-                                            fields=block.collection_fields(),
-                                            # TODO: use edit_only once available
-                                            max_num=0, can_delete=False,
-                                            validate_max=False)
+            FormSet = modelformset_factory(self.program_form.item_model,
+                                           formset=ItemsFormSet, form=ItemsForm,
+                                           fields=block.collection_fields(),
+                                           # TODO: use edit_only once available
+                                           max_num=0, can_delete=False,
+                                           validate_max=False)
             
             queryset = self.object._items.filter(_block=block.pk)
             queryset = queryset.exclude(_file='', _filesize__gt=0)
@@ -331,17 +330,16 @@ class SubmissionItemCreateView(SubmissionBase,
         return ItemFileForm(block=self.block, data=kwargs)
     
     def get_formset(self, ids):
-        FormSet = inlineformset_factory(self.program_form.model,
-                                        self.program_form.item_model,
-                                        formset=ItemsFormSet, form=ItemsForm,
-                                        fields=self.block.collection_fields(),
-                                        max_num=0, can_delete=False)
+        FormSet = modelformset_factory(self.program_form.item_model,
+                                       formset=ItemsFormSet, form=ItemsForm,
+                                       fields=self.block.collection_fields(),
+                                       max_num=0, can_delete=False)
         
         queryset = self.submission._items.filter(_block=self.block.pk)
         queryset = queryset.filter(_id__in=ids)
         
         formset = FormSet(prefix=f'items{self.block.pk}', block=self.block,
-                          queryset=queryset, instance=self.submission)
+                          queryset=queryset)
         return formset
     
     def post(self, request, *args, **kwargs):
