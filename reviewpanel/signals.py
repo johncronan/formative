@@ -72,10 +72,9 @@ def collectionblock_post_save(sender, instance, created, **kwargs):
     block = instance
     
     fields = block.collection_fields()
-    collections = block.form.collections()
     
     if created:
-        existing = collections.filter(any_name_field(__in=fields), page=0)
+        existing = block.form.custom_blocks().filter(name__in=fields, page=0)
         existing_names = existing.values_list('name', flat=True)
         for name in fields:
             if name in existing_names: continue
@@ -86,7 +85,7 @@ def collectionblock_post_save(sender, instance, created, **kwargs):
     
     refs = CollectionBlock.objects.filter(any_name_field(_=OuterRef('name')),
                                           form=block.form)
-    collections.filter(~Exists(refs), page=0, _rank__gt=1).delete()
+    block.form.collections().filter(~Exists(refs), page=0, _rank__gt=1).delete()
     
     if not created: return
     

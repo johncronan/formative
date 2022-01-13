@@ -87,13 +87,19 @@ def collection_block_main(program_form, custom_textarea_block):
     yield b
 
 def test_collection_block_main(collection_block_main):
-    assert collection_block_main
+    collection = collection_block_main
+    b = collection.form.blocks.get(page=0, name=collection.name1)
+    
+    assert b
+    b.min_chars = 1
+    b.save()
+    
 
 @pytest.fixture(scope='session')
 def collection_block_optional(program_form, collection_block_main):
     b = CollectionBlock(form=program_form, name='files', page=2,
                         min_items=0, max_items=1, has_file=True,
-                        name1='caption', file_optional=True)
+                        name1='caption')
     b.save()
     yield b
 
