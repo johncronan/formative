@@ -362,7 +362,7 @@ class FormBlock(PolymorphicModel, RankedModel):
 
 class CustomBlock(FormBlock):
     class Meta:
-        db_table = 'reviewpanel_formcustomblock'
+        db_table = 'formative_formcustomblock'
     
     CHOICE_VAL_MAXLEN = 64
     DEFAULT_TEXT_MAXLEN = 1000
@@ -477,7 +477,7 @@ class CustomBlock(FormBlock):
 
 class CollectionBlock(FormBlock):
     class Meta:
-        db_table = 'reviewpanel_formcollectionblock'
+        db_table = 'formative_formcollectionblock'
     
     class AlignType(models.TextChoices):
         HORIZONTAL = 'horizontal', _('horizontal')

@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bullseye
 
-RUN mkdir -p /opt/services/djangoapp/src
+RUN mkdir -p /opt/services/djangoapp/src /opt/services/djangoapp/static
 WORKDIR /opt/services/djangoapp/src
 
 COPY Pipfile Pipfile.lock /opt/services/djangoapp/src/

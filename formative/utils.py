@@ -7,7 +7,7 @@ from django.contrib import admin
 import os
 
 
-def create_model(name, fields, app_label='reviewpanel', module='',
+def create_model(name, fields, app_label='formative', module='',
                  table_prefix=None, meta=None, base_class=Model):
     class Meta:
         pass

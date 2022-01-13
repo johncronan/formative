@@ -1,5 +1,5 @@
 """
-WSGI config for reviewpanel project.
+WSGI config for Formative project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

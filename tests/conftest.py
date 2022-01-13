@@ -7,7 +7,7 @@ def django_db_setup():
 
     settings.DATABASES['default'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'reviewpanel'
+        'NAME': 'formative'
     }
 
 @pytest.fixture(scope='session')

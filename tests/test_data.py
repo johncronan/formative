@@ -1,6 +1,6 @@
 import pytest
 
-from reviewpanel.models import Program, Form, FormBlock, CustomBlock, \
+from formative.models import Program, Form, FormBlock, CustomBlock, \
     CollectionBlock, FormLabel, FormDependency
 
 

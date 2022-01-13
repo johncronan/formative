@@ -8,12 +8,12 @@ services:
       - config/django_env
       - .env
     environment:
-      DOCKER_ENV: on
+      DOCKER_ENV: 'on'
     volumes:
       - static_volume:/opt/services/djangoapp/static
       - media_volume:/opt/services/djangoapp/media
       # these three are for a development environment:
-      - ./reviewpanel:/opt/services/djangoapp/src/reviewpanel
+      - ./formative:/opt/services/djangoapp/src/formative
       - ./templates:/opt/services/djangoapp/src/templates
       - ./assets/bundles:/opt/services/djangoapp/src/assets/bundles
     networks:
