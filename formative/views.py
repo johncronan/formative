@@ -248,7 +248,12 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         self.object._skipped[self.page-1] = list(self.skipped.keys())
         self.reset_skipped()
         
-        for formset in self.formsets.values(): formset.save()
+        for formset in self.formsets.values():
+            formset.save()
+            
+            # these are the failed uploads
+            self.object._items.filter(_block=formset.block.pk,
+                                      _file='', _filesize__gt=0).delete()
         
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
@@ -395,10 +400,12 @@ class SubmissionItemCreateView(SubmissionBase,
             else:
                 if item._file: delete_file(item._file)
                 if name:
-                    # TODO: option to init field with name
+                    if self.block.autoinit_filename():
+                        setattr(item, self.block.name1, name[:name.rindex('.')])
                     item._file, item._filesize = '', size
-            # TODO: failed (or in-progress) uploads - delete them on form submit
+                
                 item._error, item._message = False, ''
+            
             item.save()
             ids.append(item._id)
             items.append(item)

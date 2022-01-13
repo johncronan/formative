@@ -510,7 +510,11 @@ class CollectionBlock(FormBlock):
     
     def file_maxsize(self):
         if 'maxsize' in self.options: return self.options['maxsize']
-        return None
+        return None # TODO: overall default max
+    
+    def autoinit_filename(self):
+        if 'autoinit_filename' in self.options: return True
+        return False
     
     def span(self, media=None):
         width = 10
