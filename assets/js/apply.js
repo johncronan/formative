@@ -94,8 +94,12 @@ document.addEventListener('dragover', function(e) { e.preventDefault() });
 const sortables = [];
 document.querySelectorAll('.rp-collection-table-body')
         .forEach(tbody => sortables.push(Sortable.create(tbody, {
-          handle: '.rp-sort-handle-cell',
           animation: 120,
+          handle: '.rp-sort-handle-cell',
+          filter: '.rp-collection-field-errors',
+          onMove: e => {
+            return !e.related.classList.contains('rp-collection-field-errors');
+          },
           onEnd: event => {
             var itemRow = event.item;
             if (event.oldIndex != event.newIndex)
