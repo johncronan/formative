@@ -4,7 +4,8 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from .models import CustomBlock, SubmissionItem
-from .validators import MinWordsValidator, MaxWordsValidator
+from .validators import MinWordsValidator, MaxWordsValidator, \
+    FileExtensionValidator
 
 
 class OpenForm(forms.Form):
@@ -80,6 +81,9 @@ class ItemFileForm(forms.Form):
         if maxsize:
             self.fields['size'].validators.append(MaxValueValidator(maxsize))
         
+        extensions = self.block.allowed_extensions()
+        validator = FileExtensionValidator(allowed_extensions=extensions)
+        self.fields['name'].validators.append(validator)
         # TODO: maxsize by file type
 
 

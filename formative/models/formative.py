@@ -512,6 +512,13 @@ class CollectionBlock(FormBlock):
         if 'maxsize' in self.options: return self.options['maxsize']
         return None # TODO: overall default max
     
+    def allowed_extensions(self):
+        if 'file_types' in self.options:
+            # TODO
+            pass
+        
+        return None
+    
     def autoinit_filename(self):
         if 'autoinit_filename' in self.options: return True
         return False
