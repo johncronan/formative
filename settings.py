@@ -140,7 +140,7 @@ MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media')
 
 STATICFILES_DIRS = (
     ("bundles", os.path.join(BASE_DIR, 'assets/bundles')),
-    ("img", os.path.join(BASE_DIR, 'assets/img')),
+#    ("img", os.path.join(BASE_DIR, 'assets/img')),
 )
 
 WEBPACK_LOADER = {

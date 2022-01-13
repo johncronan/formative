@@ -575,7 +575,7 @@ class Submission(models.Model):
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
 
     def _send_email(self, form, template, **kwargs):
-        path = 'apply/emails/' + template
+        path = 'formative/emails/' + template
         return send_email(self, template=path, to=self._email,
                           context={'form': form},
                           context_object_name='submission', **kwargs)

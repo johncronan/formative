@@ -92,7 +92,7 @@ def include_stock(context, block, labels, review=False):
     stock = block.stock
     
     name = review and stock.review_template_name or stock.template_name
-    template = context.template.engine.get_template('apply/stock/' + name)
+    template = context.template.engine.get_template('formative/stock/' + name)
     
     fields = []
     for n in stock.widget_names():

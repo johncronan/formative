@@ -15,7 +15,7 @@ from .utils import delete_file
 
 
 class ProgramIndexView(generic.ListView):
-    template_name = 'apply/index.html'
+    template_name = 'formative/index.html'
     context_object_name = 'programs'
     
     def get_queryset(self):
@@ -24,7 +24,7 @@ class ProgramIndexView(generic.ListView):
 
 class ProgramView(generic.DetailView):
     model = Program
-    template_name = 'apply/program.html'
+    template_name = 'formative/program.html'
     slug_field = 'slug'
 
 
@@ -48,7 +48,7 @@ class ProgramFormMixin(generic.edit.FormMixin):
 
 class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
                       generic.base.TemplateResponseMixin):
-    template_name = 'apply/form.html'
+    template_name = 'formative/form.html'
     form_class = OpenForm
     context_object_name = 'program_form'
     
@@ -70,7 +70,7 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
 
 
 class SubmissionView(ProgramFormMixin, generic.UpdateView):
-    template_name = 'apply/submission.html'
+    template_name = 'formative/submission.html'
     context_object_name = 'submission'
     first_page = False
     
@@ -322,7 +322,7 @@ class SubmissionBase(generic.View):
 
 class SubmissionItemCreateView(SubmissionBase,
                                generic.base.TemplateResponseMixin):
-    template_name = 'apply/collection_items_new.html'
+    template_name = 'formative/collection_items_new.html'
     http_method_names = ['post']
     
     def get_form(self, **kwargs):
