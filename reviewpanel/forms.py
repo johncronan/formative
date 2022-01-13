@@ -12,9 +12,6 @@ class OpenForm(forms.Form):
 
 
 class SubmissionForm(forms.ModelForm):
-    class Meta:
-        pass
-
     def __init__(self, custom_blocks=None, stock_blocks=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.custom_blocks = custom_blocks
@@ -86,9 +83,37 @@ class ItemFileForm(forms.Form):
         # TODO: maxsize by file type
 
 
-class ItemsFormSet(forms.BaseInlineFormSet):
-    def __init__(self, *args, **kwargs):
+class ItemsForm(forms.ModelForm):
+    def __init__(self, block=None, field_blocks=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.block = block
+        self.field_blocks = field_blocks
+        
+        for name, f in self.fields.items():
+            if name in self.field_blocks: field_block = self.field_blocks[name]
+            else: field_block = CustomBlock.text_create()
+            
+            if field_block.min_words:
+                f.validators.append(MinWordsValidator(field_block.min_words))
+            if field_block.max_words:
+                f.validators.append(MaxWordsValidator(field_block.max_words))
+
+
+class ItemsFormSet(forms.BaseInlineFormSet):
+    def __init__(self, block=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.block = block
+        
+        cfields = block.collection_fields()
+        blocks = block.form.custom_blocks().filter(page=0, name__in=cfields)
+        self.field_blocks = { b.name: b for b in blocks }
+    
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        
+        kwargs['block'] = self.block
+        kwargs['field_blocks'] = self.field_blocks
+        return kwargs
     
     # the way Django formsets index forms in POST data doesn't work well when
     # there's AJAX on the page that can do insertions and deletions.

@@ -9,7 +9,8 @@ from django.views import generic
 import itertools
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
-from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet
+from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
+    ItemsForm
 from .utils import delete_file
 
 
@@ -167,6 +168,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             FormSet = inlineformset_factory(self.program_form.model,
                                             self.program_form.item_model,
                                             formset=ItemsFormSet,
+                                            form=ItemsForm,
                                             fields=block.collection_fields(),
                                             # TODO: use edit_only once available
                                             max_num=0, can_delete=False,
@@ -176,7 +178,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             queryset = queryset.exclude(_file='', _filesize__gt=0)
             
             formset = FormSet(prefix=f'items{block.pk}', queryset=queryset,
-                              **kwargs)
+                              block=block, **kwargs)
             formsets[block.pk] = formset
         
         return formsets
@@ -331,14 +333,14 @@ class SubmissionItemCreateView(SubmissionBase,
     def get_formset(self, ids):
         FormSet = inlineformset_factory(self.program_form.model,
                                         self.program_form.item_model,
-                                        formset=ItemsFormSet,
+                                        formset=ItemsFormSet, form=ItemsForm,
                                         fields=self.block.collection_fields(),
                                         max_num=0, can_delete=False)
         
         queryset = self.submission._items.filter(_block=self.block.pk)
         queryset = queryset.filter(_id__in=ids)
         
-        formset = FormSet(prefix=f'items{self.block.pk}',
+        formset = FormSet(prefix=f'items{self.block.pk}', block=self.block,
                           queryset=queryset, instance=self.submission)
         return formset
     
