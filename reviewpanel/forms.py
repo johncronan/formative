@@ -1,5 +1,6 @@
 from django import forms
 from django.core.validators import MaxValueValidator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from .models import CustomBlock, SubmissionItem
@@ -89,15 +90,60 @@ class ItemsFormSet(forms.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
     
-    # we can have sparse form indices in the request kwarg data (due to deletes)
-    # so the total form count that we get is actually a max possible index.
-    # this is where we filter out invalid forms in the formset that result
-    def is_valid(self):
-        if not self.is_bound: return False
+    # the way Django formsets index forms in POST data doesn't work well when
+    # there's AJAX on the page that can do insertions and deletions.
+    # we assume here that the forms in the formset always have an instance.
+    @cached_property
+    def forms(self):
+        args_list, objects = [], { str(o.pk): o for o in self.get_queryset() }
         
-        self.errors # triggers a full clean the first time only
+        defaults = {
+            'auto_id': self.auto_id,
+            'error_class': self.error_class,
+            'renderer': self.renderer
+        }
         
-        forms_valid = all([ form.is_valid() for i, form in enumerate(self.forms)
-                            if self.prefix + f'-{i}-_id' in form.data])
+        if self.is_bound:
+            for key, val in self.data.items():
+                if not key.startswith(self.prefix + '-'): continue
+                
+                rest = key[len(self.prefix)+1:]
+                if not rest.endswith('-' + self.model._meta.pk.name): continue
+                
+                pk_str = rest[:-len(self.model._meta.pk.name)-1]
+                
+                if pk_str in objects:
+                    kwargs = self.get_form_kwargs(None)
+                    kwargs.update(defaults)
+                    
+                    kwargs['instance'] = objects[pk_str]
+                    kwargs['prefix'] = self.prefix + '-' + pk_str
+                    kwargs['data'] = self.data
+                    kwargs['files'] = self.files
+                    args_list.append(kwargs)
+        else:
+            for i, instance in enumerate(self.get_queryset()):
+                kwargs = self.get_form_kwargs(None)
+                kwargs.update(defaults)
+                
+                kwargs['instance'] = instance
+                kwargs['prefix'] = self.prefix + '-%s' % (instance.pk,)
+                args_list.append(kwargs)
         
-        return forms_valid and not self.non_form_errors()
+        forms = []
+        for i, kwargs in enumerate(args_list):
+                form = self.form(**kwargs)
+                self.add_fields(form, i)
+                form.fields[self.model._meta.pk.name].required = True
+                forms.append(form)
+            
+        return forms
+    
+# still need that management form, for now
+#    def initial_form_count(self):
+#        if not self.is_bound: return len(self.get_queryset())
+#        return len(self.forms)
+#    
+#    def total_form_count(self):
+#        if not self.is_bound: return 0
+#        else: return self.initial_form_count()

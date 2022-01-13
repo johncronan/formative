@@ -336,7 +336,7 @@ function removeClick(event) {
     .then(res => {
       var tbody = rowEl.parentElement;
       tbody.removeChild(rowEl);
-      /* updateTotal(blockId, 1); you'd think so! see forms.ItemsFormSet */
+      updateTotal(blockId, -1);
       
       var numRows = tbody.children.length;
       var table = tbody.parentElement;

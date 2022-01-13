@@ -93,7 +93,7 @@ def test_collection_block_main(collection_block_main):
 def collection_block_optional(program_form, collection_block_main):
     b = CollectionBlock(form=program_form, name='files', page=2,
                         min_items=0, max_items=1, has_file=True,
-                        file_optional=True)
+                        name1='caption', file_optional=True)
     b.save()
     yield b
 
