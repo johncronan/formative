@@ -253,10 +253,14 @@ $maxlines: 30;
   }
 }
 
-.rp-collection-field-error {
-  & .mdc-text-field-helper-text {
-    font-size: 0.85rem;
-  }
+.rp-formset-error {
+  grid-column-start: 1;
+  position: relative;
+  top: -8px;
+}
+
+.rp-formset-error,.rp-collection-field-error .mdc-text-field-helper-text {
+  font-size: 0.85rem;
 }
 
 .rp-save-button {

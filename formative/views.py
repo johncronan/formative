@@ -177,7 +177,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             queryset = queryset.exclude(_file='', _filesize__gt=0)
             
             formset = FormSet(prefix=f'items{block.pk}', queryset=queryset,
-                              block=block, **kwargs)
+                              block=block, instance=self.object, **kwargs)
             formsets[block.pk] = formset
         
         return formsets
@@ -343,8 +343,8 @@ class SubmissionItemCreateView(SubmissionBase,
         queryset = self.submission._items.filter(_block=self.block.pk)
         queryset = queryset.filter(_id__in=ids)
         
-        formset = FormSet(prefix=f'items{self.block.pk}', block=self.block,
-                          queryset=queryset)
+        formset = FormSet(prefix=f'items{self.block.pk}', queryset=queryset,
+                          block=self.block, instance=self.submission)
         return formset
     
     def post(self, request, *args, **kwargs):

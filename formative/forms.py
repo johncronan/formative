@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -104,9 +105,9 @@ class ItemsForm(forms.ModelForm):
 
 
 class ItemsFormSet(forms.BaseModelFormSet):
-    def __init__(self, block=None, *args, **kwargs):
+    def __init__(self, block=None, instance=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.block = block
+        self.block, self.instance = block, instance
         
         cfields = block.collection_fields()
         blocks = block.form.custom_blocks().filter(page=0, name__in=cfields)
@@ -176,3 +177,37 @@ class ItemsFormSet(forms.BaseModelFormSet):
 #    def total_form_count(self):
 #        if not self.is_bound: return 0
 #        else: return self.initial_form_count()
+    
+    def clean(self):
+        super().clean()
+        
+        if not self.block.min_items and not self.block.max_items: return
+        n = self.instance._items.filter(_block=self.block.pk).count()
+        
+        params, msg = {}, ''
+        if self.block.min_items and self.block.max_items is None:
+            if n >= self.block.min_items: return
+            
+            if self.block.has_file and not self.block.file_optional:
+                msg = _('Number of files must be at least %(min_val)d.')
+            else: msg = _('Number of items must be at least %(min_val)d.')
+            params['min_val'] = self.block.min_items
+        elif self.block.max_items is not None and not self.block.min_items:
+            if n <= self.block.max_items: return
+            
+            if self.block.has_file and not self.block.file_optional:
+                msg = _('Number of files must be at most %(max_val)d.')
+            else: msg = _('Number of items must be at most %(max_val)d.')
+            params['max_val'] = self.block.max_items
+        else:
+            if n >= self.block.min_items and n <= self.block.max_items: return
+            
+            if self.block.has_file and not self.block.file_optional:
+                msg = _('Number of files must be between '
+                        '%(min_val)d and %(max_val)d.')
+            else: msg = _('Number of items must be between '
+                          '%(min_val)d and %(max_val)d.')
+            params['min_val'] = self.block.min_items
+            params['max_val'] = self.block.max_items
+        
+        raise ValidationError(msg, code='invalid_num_items', params=params)
