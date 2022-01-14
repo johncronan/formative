@@ -44,7 +44,9 @@
       </div>
     {% endif %}
     <div {% if not form.non_field_errors %}style="display: none;"{% endif %}
-         id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell">
+         id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell
+                                   mdc-layout-grid__cell--span-8-tablet
+                                   mdc-layout-grid__cell--span-8-desktop">
       <span class="rp-error">{{ form.non_field_errors }}</span>
     </div>
   

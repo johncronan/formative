@@ -379,12 +379,15 @@ window.addEventListener("pageshow", function() {
   texts.forEach(text => { if (text.value) text.value = text.value; });
 });
 
-var unsaved = false;
+var unsaved = false, submitting = false;
 document.querySelector('form#submission').onchange = () => {
   unsaved = true;
 };
+document.querySelector('form#submission').onsubmit = () => {
+  submitting = true;
+}
 
 window.onbeforeunload = (event) => {
   var msg = "There are unsaved changes on this page.";
-  if (unsaved) return msg;
+  if (unsaved && !submitting) return msg;
 };

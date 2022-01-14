@@ -23,9 +23,7 @@ class SubmissionForm(forms.ModelForm):
             if name in stock_blocks:
                 stock = stock_blocks[name]
 
-                widget = None
-                if len(stock.widget_names()) > 1:
-                    widget = name[1:][len(stock.name)+1:]
+                widget = stock.get_widget(name)
                 field.validators += stock.field_validators(widget)
 
                 if stock.field_required(widget): field.required = True
@@ -44,7 +42,20 @@ class SubmissionForm(forms.ModelForm):
     def clean(self):
         super().clean()
         
+        stocks = {}
+        
         for name, field in self.fields.items():
+            if name in self.stock_blocks:
+                stock = self.stock_blocks[name]
+                if stock.name not in stocks: stocks[stock.name] = [stock, {}]
+                
+                widget = stock.get_widget(name)
+                if widget:
+                    stocks[stock.name][1][widget] = self.cleaned_data[name]
+                else: stocks[stock.name][1] = self.cleaned_data[name]
+                
+                if self.has_error(name): stocks[stock.name][0] = False
+                
             if name in self.custom_blocks:
                 block = self.custom_blocks[name]
                 if self.has_error(name): continue
@@ -56,6 +67,19 @@ class SubmissionForm(forms.ModelForm):
                     # NULL for fields that're never seen; '' for no choice made
                     if self.cleaned_data[name] is None:
                         self.cleaned_data[name] = ''
+        
+        for name, (stock, data) in stocks.items():
+            if not stock: continue # show validator errors on form fields first
+            
+            err = stock.clean(data)
+            if not err: continue
+            
+            if not stock.composite:
+                self.add_error(name, err)
+                continue
+            for widget, err in err.items():
+                if widget: self.add_error(stock.field_name(widget), err)
+                else: self.add_error(None, err)
 
 
 class ItemFileForm(forms.Form):

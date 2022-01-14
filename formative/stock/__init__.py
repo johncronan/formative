@@ -5,6 +5,7 @@ __all__ = ["StockWidget", "EmailWidget", "NameWidget"]
 
 class StockWidget:
     types = {}
+    composite = False
     
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -39,6 +40,9 @@ class StockWidget:
 
     def default_label(self):
         return capfirst(self.name)
+    
+    def get_widget(self, field_name):
+        return None # methods will be called w/ widget=None since all one field
 
     def widget_labels(self):
         from ..models import FormLabel
@@ -50,10 +54,14 @@ class StockWidget:
     def conditional_value(self, **kwargs):
         # default is to return a boolean that's True if we got some input
         return bool([v for v in kwargs.values() if v])
+    
+    def clean(self, data):
+        pass
 
 
 class CompositeStockWidget(StockWidget):
     TYPE = None
+    composite = True
 
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
@@ -70,6 +78,9 @@ class CompositeStockWidget(StockWidget):
         # name has an initial underscore so that non-stock fields can't conflict
         return f'_{self.name}_{field}'
 
+    def get_widget(self, field_name):
+        return field_name[1:][len(self.name)+1:]
+    
     def widget_labels(self):
         from ..models import FormLabel
         
