@@ -4,7 +4,7 @@
 {% load utils %}
 
 {% block pre_layout %}
-<form method="post">
+<form id="submission" method="post">
 {% csrf_token %}
 {% endblock %}
 
