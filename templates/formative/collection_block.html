@@ -14,7 +14,7 @@
   <div class="rp-collection-table mdc-data-table mdc-layout-grid__cell
               mdc-layout-grid__cell--span-{{ tsp }}-tablet
               mdc-layout-grid__cell--span-{{ dsp }}-desktop"
-      {% if not items %}style="display: none;"{% endif %}>
+    {% if not form_block.fixed and not items %}style="display: none;"{% endif %}>
   {% endwith %}
     <div class="mdc-data-table__table-container">
       <table id="collection{{ form_block.pk }}" class="mdc-data-table__table"
@@ -23,7 +23,13 @@
          {% endif %}>
         <tbody class="rp-collection-table-body mdc-data-table__content">
         {% for item in items %}
-          {% include "./collection_item.html" with new_file=False %}
+          {% include "./collection_item.html" %}
+        {% empty %}
+          {% if form_block.fixed %}
+            {% for name in form_block.fixed_choices %}
+              {% include "./collection_item.html" with i=forloop.counter %}
+            {% endfor %}
+          {% endif %}
         {% endfor %}
         
         {% if formset.errors %}
@@ -78,9 +84,9 @@
          {% if form_block.max_items > 1 %}multiple{% endif %}
          style="display: none;"/>
   {% endif %}
-  
-  {{ formset.management_form }}
 {% endif %}
+
+{{ formset.management_form }}
 
 {% if formset.non_form_errors %}
   <div class="rp-formset-error mdc-layout-grid__cell

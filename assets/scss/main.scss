@@ -191,6 +191,7 @@ $maxlines: 30;
 }
 
 .rp-collection-table {
+  margin-bottom: 8px;
   position: relative;
   & .mdc-data-table__table {
     white-space: normal;
@@ -257,6 +258,12 @@ $maxlines: 30;
   grid-column-start: 1;
   position: relative;
   top: -8px;
+}
+
+.rp-collection-table > .rp-formset-error {
+  position: relative;
+  top: -16px;
+  margin-bottom: 8px;
 }
 
 .rp-formset-error,.rp-collection-field-error .mdc-text-field-helper-text {

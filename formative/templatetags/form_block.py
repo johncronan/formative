@@ -34,6 +34,8 @@ def collection_items(items, block):
 
 @register.simple_tag
 def item_columns(item, block, uploading):
+    if not item: return { 'fields': True }
+    
     return {
         'fields': not item._error and not uploading,
         'progress': not item._error and uploading,
@@ -43,6 +45,8 @@ def item_columns(item, block, uploading):
 
 @register.simple_tag
 def item_form(formset, item):
+    if type(item) == int: return formset[item-1]
+    
     for form in formset:
         if form.instance == item: return form
     return None

@@ -102,8 +102,17 @@ document.querySelectorAll('.rp-collection-table-body')
           },
           onEnd: event => {
             var itemRow = event.item;
-            if (event.oldIndex != event.newIndex)
+            if (event.oldIndex != event.newIndex) {
+              if (!itemRow.querySelector('.rp-sort-defer'))
                 itemMove(itemRow, event.newIndex + 1);
+              else {
+                let tbody = itemRow.parentElement;
+                for (let i=0; i < tbody.children.length; i++) {
+                  let tr = tbody.children[i];
+                  tr.querySelector('.rp-hidden-rank-input').value = i;
+                }
+              }
+            }
           }
         })));
 

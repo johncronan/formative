@@ -523,6 +523,16 @@ class CollectionBlock(FormBlock):
         if 'autoinit_filename' in self.options: return True
         return False
     
+    def fixed_choices(self):
+        if 'choices' not in self.options:
+            msg = 'choices must be provided for a fixed collection block'
+            raise FieldError(msg)
+        
+        return self.options['choices']
+    
+    def num_choices(self):
+        return len(self.fixed_choices())
+    
     def span(self, media=None):
         width = 10
         if media == 'tablet': width = 8

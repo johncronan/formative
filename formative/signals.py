@@ -93,6 +93,7 @@ def collectionblock_post_save(sender, instance, created, **kwargs):
     l = FormLabel.objects.get_or_create(form=block.form, path=block.name,
                                         defaults={'style': style, 'text': text})
     
+    if block.fixed: return
     style = FormLabel.LabelStyle.WIDGET
     for name in block.collection_fields():
         text, path = capfirst(name), '.'.join((block.name, name))

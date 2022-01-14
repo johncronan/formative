@@ -53,9 +53,22 @@ def dependence_choice_block(program_form, stock_email_block):
 
 def test_dependence_choice_block(dependence_choice_block):
     assert dependence_choice_block
-    
+
 @pytest.fixture(scope='session')
-def custom_text_block(program_form, dependence_choice_block):
+def fixed_collection_block(program_form, dependence_choice_block):
+    b = CollectionBlock(form=program_form, name='preference',
+                        fixed=True, name1='preference',
+                        options={'choices': ['option #1', 'option #2',
+                                             'option #3'],
+                                 'span_tablet': 6, 'span_desktop': 6})
+    b.save()
+    yield b
+
+def test_fixed_collection_block(fixed_collection_block):
+    assert fixed_collection_block
+
+@pytest.fixture(scope='session')
+def custom_text_block(program_form, fixed_collection_block):
     b = CustomBlock(form=program_form, name='answer', page=2,
                     type=CustomBlock.InputType.TEXT, max_chars=50)
     b.save()

@@ -114,7 +114,7 @@ class ItemsFormSet(forms.BaseModelFormSet):
         self.field_blocks = { b.name: b for b in blocks }
     
     def get_form_kwargs(self, index):
-        kwargs = super().get_form_kwargs(index)
+        kwargs = super().get_form_kwargs(None) # it just makes a copy
         
         kwargs['block'] = self.block
         kwargs['field_blocks'] = self.field_blocks
@@ -122,51 +122,71 @@ class ItemsFormSet(forms.BaseModelFormSet):
     
     # the way Django formsets index forms in POST data doesn't work well when
     # there's AJAX on the page that can do insertions and deletions.
-    # we assume here that the forms in the formset always have a pk'd instance.
+    # we assume here that the forms in the formset always have a pk'd instance,
+    # except for unbound formsets, which can have extra (for fixed collections)
     @cached_property
     def forms(self):
         args_list, objects = [], { str(o.pk): o for o in self.get_queryset() }
+        creating = False
+        if self.block.fixed and not objects:
+            creating = True
+            objects = [ str(i) for i in range(self.block.num_choices()) ]
         
         defaults = {
             'auto_id': self.auto_id,
             'error_class': self.error_class,
             'renderer': self.renderer
         }
+        def new_kwargs():
+            kwargs = self.get_form_kwargs(None)
+            kwargs.update(defaults)
+            return kwargs
         
         if self.is_bound:
             for key, val in self.data.items():
                 if not key.startswith(self.prefix + '-'): continue
                 
-                rest = key[len(self.prefix)+1:]
-                if not rest.endswith('-' + self.model._meta.pk.name): continue
+                if creating: pk_name = '_rank'
+                else: pk_name = '_id'
                 
-                pk_str = rest[:-len(self.model._meta.pk.name)-1]
+                rest = key[len(self.prefix)+1:]
+                if not rest.endswith('-' + pk_name): continue
+                
+                pk_str = rest[:-len(pk_name)-1]
                 
                 if pk_str in objects:
-                    kwargs = self.get_form_kwargs(None)
-                    kwargs.update(defaults)
+                    kwargs = new_kwargs()
                     
-                    kwargs['instance'] = objects[pk_str]
                     kwargs['prefix'] = self.prefix + '-' + pk_str
-                    kwargs['data'] = self.data
-                    kwargs['files'] = self.files
+                    kwargs['data'], kwargs['files'] = self.data, self.files
+                    
+                    if not creating:
+                        kwargs['instance'] = objects[pk_str]
                     args_list.append(kwargs)
-        else:
+        elif not creating:
             for instance in self.get_queryset():
-                kwargs = self.get_form_kwargs(None)
-                kwargs.update(defaults)
+                kwargs = new_kwargs()
                 
                 kwargs['instance'] = instance
                 kwargs['prefix'] = self.prefix + '-%s' % (instance.pk,)
+                args_list.append(kwargs)
+        else:
+            for i in range(self.extra):
+                kwargs = new_kwargs()
+                
+                kwargs['prefix'] = self.prefix + '-%s' % (i,)
+                if self.initial_extra: kwargs['initial'] = self.initial_extra[i]
                 args_list.append(kwargs)
         
         forms = []
         for i, kwargs in enumerate(args_list):
                 form = self.form(**kwargs)
                 self.add_fields(form, i)
-                form.fields[self.model._meta.pk.name].required = True
+                
+                if not creating:
+                    form.fields[self.model._meta.pk.name].required = True
                 forms.append(form)
-            
+        
         return forms
     
 # still need that management form, for now

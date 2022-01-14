@@ -2,24 +2,31 @@
 {% load form_block %}
 {% load utils %}
 
-{% item_form formset item as item_form %}
+{% if not i %}
+  {% item_form formset item as item_form %}
+{% else %}
+  {% item_form formset i as item_form %}
+{% endif %}
 
 {% with styles=form_block.form.label_class.LabelStyle %}
       <tr class="mdc-data-table__row"
-          data-block-id="{{ form_block.pk }}"
-          data-id="{{ item|underscore:'id' }}">
+          {% if item %}data-id="{{ item|underscore:'id' }}"{% endif %}
+          data-block-id="{{ form_block.pk }}">
+      
       {% if form_block.items_sortable %}
-        <td class="rp-sort-handle-cell mdc-data-table__cell">
+        <td class="rp-sort-handle-cell
+                   {% if i %}rp-sort-defer{% endif %}
+                   mdc-data-table__cell">
           <button type="button" class="mdc-icon-button material-icons">
             <div class="mdc-icon-button__ripple"></div>
             unfold_more
           </button>
         </td>
       {% endif %}
-  {% with error=item|underscore:'error' file=item|underscore:'file' %}
-    {% item_columns item form_block uploading as columns %}
+      
+      {% item_columns item form_block uploading as columns %}
       {% form_hidden item_form 'id' as hidden_id %}
-
+      
       {% for field in form_block.collection_fields_as_blocks %}
         {% block_field item_form field as form_field %}
         
@@ -28,20 +35,33 @@
           style="width: {{ fw }}%;{% if not columns.fields %}{{ h }}{% endif %}"
           {% endwith %}
           {% if not columns.upload and forloop.last %}colspan="2"{% endif %}>
+        {% if form_block.fixed and forloop.first %}
+          {{ form_field.initial }}
+          <input type="hidden" name="{{ item_form.prefix }}-{{ field.name }}"
+            value="{{ form_field.initial }}" />
+        {% else %}
           <label class="rp-item-field mdc-text-field mdc-text-field--filled
             {% if form_field.errors %}rp-text-field--invalid{% endif %}">
             <span class="mdc-text-field__ripple"></span>
         {% with flabels=labels|for_item_field:field.name %}
           {% with label=flabels|get_by_style:styles.WIDGET %}
-            <span class="mdc-floating-label">
-              {{ label.text|default:field.name }}
-            </span>
+            {% if label %}
+              <span class="mdc-floating-label">{{ label.text }}</span>
+            {% endif %}
           {% endwith %}
         {% endwith %}
             {% render_field form_field class+="mdc-text-field__input" %}
             <span class="mdc-line-ripple"></span>
           </label>
-          {% if forloop.counter == 1 %}{{ hidden_id }}{% endif %}
+        {% endif %}
+          {% if forloop.first %}
+            {% if not i %}
+              {{ hidden_id }}
+            {% else %}
+              <input type="hidden" class="rp-hidden-rank-input"
+                name="{{ item_form.prefix }}-_rank" value="{{ i|add:-1 }}" />
+            {% endif %}
+          {% endif %}
         </td>
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"
@@ -59,7 +79,8 @@
         </td>
       {% endfor %}
     
-    {% if form_block.has_file %}
+  {% if form_block.has_file %}
+    {% with error=item|underscore:'error' file=item|underscore:'file' %}
       {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
             colspan="{{ form_block.total_colspan|add:1 }}"{{ hide }}>
@@ -93,8 +114,9 @@
         </td>
         {% endwith %}
       {% endif %}
-    {% endif %}
-    {% if not form_block.fixed %}
+    {% endwith %}
+  {% endif %}
+      {% if not form_block.fixed %}
         <td class="rp-item-action-cell mdc-data-table__cell">
           <button class="rp-item-remove mdc-icon-button material-icons"
                   type="button">
@@ -102,7 +124,6 @@
             clear
           </button>
         </td>
-    {% endif %}
-  {% endwith %}
+      {% endif %}
       </tr>
 {% endwith %}

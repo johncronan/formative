@@ -158,24 +158,35 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return f
     
     def get_formsets(self):
-        kwargs = self.get_form_kwargs()
-        kwargs.pop('prefix')
-        kwargs.pop('instance')
-
         formsets = {}
         for block in self.query:
             if block.block_type() != 'collection': continue
             
-            FormSet = modelformset_factory(self.program_form.item_model,
-                                           formset=ItemsFormSet, form=ItemsForm,
-                                           fields=block.collection_fields(),
-                                           # TODO: use edit_only once available
-                                           max_num=0, can_delete=False,
-                                           validate_max=False)
-            
+            kwargs = self.get_form_kwargs()
+            kwargs.pop('prefix')
+            kwargs.pop('instance')
+
+            item_model = self.program_form.item_model
             queryset = self.object._items.filter(_block=block.pk)
             queryset = queryset.exclude(_file='', _filesize__gt=0)
             
+            extra = 0
+            if block.fixed and not queryset:
+                extra = block.num_choices()
+                choices = [ {block.name1: c} for c in block.fixed_choices() ]
+                kwargs['initial'] = choices
+            
+            fields = block.collection_fields()
+            if block.fixed and queryset:
+                if self.request.method == 'POST': fields = fields[1:]
+            
+            FormSet = modelformset_factory(item_model,
+                                           formset=ItemsFormSet, form=ItemsForm,
+                                           fields=fields,
+                                           # TODO: use edit_only once available
+                                           max_num=extra, can_delete=False,
+                                           extra=extra, validate_max=False)
+
             formset = FormSet(prefix=f'items{block.pk}', queryset=queryset,
                               block=block, instance=self.object, **kwargs)
             formsets[block.pk] = formset
@@ -249,7 +260,27 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         self.reset_skipped()
         
         for formset in self.formsets.values():
-            formset.save()
+            block = formset.block
+            
+            if block.fixed and not formset.get_queryset():
+                forms, choices = {}, block.fixed_choices()
+                for form in formset.forms:
+                    rank_key = form.add_prefix('_rank')
+                    if rank_key in form.data:
+                        forms[int(form.data[rank_key])] = form
+                
+                # create the items in the given order
+                for i in range(block.num_choices()):
+                    if i in forms:
+                        if form.cleaned_data[block.name1] not in choices:
+                            continue # form tampering
+                        item = forms[i].save(commit=False)
+                        item._block = block.pk
+                        item._collection = block.name
+                        item._submission = self.object
+                        item.save()
+            
+            else: formset.save()
             
             # these are the failed uploads
             self.object._items.filter(_block=formset.block.pk,
@@ -261,7 +292,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         
-        form, formsets = self.get_form(), self.formsets
+        form = self.get_form()
+        formsets = self.formsets
         if form.is_valid() and all(f.is_valid() for f in formsets.values()):
             return self.form_valid(form)
         else:
