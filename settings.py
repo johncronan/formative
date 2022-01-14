@@ -95,7 +95,9 @@ EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
 CONTACT_EMAIL = env('CONTACT_EMAIL')
 SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
 
-SERVER_HOSTNAME = env('SERVER_HOSTNAME')
+SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME', default=env('SERVER_HOSTNAME'))
+port = env('DJANGO_SERVER_PORT', default=None)
+DJANGO_SERVER = SERVER_HOSTNAME + (port and ':' + port or '')
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
