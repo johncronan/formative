@@ -391,14 +391,18 @@ window.addEventListener("pageshow", function() {
 });
 
 var unsaved = false, submitting = false;
-document.querySelector('form#submission').onchange = () => {
-  unsaved = true;
-};
-document.querySelector('form#submission').onsubmit = () => {
-  submitting = true;
-}
+var form = document.querySelector('form#submission');
 
-window.onbeforeunload = (event) => {
-  var msg = "There are unsaved changes on this page.";
-  if (unsaved && !submitting) return msg;
-};
+if (form) {
+  form.onchange = () => {
+    unsaved = true;
+  };
+  form.onsubmit = () => {
+    submitting = true;
+  }
+
+  window.onbeforeunload = (event) => {
+    var msg = "There are unsaved changes on this page.";
+    if (unsaved && !submitting) return msg;
+  };
+}
