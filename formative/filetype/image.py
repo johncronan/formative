@@ -1,9 +1,11 @@
 from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageFile
+import logging
 
 from . import FileType
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+logger = logging.getLogger('django.request')
 
 
 class ImageFile(FileType):
@@ -17,4 +19,6 @@ class ImageFile(FileType):
             return {'width': width, 'height': height}
         
         except:
-            return {'error': _('Error occurred processing the image file.')}
+            msg = _('Error occurred processing the image file.')
+            logger.exception(msg)
+            return {'error': msg}

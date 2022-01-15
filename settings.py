@@ -73,9 +73,6 @@ TEMPLATES = [
 ]
 
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 host = env('POSTGRES_HOST', default='')
 if env('DOCKER_ENV', default=''):
     host = env('POSTGRES_DOCKER_HOST')
@@ -91,16 +88,17 @@ DATABASES = {
     }
 }
 
+
 EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
 CONTACT_EMAIL = env('CONTACT_EMAIL')
 SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
+ADMINS = [(env('ADMIN_NAME', default=''),
+           env('ADMIN_EMAIL', default=CONTACT_EMAIL))]
 
 SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME', default=env('SERVER_HOSTNAME'))
 port = env('DJANGO_SERVER_PORT', default=None)
 DJANGO_SERVER = SERVER_HOSTNAME + (port and ':' + port or '')
 
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 prefix = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [
@@ -119,9 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -131,8 +126,28 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': [],
+            'class': 'django.utils.log.AdminEmailHandler',
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'INFO',
+        }
+    }
+}
+
 
 STATIC_URL = '/static/'
 
@@ -144,6 +159,7 @@ STATICFILES_DIRS = (
     ("bundles", os.path.join(BASE_DIR, 'assets/bundles')),
 #    ("img", os.path.join(BASE_DIR, 'assets/img')),
 )
+
 
 WEBPACK_LOADER = {
     'DEFAULT': {
@@ -157,10 +173,9 @@ WEBPACK_LOADER = {
     }
 }
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 JAZZMIN_SETTINGS = {
     'related_modal_active': True,
@@ -173,6 +188,7 @@ JAZZMIN_UI_TWEAKS = {
     'sidebar_nav_legacy_style': True,
     'sidebar_disable_expand': True,
 }
+
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 SILENCED_SYSTEM_CHECKS = ['security.W019']
