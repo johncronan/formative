@@ -11,7 +11,7 @@
 {% with styles=form_block.form.label_class.LabelStyle %}
       <tr class="mdc-data-table__row"
           {% if item %}data-id="{{ item|underscore:'id' }}"{% endif %}
-          {% if from_block.file_optional %}data-file-optional{% endif %}
+          {% if form_block.file_optional %}data-file-optional{% endif %}
           data-block-id="{{ form_block.pk }}">
       
       {% if form_block.items_sortable %}
@@ -67,7 +67,7 @@
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"
           {% if not columns.upload %}colspan="2"{% endif %}
-            {{ hide }}>
+          {% if not columns.fields %}style="display: none;"{% endif %}>
         {% if item|underscore:'filesize' %}
           <span class="rp-done-icon material-icons">
             download_done

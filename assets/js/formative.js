@@ -146,7 +146,6 @@ function postFile(rowEl, file) {
     .then(res => {
       if (!res.data) setStatus(rowEl, 'normal');
       else {
-      
         rowEl.querySelector('span.rp-item-error').innerHTML = res.data;
         setStatus(rowEl, 'error');
       }
@@ -212,7 +211,7 @@ function updateTotal(blockId, incr) {
   document.querySelector(prefix + '-INITIAL_FORMS"]').value = n + incr;
 }
 
-function newItems(blockId, files, itemId) {
+function newItems(blockId, restore, files, itemId) {
   var url = postUrlBase();
   
   var data = new FormData();
@@ -271,6 +270,7 @@ function newItems(blockId, files, itemId) {
       }
       processQueue();
       
+      unsaved = restore;
       document.querySelectorAll('.rp-item-upload')
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')
@@ -310,22 +310,23 @@ function newItems(blockId, files, itemId) {
   
 }
 
-function filesSelected(event, blockId, itemId) {
+function filesSelected(event, blockId, restore, itemId) {
   var fileInput = event.target;
-  newItems(blockId, fileInput.files, itemId);
+  newItems(blockId, restore, fileInput.files, itemId);
   fileInput.value = '';
 }
 
 function collectionClick(event) {
   var buttonEl = event.target.parentElement;
   var blockId = buttonEl.dataset.blockId;
+  var restore = unsaved;
   
   if (buttonEl.dataset.needsFile) {
     var fileInput = document.querySelector('input[name="file' + blockId + '"]');
-    fileInput.onchange = event => filesSelected(event, blockId);
+    fileInput.onchange = event => filesSelected(event, blockId, restore);
     fileInput.click();
   } else {
-    newItems(blockId);
+    newItems(blockId, restore);
   }
 }
 
@@ -337,7 +338,8 @@ function uploadClick(event) {
   var blockId = rowEl.dataset.blockId;
   var id = rowEl.dataset.id;
   var fileInput = document.querySelector('input[name="itemfile' + id + '"]');
-  fileInput.onchange = event => filesSelected(event, blockId, id);
+  var restore = unsaved;
+  fileInput.onchange = event => filesSelected(event, blockId, restore, id);
   fileInput.click();
 }
 
@@ -355,6 +357,7 @@ function removeClick(event) {
   axios.post(url + '/removeitem', data, { timeout: 10000 })
     .then(res => {
       var tbody = rowEl.parentElement;
+      var restore = unsaved;
       tbody.removeChild(rowEl);
       updateTotal(blockId, -1);
       
@@ -369,6 +372,7 @@ function removeClick(event) {
         var sel = '.rp-collection-button[data-block-id="' + blockId + '"]';
         document.querySelector(sel).disabled = false;
       }
+      unsaved = restore;
     })
     .catch(err => {
       setError(rowEl, err);

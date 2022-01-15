@@ -477,13 +477,13 @@ class SubmissionItemUploadView(SubmissionItemBase):
         types = block.allowed_filetypes()
         
         retmsg = ''
-        if types:
-            path = item._file.path
-            filetype_class = FileType.by_extension(get_file_extension(path))
-            
-            # the extension was supposed to be already validated
-            if not filetype_class: return HttpResponseBadRequest()
-            
+        path = item._file.path
+        filetype_class = FileType.by_extension(get_file_extension(path))
+        
+        # the extension was supposed to be already validated
+        if not filetype_class and types: return HttpResponseBadRequest()
+        
+        if filetype_class:
             filetype = filetype_class()
             meta = filetype.meta(path)
             if 'error' in meta:

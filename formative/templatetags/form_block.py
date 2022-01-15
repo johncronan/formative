@@ -40,7 +40,7 @@ def item_columns(item, block, uploading):
         'fields': not item._error and not uploading,
         'progress': not item._error and uploading,
         'message': item._error,
-        'upload': item._error or (not uploading and block.file_optional)
+        'upload': item._error or block.file_optional
     }
 
 @register.simple_tag
