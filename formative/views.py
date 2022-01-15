@@ -11,7 +11,8 @@ import itertools
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
 from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
-from .utils import delete_file
+from .filetype import FileType
+from .utils import delete_file, get_file_extension
 
 
 class ProgramIndexView(generic.ListView):
@@ -455,22 +456,43 @@ class SubmissionItemBase(SubmissionBase):
                                  _submission=self.submission.pk,
                                  _id=self.request.POST['item_id'])
 
-        
+
 class SubmissionItemUploadView(SubmissionItemBase):
     http_method_names = ['post']
     
     def post(self, request, *args, **kwargs):
         item = self.get_item()
         
+        block = get_object_or_404(CollectionBlock,
+                                  form=self.program_form,
+                                  pk=item._block)
+        
         if 'file' not in self.request.FILES: return HttpResponseBadRequest()
         if item._error: return HttpResponseBadRequest()
         
         item._file = self.request.FILES['file']
-        # check _filesize is still correct
-        # process meta, check for errors
+        if item._file.size != item._filesize: return HttpResponseBadRequest()
+        
+        types = block.allowed_filetypes()
+        
+        retmsg = ''
+        if types:
+            path = item._file.path
+            filetype_class = FileType.by_extension(get_file_extension(path))
+            
+            # the extension was supposed to be already validated
+            if not filetype_class: return HttpResponseBadRequest()
+            
+            filetype = filetype_class()
+            meta = filetype.meta(path)
+            if 'error' in meta:
+                retmsg = meta['error']
+                item._error, item._message = True, retmsg
+            else:
+                item._filemeta = meta
         
         item.save()
-        return HttpResponse('')
+        return HttpResponse(retmsg)
 
 
 class SubmissionItemRemoveView(SubmissionItemBase):

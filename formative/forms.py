@@ -106,10 +106,11 @@ class ItemFileForm(forms.Form):
         if maxsize:
             self.fields['size'].validators.append(MaxValueValidator(maxsize))
         
-        extensions = self.block.allowed_extensions()
+        extensions = None #self.block.allowed_extensions()
         validator = FileExtensionValidator(allowed_extensions=extensions)
         self.fields['name'].validators.append(validator)
-        # TODO: maxsize by file type
+        
+        # TODO: extension claimed by allowed type; maxsize by file type
 
 
 class ItemsForm(forms.ModelForm):

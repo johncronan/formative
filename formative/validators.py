@@ -1,9 +1,9 @@
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
 import re
-from pathlib import Path
+
+from .utils import get_file_extension
 
 
 class WordValidator(validators.BaseValidator):
@@ -37,7 +37,7 @@ class FileExtensionValidator(validators.FileExtensionValidator):
     def __call__(self, value):
         if self.allowed_extensions is None:
             # validate that there is some extension
-            extension = Path(value).suffix[1:].lower()
+            extension = get_file_extension(value)
             if not extension or len(extension) > self.MAX_EXTENSION_LENGTH:
                 message = _('File name must end with an extension.')
                 raise ValidationError(message, code='no_extension',

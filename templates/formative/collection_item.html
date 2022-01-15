@@ -11,6 +11,7 @@
 {% with styles=form_block.form.label_class.LabelStyle %}
       <tr class="mdc-data-table__row"
           {% if item %}data-id="{{ item|underscore:'id' }}"{% endif %}
+          {% if from_block.file_optional %}data-file-optional{% endif %}
           data-block-id="{{ form_block.pk }}">
       
       {% if form_block.items_sortable %}
@@ -100,8 +101,7 @@
           </span>
         </td>
       {% endwith %}
-      {% if error or form_block.file_optional %}
-        {% with hide=columns.upload|yesno:', style="display: none;"'|safe %}
+      {% with hide=columns.upload|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-action-cell rp-item-upload-action
                    mdc-data-table__cell"{{ hide }}>
           <button class="rp-item-upload mdc-icon-button material-icons"
@@ -112,8 +112,7 @@
           <input type="file" name="itemfile{{ item|underscore:'id' }}"
                  style="display: none;"/>
         </td>
-        {% endwith %}
-      {% endif %}
+      {% endwith %}
     {% endwith %}
   {% endif %}
       {% if not form_block.fixed %}

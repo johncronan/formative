@@ -144,7 +144,13 @@ function postFile(rowEl, file) {
   
   axios.post(url + '/file', data, config)
     .then(res => {
-      setStatus(rowEl, 'normal');
+      if (!res.data) setStatus(rowEl, 'normal');
+      else {
+      
+        rowEl.querySelector('span.rp-item-error').innerHTML = res.data;
+        setStatus(rowEl, 'error');
+      }
+      
       for (let i=0; i < filesQueue.length; i++) {
         if (filesQueue[i][1].dataset.id == rowEl.dataset.id) {
           filesQueue.splice(i, 1);
@@ -186,10 +192,11 @@ function rowStatus(rowEl) {
 }
 
 function setStatus(rowEl, status) {
-  var hide, show;
+  var hide, show, upload='';
+  if (rowEl.dataset.fileOptional) upload=',td.rp-item-upload-action';
   if (status == 'normal') {
     hide = 'td.rp-item-progress-cell,td.rp-item-message-cell';
-    show = 'td.rp-item-field-cell,td.rp-item-upload-action';
+    show = 'td.rp-item-field-cell' + upload;
   } else if (status == 'error') {
     hide = 'td.rp-item-progress-cell,td.rp-item-field-cell';
     show = 'td.rp-item-message-cell,td.rp-item-upload-action';

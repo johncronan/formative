@@ -13,6 +13,7 @@ django-polymorphic = "*"
 django-jazzmin = "*"
 django-widget-tweaks = "*"
 markdown = "*"
+pillow = "*"
 
 [dev-packages]
 pytest = "*"
