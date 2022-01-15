@@ -129,6 +129,14 @@ USE_TZ = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
@@ -136,13 +144,18 @@ LOGGING = {
         },
         'mail_admins': {
             'level': 'ERROR',
-            'filters': [],
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+        'mail_debug_admins': {
+            'level': 'CRITICAL',
+            'filters': ['require_debug_true'],
             'class': 'django.utils.log.AdminEmailHandler',
         }
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'mail_admins'],
+            'handlers': ['console', 'mail_admins', 'mail_debug_admins'],
             'level': 'INFO',
         }
     }

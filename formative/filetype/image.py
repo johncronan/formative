@@ -20,5 +20,5 @@ class ImageFile(FileType):
         
         except:
             msg = _('Error occurred processing the image file.')
-            logger.exception(msg)
+            logger.critical(msg, exc_info=True)
             return {'error': msg}
