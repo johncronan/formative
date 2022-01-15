@@ -14,6 +14,7 @@ django-jazzmin = "*"
 django-widget-tweaks = "*"
 markdown = "*"
 pillow = "*"
+pikepdf = "*"
 
 [dev-packages]
 pytest = "*"

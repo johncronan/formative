@@ -494,6 +494,7 @@ class SubmissionItemUploadView(SubmissionItemBase):
                 delete_file(item._file)
             else:
                 item._filemeta = meta
+            item.save()
         
         return HttpResponse(retmsg)
 

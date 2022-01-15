@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM debian:bookworm-slim
 
 RUN mkdir -p /opt/services/djangoapp/src /opt/services/djangoapp/static
 WORKDIR /opt/services/djangoapp/src
@@ -7,7 +7,8 @@ COPY Pipfile Pipfile.lock /opt/services/djangoapp/src/
 
 # dependencies
 RUN apt-get update \
-    && apt-get install -y build-essential libpq-dev python3-dev \
+    && apt-get install -y build-essential libpq-dev libqpdf-dev pip \
+                          python3-dev python3-importlib-metadata \
     && rm -rf /var/lib/apt/lists/* \
     && pip install pipenv \
     && pipenv install --system \

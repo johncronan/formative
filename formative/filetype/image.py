@@ -14,9 +14,10 @@ class ImageFile(FileType):
     
     def meta(self, path):
         try:
-            im = Image.open(path)
-            width, height = im.size
-            return {'width': width, 'height': height}
+            with Image.open(path) as img:
+                width, height = img.size
+            return {'width': width, 'height': height,
+                    'megapixels': width * height / 1000000}
         
         except:
             msg = _('Error occurred processing the image file.')
