@@ -1,5 +1,5 @@
 
-__all__ = ["ImageFile"]
+__all__ = ["ImageFile", "DocumentFile"]
 
 
 class FileType:
@@ -34,3 +34,4 @@ class FileType:
     
 
 from .image import ImageFile
+from .document import DocumentFile
