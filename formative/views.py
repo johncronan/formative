@@ -8,7 +8,8 @@ from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
 import itertools
 
-from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock
+from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
+    SubmissionItem
 from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
 from .filetype import FileType
@@ -487,7 +488,8 @@ class SubmissionItemUploadView(SubmissionItemBase):
             meta = filetype.meta(path)
             if 'error' in meta:
                 retmsg = meta['error']
-                item._error, item._message = True, retmsg
+                item._error = True
+                item._message = retmsg[:SubmissionItem._message_maxlen()]
             else:
                 item._filemeta = meta
         

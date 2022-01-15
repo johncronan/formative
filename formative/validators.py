@@ -33,6 +33,7 @@ class MaxWordsValidator(WordValidator):
 
 class FileExtensionValidator(validators.FileExtensionValidator):
     MAX_EXTENSION_LENGTH = 10
+    message = 'Allowed file extensions are: %(allowed_extensions)s.'
     
     def __call__(self, value):
         if self.allowed_extensions is None:

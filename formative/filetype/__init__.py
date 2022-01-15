@@ -26,6 +26,9 @@ class FileType:
     
     # at some point, will probably want to load file type options here
     
+    def allowed_extensions(self):
+        return self.EXTENSIONS
+    
     def meta(self, path):
         return {}
     

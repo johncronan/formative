@@ -84,7 +84,7 @@ class SubmissionForm(forms.ModelForm):
 
 class ItemFileForm(forms.Form):
     # TODO: validate that there's an extension
-    name = forms.CharField(max_length=SubmissionItem.filename_maxlen(),
+    name = forms.CharField(max_length=SubmissionItem._filename_maxlen(),
                            error_messages={
         'max_length': _('File name cannot exceed %(limit_value)d characters')
     })
@@ -106,7 +106,7 @@ class ItemFileForm(forms.Form):
         if maxsize:
             self.fields['size'].validators.append(MaxValueValidator(maxsize))
         
-        extensions = None #self.block.allowed_extensions()
+        extensions = self.block.allowed_extensions()
         validator = FileExtensionValidator(allowed_extensions=extensions)
         self.fields['name'].validators.append(validator)
         

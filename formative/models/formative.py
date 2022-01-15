@@ -13,6 +13,7 @@ import uuid
 import markdown
 
 from ..stock import StockWidget
+from ..filetype import FileType
 from ..utils import create_model, remove_p, send_email
 from .ranked import RankedModel, UnderscoredRankedModel
 from .automatic import AutoSlugModel
@@ -518,6 +519,15 @@ class CollectionBlock(FormBlock):
         
         return None # allow any file extension
     
+    def allowed_extensions(self):
+        types = self.allowed_filetypes()
+        if not types: return None
+        
+        extensions = []
+        for filetype in types:
+            extensions += FileType.by_type(filetype)().allowed_extensions()
+        return extensions
+    
     def autoinit_filename(self):
         if 'autoinit_filename' in self.options: return True
         return False
@@ -628,9 +638,13 @@ class SubmissionItem(UnderscoredRankedModel):
     _message = models.CharField(max_length=64, default='', blank=True)
     
     @classmethod
-    def filename_maxlen(cls):
+    def _filename_maxlen(cls):
         # use 37 for directory uuid, 8 for possible alt name, 7 for order prefix
         return cls._meta.get_field('_file').max_length - 37 - 8 - 7
+    
+    @classmethod
+    def _message_maxlen(cls):
+        return cls._meta.get_field('_message').max_length
     
     def _rank_group(self):
         return self.__class__.objects.filter(_submission=self._submission,
