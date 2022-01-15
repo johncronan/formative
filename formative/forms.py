@@ -83,7 +83,6 @@ class SubmissionForm(forms.ModelForm):
 
 
 class ItemFileForm(forms.Form):
-    # TODO: validate that there's an extension
     name = forms.CharField(max_length=SubmissionItem._filename_maxlen(),
                            error_messages={
         'max_length': _('File name cannot exceed %(limit_value)d characters')

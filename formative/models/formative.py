@@ -11,6 +11,7 @@ from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
+import os
 
 from ..stock import StockWidget
 from ..filetype import FileType
@@ -616,7 +617,7 @@ class Submission(models.Model):
 
 
 def file_path(instance, filename):
-    return str(instance._submission_id) + '/' + filename
+    return os.path.join(str(instance._submission_id), filename)
 
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:

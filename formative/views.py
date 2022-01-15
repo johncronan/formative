@@ -476,13 +476,14 @@ class SubmissionItemUploadView(SubmissionItemBase):
         
         types = block.allowed_filetypes()
         
-        retmsg = ''
+        item.save()
         path = item._file.path
         filetype_class = FileType.by_extension(get_file_extension(path))
         
         # the extension was supposed to be already validated
         if not filetype_class and types: return HttpResponseBadRequest()
         
+        retmsg = ''
         if filetype_class:
             filetype = filetype_class()
             meta = filetype.meta(path)
@@ -490,10 +491,10 @@ class SubmissionItemUploadView(SubmissionItemBase):
                 retmsg = meta['error']
                 item._error = True
                 item._message = retmsg[:SubmissionItem._message_maxlen()]
+                delete_file(item._file)
             else:
                 item._filemeta = meta
         
-        item.save()
         return HttpResponse(retmsg)
 
 
