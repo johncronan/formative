@@ -1,7 +1,8 @@
 from django.utils.translation import gettext_lazy as _
 import ffmpeg
+import os
 
-from ..utils import get_file_extension
+from ..utils import get_file_extension, thumbnail_path
 from . import FileType
 
 
@@ -9,6 +10,8 @@ class AVFileType(FileType):
     TYPE = None
     
     def meta(self, path):
+        ret = super().meta(path)
+        
         try:
             probe = ffmpeg.probe(path)
             streams, msg = probe['streams'], ''
@@ -29,10 +32,8 @@ class AVFileType(FileType):
                 return {'error': _('File contains more than 1 audio stream.')}
             if len(video_streams) > 1:
                 return {'error': _('File contains more than 1 video stream.')}
-            ret = {
-                'seconds': float(probe['format']['duration']),
-                'bit_rate': float(probe['format']['bit_rate'])
-            }
+            ret.update(seconds=float(probe['format']['duration']),
+                       bit_rate=float(probe['format']['bit_rate']))
             
             if audio_streams: ret.update(self.audio_meta(audio_streams[0], ext))
             if 'error' in ret: return ret
@@ -106,3 +107,13 @@ class VideoFile(AudioFile):
             'video_height': stream['height'],
             'video_width': stream['width']
         }
+    
+    def submitted(self, items):
+        for item in items:
+            file = item._file
+            
+            vid = ffmpeg.input(file.path, ss=item._filemeta['seconds']/4)
+            outpath = thumbnail_path(file.path)
+            if os.path.isfile(outpath): continue
+            
+            vid.filter('scale', 120, -1).output(outpath, vframes=1).run()

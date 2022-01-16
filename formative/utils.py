@@ -51,8 +51,13 @@ def send_email(instance, template, to, context={}, context_object_name='obj'):
 def get_file_extension(name):
     return Path(name).suffix[1:].lower()
 
+def thumbnail_path(path):
+    return path[:path.rindex('.')] + '_tn.jpg'
+
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)
+    thumb = thumbnail_path(file.path)
+    if os.path.isfile(thumb): os.remove(thumb)
 
 def any_name_field(**kwargs):
     Qs = [ Q(**{ namen + (k != '_' and k or ''): v for k, v in kwargs.items() })

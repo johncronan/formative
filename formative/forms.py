@@ -118,7 +118,7 @@ class ItemFileForm(forms.Form):
         filetype = FileType.by_extension(extension)
         limits = self.block.file_limits()
         
-        if filetype.TYPE in limits:
+        if filetype and filetype.TYPE in limits:
             if 'max_filesize' in limits[filetype.TYPE]:
                 maxval = limits[filetype.TYPE]['max_filesize']
                 if cleaned_data['size'] > maxval:

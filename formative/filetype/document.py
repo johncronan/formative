@@ -9,10 +9,13 @@ class DocumentFile(FileType):
     EXTENSIONS = ('pdf',)
     
     def meta(self, path):
+        ret = super().meta(path)
+        
         try:
             with Pdf.open(path) as pdf:
                 pages = len(pdf.pages)
-            return {'pages': pages}
+            ret.update(pages=pages)
+            return ret
         
         except:
             msg = _('Error occurred processing the PDF file.')

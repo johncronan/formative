@@ -34,7 +34,7 @@ class FileType:
         return self.EXTENSIONS
     
     def meta(self, path):
-        return {}
+        return {'type': self.TYPE}
     
     def limit_error(self, meta, limits):
         for key, val in limits.items():
@@ -58,6 +58,9 @@ class FileType:
                                 'val': formatted_v}
         
         return None
+    
+    def submitted(self, items):
+        pass
 
 
 from .image import ImageFile

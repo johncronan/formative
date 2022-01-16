@@ -284,9 +284,18 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             
             else: formset.save()
             
-            # these are the failed uploads
-            self.object._items.filter(_block=formset.block.pk,
-                                      _file='', _filesize__gt=0).delete()
+            items = self.object._items.filter(_block=formset.block.pk)
+            # these are the failed uploads:
+            items.filter(_file='', _filesize__gt=0).delete()
+        
+            types = {}
+            for item in items:
+                if 'type' not in item._filemeta: continue
+                filetype = FileType.by_type(item._filemeta['type'])()
+                if filetype not in types: types[filetype] = []
+                types[filetype].append(item)
+                
+            for filetype, items in types.items(): filetype.submitted(items)
         
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
