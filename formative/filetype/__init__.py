@@ -1,5 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 import logging
+from math import ceil, floor
 
 __all__ = ["ImageFile", "DocumentFile", "AudioFile", "VideoFile"]
 
@@ -41,16 +42,20 @@ class FileType:
             name = key[4:]
             if name == 'filesize' or name not in meta: continue
             v = meta[name]
+            if type(v) == float: formatted_v = f'{v:.4f}'
+            else: formatted_v = v
             
             retname = _(name.replace('_', ' '))
             if key.startswith('max_'):
                 if v > val:
                     m = _('Maximum for %(name)s is %(maxval)s. It is %(val)s.')
-                    return m % {'name': retname, 'maxval': val, 'val': v}
+                    return m % {'name': retname, 'maxval': floor(val),
+                                'val': formatted_v}
             else:
                 if v < val:
                     m = _('Minimum for %(name)s is %(minval)s. It is %(val)s.')
-                    return m % {'name': retname, 'maxval': val, 'val': v}
+                    return m % {'name': retname, 'minval': ceil(val),
+                                'val': formatted_v}
         
         return None
 

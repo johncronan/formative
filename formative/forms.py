@@ -253,23 +253,43 @@ class ItemsFormSet(forms.BaseModelFormSet):
 #    def total_form_count(self):
 #        if not self.is_bound: return 0
 #        else: return self.initial_form_count()
-    def form_error_count(self):
-        return sum(len(form_errors) for form_errors in self.errors)
     
     def clean(self):
         super().clean()
         
-        if not self.block.min_items and not self.block.max_items: return
         files = self.instance._items.filter(_block=self.block.pk)
         files = files.exclude(_file='', _filesize__gt=0)
         file_errors = files.values_list('_error', flat=True)
         n = len(file_errors)
-        
-        params, msg = {}, ''
         if True in file_errors:
             msg = _('Some files have errors.')
             raise ValidationError(msg, code='file_error')
         
+        self.valid_num(n)
+        
+        file_limits = self.block.file_limits()
+        if 'total' not in file_limits: return
+        
+        for key, limit_val in file_limits['total'].items():
+            if not (key.startswith('max_') or key.startswith('min_')): continue
+            name = key[4:]
+            
+            if name == 'filesize': name = 'size'
+            generic = FileType()
+            if name == 'size':
+                total = sum(files.values_list('_filesize', flat=True))
+            else:
+                total = sum(f._filemeta[name] for f in files
+                            if name in f._filemeta)
+            
+            meta = { name: total }
+            err = generic.limit_error(meta, {key: limit_val})
+            if err: raise ValidationError(err)
+    
+    def valid_num(self, n):
+        if not self.block.min_items and not self.block.max_items: return
+        
+        params, msg = {}, ''
         if self.block.min_items and self.block.max_items is None:
             if n >= self.block.min_items: return
             

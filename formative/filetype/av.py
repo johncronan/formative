@@ -30,8 +30,8 @@ class AVFileType(FileType):
             if len(video_streams) > 1:
                 return {'error': _('File contains more than 1 video stream.')}
             ret = {
-                'seconds': probe['format']['duration'],
-                'bit_rate': probe['format']['bit_rate']
+                'seconds': float(probe['format']['duration']),
+                'bit_rate': float(probe['format']['bit_rate'])
             }
             
             if audio_streams: ret.update(self.audio_meta(audio_streams[0], ext))
@@ -74,8 +74,8 @@ class AudioFile(AVFileType):
         
         return {
             'audio_codec': codec,
-            'audio_bitrate': stream['bit_rate'],
-            'audio_samplerate': stream['sample_rate'],
+            'audio_bitrate': float(stream['bit_rate']),
+            'audio_samplerate': float(stream['sample_rate']),
             'audio_channels': stream['channels']
         }
 
@@ -101,7 +101,7 @@ class VideoFile(AudioFile):
         
         return {
             'video_codec': codec,
-            'video_bitrate': stream['bit_rate'],
+            'video_bitrate': float(stream['bit_rate']),
             'video_framerate': float(frame_rate.split('/')[0]) / divisor,
             'video_height': stream['height'],
             'video_width': stream['width']
