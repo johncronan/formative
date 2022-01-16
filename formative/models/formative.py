@@ -510,8 +510,8 @@ class CollectionBlock(FormBlock):
         
         return fields
     
-    def file_maxsize(self):
-        if 'maxsize' in self.options: return self.options['maxsize']
+    def max_filesize(self):
+        if 'max_filesize' in self.options: return self.options['max_filesize']
         return None # TODO: overall default max
     
     def allowed_filetypes(self):

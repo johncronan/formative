@@ -394,6 +394,18 @@ var unsaved = false, submitting = false;
 var form = document.querySelector('form#submission');
 
 if (form) {
+  document.querySelectorAll('.rp-item-field input')
+          .forEach(input => {
+    input.oninvalid = (e) => {
+      var td = e.target.parentElement.parentElement;
+      if (td.style.display == 'none') {
+        e.target.required = false;
+        form.submit();
+        return false;
+      }
+    };
+  });
+  
   form.onchange = () => {
     unsaved = true;
   };

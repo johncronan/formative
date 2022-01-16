@@ -5,8 +5,10 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from .models import CustomBlock, SubmissionItem
+from .filetype import FileType
 from .validators import MinWordsValidator, MaxWordsValidator, \
     FileExtensionValidator
+from .utils import get_file_extension
 
 
 class OpenForm(forms.Form):
@@ -41,7 +43,7 @@ class SubmissionForm(forms.ModelForm):
 
     def clean(self):
         super().clean()
-        
+        cleaned_data = self.cleaned_data
         stocks = {}
         
         for name, field in self.fields.items():
@@ -50,9 +52,8 @@ class SubmissionForm(forms.ModelForm):
                 if stock.name not in stocks: stocks[stock.name] = [stock, {}]
                 
                 widget = stock.get_widget(name)
-                if widget:
-                    stocks[stock.name][1][widget] = self.cleaned_data[name]
-                else: stocks[stock.name][1] = self.cleaned_data[name]
+                if widget: stocks[stock.name][1][widget] = cleaned_data[name]
+                else: stocks[stock.name][1] = cleaned_data[name]
                 
                 if self.has_error(name): stocks[stock.name][0] = False
             
@@ -60,14 +61,13 @@ class SubmissionForm(forms.ModelForm):
                 block = self.custom_blocks[name]
                 if self.has_error(name): continue
 
-                err = block.clean_field(self.cleaned_data[name], field)
+                err = block.clean_field(cleaned_data[name], field)
                 if err: self.add_error(name, err)
                 
                 if block.type in (CustomBlock.InputType.TEXT,
                                   CustomBlock.InputType.CHOICE):
                     # NULL for fields that're never seen; '' for no choice made
-                    if self.cleaned_data[name] is None:
-                        self.cleaned_data[name] = ''
+                    if cleaned_data[name] is None: self.cleaned_data[name] = ''
         
         for name, (stock, data) in stocks.items():
             if not stock: continue # show validator errors on form fields first
@@ -86,10 +86,10 @@ class SubmissionForm(forms.ModelForm):
 class ItemFileForm(forms.Form):
     name = forms.CharField(max_length=SubmissionItem._filename_maxlen(),
                            error_messages={
-        'max_length': _('File name cannot exceed %(limit_value)d characters')
+        'max_length': _('File name cannot exceed %(limit_value)d characters.')
     })
     size = forms.IntegerField(error_messages={
-        # TODO: human readable
+        # TODO: human readable (and in clean method)
         'max_value': _('Maximum file size is %(limit_value)d bytes.')
     })
     
@@ -102,7 +102,7 @@ class ItemFileForm(forms.Form):
             self.fields['name'].required = False
             self.fields['size'].required = False
         
-        maxsize = block.file_maxsize()
+        maxsize = block.max_filesize()
         if maxsize:
             self.fields['size'].validators.append(MaxValueValidator(maxsize))
         
@@ -110,7 +110,30 @@ class ItemFileForm(forms.Form):
         validator = FileExtensionValidator(allowed_extensions=extensions)
         self.fields['name'].validators.append(validator)
         
-        # TODO: extension claimed by allowed type; maxsize by file type
+    def clean(self):
+        super().clean()
+        cleaned_data = self.cleaned_data
+        
+        extension = get_file_extension(self.cleaned_data['name'])
+        filetype = FileType.by_extension(extension)
+        limits = self.block.file_limits()
+        
+        if filetype.TYPE in limits:
+            if 'max_filesize' in limits[filetype.TYPE]:
+                maxval = limits[filetype.TYPE]['max_filesize']
+                if cleaned_data['size'] > maxval:
+                    msg = _('Maximum file size for this type of file is '
+                            '%(limit_value)d bytes.')
+                    params = {'limit_value': maxval}
+                    raise ValidationError(msg, code='max_value', params=params)
+            
+            if 'min_filesize' in limits[filetype.TYPE]:
+                maxval = limits[filetype.TYPE]['min_filesize']
+                if cleaned_data['size'] < maxval:
+                    msg = _('Minimum file size for this type of file is '
+                            '%(limit_value)d bytes.')
+                    params = {'limit_value': minval}
+                    raise ValidationError(msg, code='min_value', params=params)
 
 
 class ItemsForm(forms.ModelForm):
@@ -127,6 +150,14 @@ class ItemsForm(forms.ModelForm):
                 f.validators.append(MinWordsValidator(field_block.min_words))
             if field_block.max_words:
                 f.validators.append(MaxWordsValidator(field_block.max_words))
+    
+    def clean(self):
+        super().clean()
+        
+        if self.instance and self.instance._error:
+            for name in self.fields.keys():
+                if name in self.errors: self.errors.pop(name)
+                self.fields[name].required = False
 
 
 class ItemsFormSet(forms.BaseModelFormSet):
@@ -222,14 +253,23 @@ class ItemsFormSet(forms.BaseModelFormSet):
 #    def total_form_count(self):
 #        if not self.is_bound: return 0
 #        else: return self.initial_form_count()
+    def form_error_count(self):
+        return sum(len(form_errors) for form_errors in self.errors)
     
     def clean(self):
         super().clean()
         
         if not self.block.min_items and not self.block.max_items: return
-        n = self.instance._items.filter(_block=self.block.pk).count()
+        files = self.instance._items.filter(_block=self.block.pk)
+        files = files.exclude(_file='', _filesize__gt=0)
+        file_errors = files.values_list('_error', flat=True)
+        n = len(file_errors)
         
         params, msg = {}, ''
+        if True in file_errors:
+            msg = _('Some files have errors.')
+            raise ValidationError(msg, code='file_error')
+        
         if self.block.min_items and self.block.max_items is None:
             if n >= self.block.min_items: return
             

@@ -32,7 +32,7 @@
           {% endif %}
         {% endfor %}
         
-        {% if formset.errors %}
+        {% if formset.form_error_count %}
           <tr class="rp-collection-field-errors mdc-data-table__row">
             {% if form_block.items_sortable %}<td></td>{% endif %}
             {% for field in form_block.collection_fields_as_blocks %}
