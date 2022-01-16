@@ -55,15 +55,16 @@ class SubmissionForm(forms.ModelForm):
                 else: stocks[stock.name][1] = self.cleaned_data[name]
                 
                 if self.has_error(name): stocks[stock.name][0] = False
-                
-            if name in self.custom_blocks:
+            
+            elif name in self.custom_blocks:
                 block = self.custom_blocks[name]
                 if self.has_error(name): continue
 
                 err = block.clean_field(self.cleaned_data[name], field)
                 if err: self.add_error(name, err)
                 
-                if block.type == CustomBlock.InputType.CHOICE:
+                if block.type in (CustomBlock.InputType.TEXT,
+                                  CustomBlock.InputType.CHOICE):
                     # NULL for fields that're never seen; '' for no choice made
                     if self.cleaned_data[name] is None:
                         self.cleaned_data[name] = ''

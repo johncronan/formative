@@ -95,8 +95,9 @@ def collection_block_main(program_form, custom_textarea_block):
     b = CollectionBlock(form=program_form, name='files', page=2,
                         min_items=1, max_items=10, has_file=True,
                         name1='caption', name2='timecode',
-                        options={'wide': ['caption'],
-                                 'autoinit_filename': True})
+                        options={'wide': ['caption'], 'autoinit_filename': True,
+                                 'file_types': ['image', 'document',
+                                                'audio', 'video']})
     b.save()
     yield b
 

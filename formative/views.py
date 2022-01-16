@@ -430,7 +430,7 @@ class SubmissionItemCreateView(SubmissionBase,
                 elif form.has_error('size'):
                     msg = form.errors['size'][0]
                 else: msg = form.non_field_errors()[0]
-                item._message = msg
+                item._message = msg[:SubmissionItem._message_maxlen()]
             else:
                 if item._file: delete_file(item._file)
                 if name:
@@ -483,20 +483,28 @@ class SubmissionItemUploadView(SubmissionItemBase):
         # the extension was supposed to be already validated
         if not filetype_class and types: return HttpResponseBadRequest()
         
-        retmsg = ''
+        msg = ''
         if filetype_class:
             filetype = filetype_class()
             meta = filetype.meta(path)
             if 'error' in meta:
-                retmsg = meta['error']
+                msg = meta['error']
                 item._error = True
-                item._message = retmsg[:SubmissionItem._message_maxlen()]
+                item._message = msg[:SubmissionItem._message_maxlen()]
                 delete_file(item._file)
             else:
-                item._filemeta = meta
+                file_limits = block.file_limits()
+                if filetype.TYPE in file_limits:
+                    msg = filetype.limit_error(meta, file_limits[filetype.TYPE])
+                    if msg:
+                        item._error = True
+                        item._message = msg[:SubmissionItem._message_maxlen()]
+                    else: msg = ''
+                
+                if not item._error: item._filemeta = meta
             item.save()
         
-        return HttpResponse(retmsg)
+        return HttpResponse(msg)
 
 
 class SubmissionItemRemoveView(SubmissionItemBase):

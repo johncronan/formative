@@ -540,6 +540,10 @@ class CollectionBlock(FormBlock):
         
         return self.options['choices']
     
+    def file_limits(self):
+        if 'file_limits' in self.options: return self.options['file_limits']
+        return {}
+    
     def num_choices(self):
         return len(self.fixed_choices())
     
@@ -636,7 +640,7 @@ class SubmissionItem(UnderscoredRankedModel):
     _filesize = models.PositiveBigIntegerField(default=0)
     _filemeta = models.JSONField(default=dict, blank=True)
     _error = models.BooleanField(default=False)
-    _message = models.CharField(max_length=64, default='', blank=True)
+    _message = models.CharField(max_length=100, default='', blank=True)
     
     @classmethod
     def _filename_maxlen(cls):

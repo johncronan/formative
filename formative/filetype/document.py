@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from pikepdf import Pdf
 
 from . import FileType
@@ -11,9 +12,9 @@ class DocumentFile(FileType):
         try:
             with Pdf.open(path) as pdf:
                 pages = len(pdf.pages)
-            return {'length': pages}
+            return {'pages': pages}
         
         except:
             msg = _('Error occurred processing the PDF file.')
-            logger.critical(msg, exc_info=True)
+            self.logger.critical(msg, exc_info=True)
             return {'error': msg}
