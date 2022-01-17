@@ -13,7 +13,7 @@ from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
 from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
 from .filetype import FileType
-from .utils import delete_file, get_file_extension
+from .utils import delete_file, get_file_extension, get_tooltips
 
 
 class ProgramIndexView(generic.ListView):
@@ -45,6 +45,7 @@ class ProgramFormMixin(generic.edit.FormMixin):
         if not self.program_form.model: raise Http404
         
         context['program_form'] = self.program_form
+        context['tooltips'] = get_tooltips
         return context
 
 

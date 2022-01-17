@@ -7,6 +7,7 @@ import {MDCNotchedOutline} from '@material/notched-outline';
 import {MDCRadio} from '@material/radio';
 import {MDCCheckbox} from '@material/checkbox';
 import {MDCDataTable} from '@material/data-table';
+import {MDCTooltip} from '@material/tooltip';
 
 import Sortable from 'sortablejs';
 
@@ -54,6 +55,9 @@ const ripples = [];
 document.querySelectorAll('.mdc-button,.mdc-button-icon')
         .forEach(button => ripples.push(new MDCRipple(button)));
 
+const tooltips = [];
+document.querySelectorAll('.mdc-tooltip')
+        .forEach(tip => tooltips.push(new MDCTooltip(tip)));
 
 function errorMessage(err, msg) {
   if (err.response && err.response.status >= 500)

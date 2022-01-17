@@ -3,6 +3,7 @@ from django.db.models import Model, Q
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template import Context, Template, loader
+from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 import os
 from pathlib import Path
@@ -63,3 +64,10 @@ def any_name_field(**kwargs):
     Qs = [ Q(**{ namen + (k != '_' and k or ''): v for k, v in kwargs.items() })
            for namen in ('name1', 'name2', 'name3') ]
     return Qs[0] | Qs[1] | Qs[2]
+
+def get_tooltips():
+    return {
+        'previoustip': _('Previous Page'),
+#        'sortabletip': _('Drag to reorder'),
+#        'uploadtip': _('Replace File'),
+    }

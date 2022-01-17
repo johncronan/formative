@@ -29,6 +29,7 @@
     "@material/ripple": "^13.0.0",
     "@material/textfield": "^13.0.0",
     "@material/theme": "^13.0.0",
+    "@material/tooltip": "^13.0.0",
     "axios": "^0.24.0",
     "es6-promise": "^4.2.8",
     "include-media": "^1.4.10",

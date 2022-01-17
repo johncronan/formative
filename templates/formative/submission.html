@@ -53,7 +53,7 @@
   {% with program_form as form %}
   {% with submission|underscore:'id' as id %}
   {% if prev_page %}
-  <a href="{% if prev_page > 1 %}
+  <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
            {% url 'submission_page' form.program.slug form.slug id prev_page %}
            {% else %}
            {% url 'submission' form.program.slug form.slug id %}
@@ -87,4 +87,13 @@
 
 {% block post_layout %}
 </form>
+
+{% for key, tooltip in tooltips.items %}
+<div id="{{ key }}" class="mdc-tooltip" role="tooltip" aria-hidden="true">
+  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+    {{ tooltip }}
+  </div>
+</div>
+{% endfor %}
+
 {% endblock %}
