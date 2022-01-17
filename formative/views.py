@@ -66,8 +66,7 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
             _email=form.cleaned_data['email']
         )
 
-        self.object._send_email(form=self.program_form,
-                                template='continue.html')
+        self.object._send_email(form=self.program_form, name='continue')
         return super().form_valid(form)
 
 
@@ -241,6 +240,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if not self.page:
             # the draft submission will now be marked as submitted
             self.object._submit()
+            self.object._send_email(form=self.program_form, name='confirmation')
             
             return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))

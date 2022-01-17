@@ -3,6 +3,7 @@ from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
     UniqueConstraint, Subquery
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
+from django.template import Template, loader
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -252,6 +253,10 @@ class Form(AutoSlugModel):
         if 'thanks' in self.options:
             md = self.program.markdown
             return mark_safe(md.convert(self.options['thanks']))
+    
+    def emails(self):
+        if 'emails' in self.options: return self.options['emails']
+        return {}
 
 
 class FormLabel(models.Model):
@@ -614,10 +619,17 @@ class Submission(models.Model):
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
 
-    def _send_email(self, form, template, **kwargs):
-        path = 'formative/emails/' + template
-        return send_email(self, template=path, to=self._email,
-                          context={'form': form},
+    def _send_email(self, form, name, **kwargs):
+        if name in form.emails():
+            template=Template(form.emails()[name]['content'])
+            subject=Template(form.emails()[name]['subject'])
+        else:
+            template = loader.get_template('formative/emails/' + name + '.html')
+            subject = loader.get_template('formative/emails/' + name +
+                                          '_subject.html')
+        
+        return send_email(self, template=template, to=self._email,
+                          subject=subject, context={'form': form},
                           context_object_name='submission', **kwargs)
     
     def _submit(self):

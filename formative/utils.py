@@ -2,7 +2,7 @@ from django.apps import apps
 from django.db.models import Model, Q
 from django.conf import settings
 from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
+from django.template import Context, Template, loader
 from django.contrib import admin
 import os
 from pathlib import Path
@@ -36,16 +36,16 @@ def remove_p(text):
     
     return text
 
-def send_email(instance, template, to, context={}, context_object_name='obj'):
+def send_email(instance, template, to, subject, context={},
+               context_object_name='obj'):
     new_context = { context_object_name: instance, 'settings': settings }
     new_context.update(context)
-    context = new_context
+    context = Context(new_context)
 
-    subject_template = template[:template.index('.html')] + '_subject.html'
-    subject = ''.join(render_to_string(subject_template, context).splitlines())
-
-    message = render_to_string(template, context)
-    mail = EmailMessage(subject, message, settings.CONTACT_EMAIL, [to])
+    sub = ''.join(subject.render(context).splitlines())
+    message = template.render(context)
+    
+    mail = EmailMessage(sub, message, settings.CONTACT_EMAIL, [to])
     mail.send()
 
 def get_file_extension(name):
