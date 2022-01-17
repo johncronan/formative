@@ -242,7 +242,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             # the draft submission will now be marked as submitted
             self.object._submit()
             
-            return HttpResponseRedirect(reverse('thanks',
+            return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))
         
         self.object = form.save(commit=False)
@@ -319,7 +319,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         
     def render_to_response(self, context):
         if self.object._submitted:
-            return HttpResponseRedirect(reverse('thanks',
+            return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))
         
         if (self.page and context['page'] <= self.object._valid + 1

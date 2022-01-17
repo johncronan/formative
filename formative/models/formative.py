@@ -247,6 +247,11 @@ class Form(AutoSlugModel):
         if 'review_post' in self.options:
             md = self.program.markdown
             return mark_safe(md.convert(self.options['review_post']))
+    
+    def thanks(self):
+        if 'thanks' in self.options:
+            md = self.program.markdown
+            return mark_safe(md.convert(self.options['thanks']))
 
 
 class FormLabel(models.Model):
