@@ -323,6 +323,10 @@ $maxlines: 30;
   grid-column-start: 1;
 }
 
+.rp-review-item-label {
+  grid-column-start: 1;
+}
+
 .markdown-body {
   & label,.rp-review-pre,.rp-review-post {
     & p:last-child {

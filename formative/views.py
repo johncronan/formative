@@ -200,18 +200,17 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         form = context['program_form']
         
         context['field_labels'] = form.field_labels()
+        args, items = {'page': self.page, 'skip': self.skipped.keys()}, {}
+        for item in form.visible_items(self.object, **args):
+            if item._block not in items: items[item._block] = []
+            items[item._block].append(item)
+            context.update(visible_items=items, formsets=self.formsets)
+        
         if self.page:
-            args, items = {'page': self.page, 'skip': self.skipped.keys()}, {}
-            for item in form.visible_items(self.object, **args):
-                if item._block not in items: items[item._block] = []
-                items[item._block].append(item)
-            
             context.update({
                 'page': self.page,
                 'prev_page': self.page > 1 and self.page - 1 or None,
-                'visible_blocks': form.visible_blocks(**args),
-                'visible_items': items,
-                'formsets': self.formsets
+                'visible_blocks': form.visible_blocks(**args)
             })
         else: context['prev_page'] = form.num_pages()
         

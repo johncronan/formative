@@ -43,7 +43,7 @@
       {% endif %}
       
     {% elif form_block.block_type == 'collection' %}
-      
+      {% include "./review_collection.html" %}
     
     {% else %}
       {% include_stock_review form_block labels %}

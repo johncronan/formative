@@ -659,3 +659,7 @@ class SubmissionItem(UnderscoredRankedModel):
     def _file_name(self):
         if not self._file: return None
         return self._file.name[self._file.name.index('/')+1:]
+    
+    def _file_type(self):
+        if 'type' in self._filemeta: return self._filemeta['type']
+        return ''
