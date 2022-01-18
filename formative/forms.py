@@ -64,11 +64,12 @@ class SubmissionForm(forms.ModelForm):
                 stock = self.stock_blocks[name]
                 if stock.name not in stocks: stocks[stock.name] = [stock, {}]
                 
+                if self.has_error(name):
+                    stocks[stock.name][0] = False
+                    continue
                 widget = stock.get_widget(name)
                 if widget: stocks[stock.name][1][widget] = cleaned_data[name]
                 else: stocks[stock.name][1] = cleaned_data[name]
-                
-                if self.has_error(name): stocks[stock.name][0] = False
             
         for name, (stock, data) in stocks.items():
             if not stock: continue # show validator errors on form fields first
