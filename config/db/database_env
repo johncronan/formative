@@ -1,0 +1,3 @@
+POSTGRES_USER=formative
+POSTGRES_DB=formative
+POSTGRES_DOCKER_HOST=database

@@ -3,7 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# pyenv
-.python-version
-
 *~
+
+.env
+
+assets/node_modules
+assets/bundles/webpack-bundle.dev.json
+assets/bundles/dev

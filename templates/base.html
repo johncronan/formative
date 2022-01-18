@@ -1,0 +1,27 @@
+{% load get_files from webpack_loader %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block page_title %}{% endblock %}</title>
+    <meta name="description" content="{% block page_desc %}{% endblock %}">
+    <meta name="viewport" content="width=375, initial-scale=1">
+    {% block page_extra_meta %}{% endblock %}
+    {% block head_trailing %}{% endblock %}
+  </head>
+  <body{% block body_attributes %}{% endblock %}>
+  {% block body %}{% endblock %}
+  <script>
+      if (!("Promise" in window)) {
+          var head = document.getElementsByTagName("head")[0];
+      {% get_files 'es6-promise' 'js' as promise_files %}
+      {% for jsfile in promise_files %}
+          var script = document.createElement("script");
+          script.type = 'text/javascript';
+          script.src = "{{ jsfile.url }}";
+          head.appendChild(script);
+      {% endfor %}
+      }
+  </script>
+  </body>
+</html>

@@ -1,0 +1,95 @@
+{% extends 'formative/base.html' %}
+
+{% load form_block %}
+{% load utils %}
+
+{% block pre_layout %}
+<form method="post">
+{% csrf_token %}
+{% endblock %}
+
+{% block content %}
+  {% if program_form.review_pre %}
+  <div class="rp-review-pre mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-4
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop">
+    {{ program_form.review_pre }}
+  </div>
+  {% endif %}
+
+  {% for form_block in program_form.visible_blocks %}
+  {% if form_block.show_in_review %}
+    {% block_labels field_labels form_block as labels %}
+    
+    {% if form_block.block_type == 'custom' %}
+      {% block_field form form_block as field %}
+      {% if field %}
+        {% with types=form_block.InputType %}
+        {% if form_block.type == types.CHOICE %}
+          {% with clabel=labels|for_choice_value:field.value %}
+          {% include "./review_block.html" with value=clabel.display_inline %}
+          {% endwith %}
+        {% elif form_block.type == types.BOOLEAN %}
+          {% if field.value %}
+            {% include "./review_block.html" with value="Yes" %}
+          {% else %}
+            {% include "./review_block.html" with value="No" %}
+          {% endif %}
+        {% else %}
+          {% include "./review_block.html" %}
+        {% endif %}
+        {% endwith %}
+      {% endif %}
+      
+    {% elif form_block.block_type == 'collection' %}
+      {% include "./review_collection.html" %}
+    
+    {% else %}
+      {% include_stock_review form_block labels %}
+    
+    {% endif %}
+  {% endif %}
+  {% endfor %}
+  
+  {% if program_form.review_post %}
+  <div class="rp-review-post mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-4
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop">
+    {{ program_form.review_post }}
+  </div>
+  {% endif %}
+  
+  {% with program_form as form %}
+  {% with submission|underscore:'id' as id %}
+  <a href="{% if prev_page > 1 %}
+           {% url 'submission_page' form.program.slug form.slug id prev_page %}
+           {% else %}
+           {% url 'submission' form.program.slug form.slug id %}
+           {% endif %}"
+     class="rp-prevpage-button mdc-icon-button material-icons"
+     data-mdc-ripple-is-unbounded>
+    <div class="mdc-icon-button__ripple"></div>
+    chevron_left
+  </a>
+  {% endwith %}
+  {% endwith %}
+
+  <button class="rp-continue-button rp-submit-button
+                 mdc-button mdc-button--raised mdc-layout-grid__cell
+                 mdc-layout-grid__cell--span-2
+                 mdc-layout-grid__cell--span-3-tablet
+                 mdc-layout-grid__cell--span-3-desktop"
+         type="submit" name="submit" value="submit">
+    <span class="mdc-button__ripple"></span>
+    <span class="mdc-button__focus-ring"></span>
+    <span class="mdc-button__label">submit</span>
+  </button>
+  
+  {{ form.non_field_errors }}
+{% endblock %}
+
+{% block post_layout %}
+</form>
+{% endblock %}

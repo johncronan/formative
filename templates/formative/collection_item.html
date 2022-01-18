@@ -1,0 +1,128 @@
+{% load patched_widget_tweaks %}
+{% load form_block %}
+{% load utils %}
+
+{% if not i %}
+  {% item_form formset item as item_form %}
+{% else %}
+  {% item_form formset i as item_form %}
+{% endif %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+      <tr class="mdc-data-table__row"
+          {% if item %}data-id="{{ item|underscore:'id' }}"{% endif %}
+          {% if form_block.file_optional %}data-file-optional{% endif %}
+          data-block-id="{{ form_block.pk }}">
+      
+      {% if form_block.items_sortable %}
+        <td class="rp-sort-handle-cell
+                   {% if i %}rp-sort-defer{% endif %}
+                   mdc-data-table__cell">
+          <button type="button" class="mdc-icon-button material-icons">
+            <div class="mdc-icon-button__ripple"></div>
+            unfold_more
+          </button>
+        </td>
+      {% endif %}
+      
+      {% item_columns item form_block uploading as columns %}
+      {% form_hidden item_form 'id' as hidden_id %}
+      
+      {% for field in form_block.collection_fields_as_blocks %}
+        {% block_field item_form field as form_field %}
+        
+        <td class="rp-item-field-cell mdc-data-table__cell"
+          {% with fw=field.width h=' display: none;' %}
+          style="width: {{ fw }}%;{% if not columns.fields %}{{ h }}{% endif %}"
+          {% endwith %}
+          {% if not columns.upload and forloop.last %}colspan="2"{% endif %}>
+        {% if form_block.fixed and forloop.first %}
+          {{ form_field.initial }}
+          <input type="hidden" name="{{ item_form.prefix }}-{{ field.name }}"
+            value="{{ form_field.initial }}" />
+        {% else %}
+          <label class="rp-item-field mdc-text-field mdc-text-field--filled
+            {% if form_field.errors %}rp-text-field--invalid{% endif %}">
+            <span class="mdc-text-field__ripple"></span>
+        {% with flabels=labels|for_item_field:field.name %}
+          {% with label=flabels|get_by_style:styles.WIDGET %}
+            {% if label %}
+              <span class="mdc-floating-label">{{ label.text }}</span>
+            {% endif %}
+          {% endwith %}
+        {% endwith %}
+            {% render_field form_field class+="mdc-text-field__input" %}
+            <span class="mdc-line-ripple"></span>
+          </label>
+        {% endif %}
+          {% if forloop.first %}
+            {% if not i %}
+              {{ hidden_id }}
+            {% else %}
+              <input type="hidden" class="rp-hidden-rank-input"
+                name="{{ item_form.prefix }}-_rank" value="{{ i|add:-1 }}" />
+            {% endif %}
+          {% endif %}
+        </td>
+      {% empty %}
+        <td class="rp-item-field-cell mdc-data-table__cell"
+          {% if not columns.upload %}colspan="2"{% endif %}
+          {% if not columns.fields %}style="display: none;"{% endif %}>
+        {% if item|underscore:'filesize' %}
+          <span class="rp-done-icon material-icons">
+            download_done
+          </span>
+          <span style="line-height: 48px;">
+            ({{ item|underscore:'filesize' }} bytes)
+          </span>
+        {% endif %}
+        {{ hidden_id }}
+        </td>
+      {% endfor %}
+    
+  {% if form_block.has_file %}
+    {% with error=item|underscore:'error' file=item|underscore:'file' %}
+      {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
+        <td class="rp-item-progress-cell mdc-data-table__cell"
+            colspan="{{ form_block.total_colspan|add:1 }}"{{ hide }}>
+          <div class="rp-progress-bar rp-progress-rounded">
+            <div class="rp-progress-percentage rp-progress-rounded
+                        mdc-theme--primary-bg" style="width: 0;">
+              <span>0%</span>
+            </div>
+          </div>
+        </td>
+      {% endwith %}
+      {% with hide=columns.message|yesno:', style="display: none;"'|safe %}
+        <td class="rp-item-message-cell mdc-data-table__cell"
+            colspan="{{ form_block.total_colspan }}"{{ hide }}>
+          <span class="rp-item-error">
+            {% if not hide %}{{ item|underscore:'message' }}{% endif %}
+          </span>
+        </td>
+      {% endwith %}
+      {% with hide=columns.upload|yesno:', style="display: none;"'|safe %}
+        <td class="rp-item-action-cell rp-item-upload-action
+                   mdc-data-table__cell"{{ hide }}>
+          <button class="rp-item-upload mdc-icon-button material-icons"
+                  type="button">
+            <div class="mdc-icon-button__ripple"></div>
+            upload
+          </button>
+          <input type="file" name="itemfile{{ item|underscore:'id' }}"
+                 style="display: none;"/>
+        </td>
+      {% endwith %}
+    {% endwith %}
+  {% endif %}
+      {% if not form_block.fixed %}
+        <td class="rp-item-action-cell mdc-data-table__cell">
+          <button class="rp-item-remove mdc-icon-button material-icons"
+                  type="button">
+            <div class="mdc-icon-button__ripple"></div>
+            clear
+          </button>
+        </td>
+      {% endif %}
+      </tr>
+{% endwith %}

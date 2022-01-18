@@ -1,0 +1,26 @@
+{% with forms=program.visible_forms %}
+{% if forms %}
+<div class="mdc-card mdc-card--outlined rp-program-card
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+  <div class="mdc-card-wrapper__text-section">
+    <div class="rp-program-card__title">{{ program.name }}</div>
+    <div class="rp-program-card__subhead">{{ program.description }}</div>
+  </div>
+</div>
+{% for form in forms %}
+<div class="mdc-card rp-form-card
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-6-desktop">
+  <div class="mdc-card-wrapper__text-section">
+    <div class="rp-program-card__title">{{ form.name }}</div>
+    <div class="rp-program-card__subhead">{{ form.status_message }}</div>
+  </div>
+  <div class="mdc-card__actions">
+      <a class="mdc-button mdc-card__action mdc-card__action--button"
+         href="{% url 'form' program.slug form.slug %}">
+        <span class="mdc-button__label">Apply</span>
+      </a>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}

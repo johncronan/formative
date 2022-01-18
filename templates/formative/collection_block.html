@@ -1,0 +1,100 @@
+{% load form_block %}
+
+{% block_formset formsets form_block as formset %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+{% with label=labels|get_by_style:styles.VERTICAL %}
+{% if label %}
+  {% include "./label_vertical.html" %}
+{% endif %}
+{% endwith %}
+{% endwith %}
+
+  {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
+  <div class="rp-collection-table mdc-data-table mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-{{ tsp }}-tablet
+              mdc-layout-grid__cell--span-{{ dsp }}-desktop"
+    {% if not form_block.fixed and not items %}style="display: none;"{% endif %}>
+  {% endwith %}
+    <div class="mdc-data-table__table-container">
+      <table id="collection{{ form_block.pk }}" class="mdc-data-table__table"
+         {% if form_block.max_items %}
+           data-max-items="{{ form_block.max_items }}"
+         {% endif %}>
+        <tbody class="rp-collection-table-body mdc-data-table__content">
+        {% for item in items %}
+          {% include "./collection_item.html" %}
+        {% empty %}
+          {% if form_block.fixed %}
+            {% for name in form_block.fixed_choices %}
+              {% include "./collection_item.html" with i=forloop.counter %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        
+        {% if formset.total_error_count and not formset.non_form_errors  %}
+          <tr class="rp-collection-field-errors mdc-data-table__row">
+            {% if form_block.items_sortable %}<td></td>{% endif %}
+            {% for field in form_block.collection_fields_as_blocks %}
+              <td class="rp-collection-field-error mdc-data-table__cell"
+                {% if not form_block.file_optional and forloop.last %}
+                  colspan="2"
+                {% endif %}>
+                <div class="mdc-text-field-helper-text
+                            mdc-text-field-helper-text--persistent
+                            mdc-text-field-helper-text--validation-msg"
+                     role="alert">
+                  {{ formset.errors|get_by_field:field.name }}
+                </div>
+              </td>
+            {% empty %}
+              <td{% if not form_block.file_optional %}colspan="2"{% endif %}>
+              </td>
+            {% endfor %}
+            {% if form_block.has_file %}
+              <td colspan="2"></td>
+              {% if error or form_block.file_optional %}<td></td>{% endif %}
+            {% endif %}
+            {% if not form_block.fixed %}<td></td>{% endif %}
+          </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% if not form_block.fixed %}
+  <button class="rp-collection-button mdc-button mdc-button--outlined
+                mdc-layout-grid__cell mdc-layout-grid__cell--span-2
+                mdc-layout-grid__cell--span-3-tablet
+                mdc-layout-grid__cell--span-3-desktop"
+         type="button" name="save" value="save"
+       {% if items|length >= form_block.max_items %}disabled{% endif %}
+       {% if form_block.has_file and not form_block.file_optional %}
+         data-needs-file="1"
+       {% endif %}
+         data-block-id="{{ form_block.pk }}">
+    <span class="mdc-button__ripple"></span>
+    <span class="mdc-button__focus-ring"></span>
+    <span class="mdc-button__label">{{ form_block.button_text }}</span>
+  </button>
+  
+  {% if form_block.has_file %}
+  <input type="file" name="file{{ form_block.pk }}"
+         {% if form_block.max_items > 1 %}multiple{% endif %}
+         style="display: none;"/>
+  {% endif %}
+{% endif %}
+
+{{ formset.management_form }}
+
+{% if formset.non_form_errors %}
+  <div class="rp-formset-error mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop
+              mdc-text-field-helper-text mdc-text-field-helper-text--persistent
+              mdc-text-field-helper-text--validation-msg"
+       role="alert">
+    {{ formset.non_form_errors.0 }}
+  </div>
+{% endif %}

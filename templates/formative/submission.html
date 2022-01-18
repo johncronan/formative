@@ -1,0 +1,97 @@
+{% extends 'formative/base.html' %}
+
+{% load form_block %}
+{% load utils %}
+
+{% block pre_layout %}
+<form id="submission" method="post">
+{% csrf_token %}
+{% endblock %}
+
+{% block content %}
+    {# TODO: put in an app bar with {{ program_form.name }} #}
+    
+    {% if page == 1 %}
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-1">
+      Email:
+    </div>
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-3">
+      {{ submission|underscore:'email' }}
+    </div>
+    {% endif %}
+    
+    {% for form_block in visible_blocks %}
+      {% block_labels field_labels form_block as labels %}
+      {% if form_block.block_type == 'custom' %}
+        {% block_field form form_block as field %}
+        {% include "./custom_block.html" %}
+        
+      {% elif form_block.block_type == 'collection' %}
+        {% collection_items visible_items form_block as items %}
+        {% include "./collection_block.html" %}
+        
+      {% else %}
+        {% include_stock form_block labels %}
+        
+      {% endif %}
+    {% endfor %}
+    
+    {% if 0 and program_form.num_pages > 1 %}
+      <div class="rp-form- mdc-layout-grid__cell">
+        Page {{ page }} of {{ program_form.num_pages }}
+      </div>
+    {% endif %}
+    <div {% if not form.non_field_errors %}style="display: none;"{% endif %}
+         id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell
+                                   mdc-layout-grid__cell--span-8-tablet
+                                   mdc-layout-grid__cell--span-8-desktop">
+      <span class="rp-error">{{ form.non_field_errors }}</span>
+    </div>
+  
+  {% with program_form as form %}
+  {% with submission|underscore:'id' as id %}
+  <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
+           {% url 'submission_page' form.program.slug form.slug id prev_page %}
+           {% else %}
+           {% url 'submission' form.program.slug form.slug id %}
+           {% endif %}{% if not prev_page %}style="display: none;"{% endif %}"
+     class="rp-prevpage-button mdc-icon-button material-icons"
+     data-mdc-ripple-is-unbounded>
+    <div class="mdc-icon-button__ripple"></div>
+    chevron_left
+  </a>
+  {% endwith %}
+  {% endwith %}
+
+  <button class="rp-save-button mdc-button mdc-button--outlined
+                mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
+         type="submit" name="save" value="save">
+    <span class="mdc-button__ripple"></span>
+    <span class="mdc-button__focus-ring"></span>
+    <span class="mdc-button__label">save</span>
+  </button>
+  
+  <button class="rp-continue-button mdc-button mdc-button--raised
+                mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
+         type="submit" name="continue" value="continue">
+    <span class="mdc-button__ripple"></span>
+    <span class="mdc-button__focus-ring"></span>
+    <span class="mdc-button__label">continue</span>
+  </button>
+  
+{% endblock %}
+
+{% block post_layout %}
+</form>
+
+{% for key, tooltip in tooltips.items %}
+<div id="{{ key }}" class="mdc-tooltip" role="tooltip" aria-hidden="true">
+  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+    {{ tooltip }}
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

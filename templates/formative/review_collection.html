@@ -1,0 +1,77 @@
+{% load form_block %}
+{% load utils %}
+
+{% collection_items visible_items form_block as items %}
+{% block_formset formsets form_block as formset %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+  {% with label=labels|get_by_style:styles.VERTICAL %}
+  {% if label %}
+  <div class="rp-review-label mdc-layout-grid__cell
+    {% if form_block.fixed %}
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-3-tablet
+              mdc-layout-grid__cell--span-3-desktop
+    {% else %}
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop
+    {% endif %}">
+    {{ label.text }}
+  </div>
+  {% endif %}
+  {% endwith %}
+  
+  {% if form_block.fixed %}
+  <div class="rp-review-value mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-5-tablet
+              mdc-layout-grid__cell--span-7-desktop">
+    {% for item in items %}
+      {% item_form formset item as item_form %}
+      {% with field_block=form_block.collection_fields_as_blocks.0 %}
+        {% block_field item_form field_block as field %}
+        <nobr>{{ field.initial }}{% if not forloop.last %},{% endif %}</nobr>
+      {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  {% for item in items %}
+    {% item_form formset item as item_form %}
+    <div class="rp-review-item-label mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-2
+                mdc-layout-grid__cell--span-3-tablet
+                mdc-layout-grid__cell--span-3-desktop">
+      {% with file=item|underscore:'file' type=item|underscore:'file_type' %}
+      {% if form_block.has_file and file %}
+        {% file_thumbnail file as thumbnail %}
+        {% if thumbnail %}
+        <img src="{{ thumbnail }}" style="max-width: 85px; max-height: 85px;" />
+        {% else %}
+          {% if type %}{{ type }}{% else %}file{% endif %}
+        {% endif %}
+      {% else %}
+      {% endif %}
+      {% endwith %}
+    </div>
+    <div class ="rp-review-item-value mdc-layout-grid__cell
+                 mdc-layout-grid__cell--span-2
+                 mdc-layout-grid__cell--span-5-tablet
+                 mdc-layout-grid__cell--span-7-desktop">
+      {% for field_block in form_block.collection_fields_as_blocks %}
+      <div style="width: 100%; margin-bottom: 8px;">
+        {% block_field item_form field_block as form_field %}
+        {% with flabels=labels|for_item_field:form_field.name %}
+        {% with label=flabels|closest_label %}
+        {% if form_field.value %}
+          {{ label.text|default:form_field.name }}: {{ form_field.value }}
+        {% else %}
+          &nbsp;
+        {% endif %}
+        {% endwith %}
+        {% endwith %}
+      </div>
+      {% endfor %}
+    </div>
+  {% endfor %}    
+  {% endif %}
+{% endwith %}

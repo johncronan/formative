@@ -1,0 +1,49 @@
+{% load patched_widget_tweaks %}
+{% load form_block %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+{% with wlabel=labels|get_by_style:'widget' %}
+  {% with types=form_block.InputType %}
+  <div class="mdc-text-field rp-text-field
+        {% if form_block.type == types.NUMERIC %}
+              rp-text-field-numeric
+        {% elif form_block.num_lines > 1 %}
+              rp-textarea rp-textarea-rows-{{ form_block.num_lines }}
+        {% endif %}
+              {% if field.errors %}rp-text-field--invalid{% endif %}
+              mdc-text-field--outlined">
+  {% endwith %}
+  {% if form_block.num_lines == 1 or not form_block.num_lines %}
+    {% render_field field class+="mdc-text-field__input" %}
+  {% endif %}
+    <div class="mdc-notched-outline">
+      <div class="mdc-notched-outline__leading"></div>
+      {% if wlabel or not form_block %}
+      <div class="mdc-notched-outline__notch">
+        {% with l=wlabel.display_inline %}
+        <label for="{{ field.id_for_label }}" class="mdc-floating-label"
+         >{% if wlabel %}{{ l }}{% else %}{{ field.label }}{% endif %}</label>
+        {% endwith %}
+      </div>
+      {% endif %}
+      <div class="mdc-notched-outline__trailing"></div>
+    </div>
+  {% with lines=form_block.num_lines %}
+  {% if lines > 1 %}
+    {% render_field field class+="mdc-text-field__input" rows=lines %}
+  {% endif %}
+  {% endwith %}
+  </div>
+  
+  <div class="mdc-text-field-helper-line">
+  {% if field.errors %}
+    <div class="mdc-text-field-helper-text
+                mdc-text-field-helper-text--persistent
+                mdc-text-field-helper-text--validation-msg">
+      {{ field.errors.0|escape }}
+    </div>
+  {% endif %}
+    {# TODO <div class="mdc-text-field-character-counter"></div> #}
+  </div>
+{% endwith %}
+{% endwith %}

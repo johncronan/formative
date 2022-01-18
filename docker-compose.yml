@@ -1,0 +1,75 @@
+version: '3'
+
+services:
+  djangoapp:
+    build: .
+    env_file:
+      - config/db/database_env
+      - config/django_env
+      - .env
+    environment:
+      DOCKER_ENV: 'on'
+    volumes:
+      - static_volume:/opt/services/djangoapp/static
+      - media_volume:/opt/services/djangoapp/media
+      # these three are for a development environment:
+      - ./formative:/opt/services/djangoapp/src/formative
+      - ./templates:/opt/services/djangoapp/src/templates
+      - ./assets/bundles:/opt/services/djangoapp/src/assets/bundles
+    networks:
+      - nginx_network
+      - database_network
+      - postfix_network
+    depends_on:
+      - database
+      - postfix
+
+  nginx:
+    image: nginx:1.20
+    ports:
+      - 8000:80
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/opt/services/djangoapp/static
+      - media_volume:/opt/services/djangoapp/media
+    depends_on:
+      - djangoapp
+    networks:
+      - nginx_network
+
+  database:
+    image: postgres:13
+    env_file:
+      - config/db/database_env
+      - .env
+    ports:
+      # a port map for the development environment:
+      - 5432:5432
+    networks:
+      - database_network
+    volumes:
+      - database_volume:/var/lib/postgresql/data
+
+  postfix:
+    image: juanluisbaptiste/postfix:1.3
+    env_file:
+      - config/postfix_env
+      - .env
+    networks:
+      - postfix_network
+    volumes:
+      - postfix_volume:/var/spool/postfix
+
+networks:
+  nginx_network:
+    driver: bridge
+  database_network:
+    driver: bridge
+  postfix_network:
+    driver: bridge
+
+volumes:
+  database_volume:
+  static_volume:
+  media_volume:
+  postfix_volume:

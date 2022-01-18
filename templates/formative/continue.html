@@ -1,0 +1,17 @@
+{% extends 'formative/base.html' %}
+
+{% block content %}
+    <div class="rp-form-top mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-8-tablet
+                mdc-layout-grid__cell--span-8-desktop">
+      We sent an email to the address you gave,
+      with a link to your application form.
+    </div>
+
+  <a href="{% url 'form' program_form.program.slug program_form.slug %}"
+     class="rp-prevpage-button mdc-icon-button material-icons"
+     data-mdc-ripple-is-unbounded>
+    <div class="mdc-icon-button__ripple"></div>
+    chevron_left
+  </a>
+{% endblock %}

@@ -1,0 +1,342 @@
+@use 'libs/reset';
+
+@use '@material/theme';
+@use '@material/typography/mdc-typography';
+@use '@material/layout-grid' with (
+  $breakpoints: (desktop: 940px, tablet: 600px, phone: 0px)
+);
+@use '@material/layout-grid/mdc-layout-grid';
+@use '@material/button/mdc-button';
+@use '@material/button';
+@use '@material/icon-button';
+@use '@material/icon-button/styles' as icon-button-styles;
+@use '@material/top-app-bar/mdc-top-app-bar';
+@use '@material/card';
+@use '@material/form-field';
+@use '@material/floating-label/mdc-floating-label';
+@use '@material/line-ripple/mdc-line-ripple';
+@use '@material/notched-outline/mdc-notched-outline';
+@use '@material/textfield';
+@use '@material/textfield/mixins' as textfield-mixins;
+@use '@material/textfield/helper-text';
+@use '@material/textfield/helper-text/mixins' as *;
+@use '@material/textfield/character-counter';
+@use '@material/radio/styles' as radio-styles;
+@use '@material/checkbox';
+@use '@material/data-table/data-table';
+@use '@material/tooltip/styles';
+
+@use 'include-media' as *;
+
+@use 'libs/markdown';
+
+// there seems to be some bug in mdc preventing @use with this one:
+@import '@material/layout-grid/mixins';
+
+@import 'material-icons/iconfont/filled.css';
+
+@include theme.core-styles;
+@include card.core-styles;
+@include form-field.core-styles;
+@include textfield.core-styles;
+@include helper-text.helper-text-core-styles;
+@include character-counter.character-counter-core-styles;
+@include checkbox.core-styles;
+@include data-table.core-styles;
+@include data-table.theme-baseline;
+
+
+$breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
+
+:root {
+  --mdc-layout-grid-gutter-tablet: 20px;
+}
+.rp-maxwidth-grid {
+  // the 992px is the only one we're really customizing
+  @include mdc-layout-grid('desktop', 24px, 992px);
+  @include mdc-layout-grid('tablet', 20px);
+  @include mdc-layout-grid('phone', 16px);
+  @include media(">=desktop") {
+    padding: 32px;
+  }
+}
+
+.rp-layout-cell-start {
+  grid-column-start: 1;
+}
+
+.rp-layout-cell {
+  & .mdc-text-field {
+    width: 100%;
+  }
+
+  & .mdc-form-field {
+    width: 100%;
+  }
+}
+
+.rp-stock-cell-1 {
+  grid-column-start: 1;
+}
+
+.rp-vertical-label-cell {
+  margin-bottom: -8px;
+  
+  & label {
+    line-height: 20px;
+  }
+}
+
+.rp-horizontal-label-cell {
+  align-self: center;
+
+  & label {
+    line-height: 20px;
+  }
+}
+
+.rp-choice-field.mdc-form-field,.rp-boolean-field.mdc-form-field {
+  font-size: inherit;
+}
+
+.rp-text-field {
+  // min-height: 75px;
+  
+  & .mdc-text-field {
+    width: 100%;
+  }
+}
+
+.rp-textarea {
+  & textarea.mdc-text-field__input {
+    resize: none;
+    margin-top: 13px;
+    line-height: 1.25rem;
+    height: auto;
+  }
+}
+
+$maxlines: 30;
+@for $i from 2 through $maxlines {
+  .rp-textarea-rows-#{$i} {
+    @include textfield-mixins.outlined-height(20px * $i + 26px);
+  }
+}
+
+.rp-program-card,.rp-form-card {
+  &__title {
+    font-size: 1.25rem;
+    line-height: 2rem;
+    font-weight: 500;
+  }
+  
+  &__subhead {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+  }
+}
+
+.rp-form-top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.rp-form-bottom {
+  grid-column-start: 1;
+  & .rp-error {
+    color: #af0109;
+  }
+}
+
+.rp-program-card {
+  padding-bottom: 16px;
+}
+
+.rp-prevpage-button {
+  grid-column-start: 1;
+  position: relative;
+  top: 2px;
+}
+
+.rp-done-icon {
+  user-select: none;
+  position: relative;
+  top: 7px; // TODO: where is this coming from?
+}
+
+.rp-progress-rounded {
+  border-radius: 4px;
+}
+
+.rp-progress-bar {
+  width: 200px;
+  background: #aaaaaa;
+  position: relative;
+  & .rp-progress-percentage {
+    padding: 4px 0px;
+    color: #fff;
+    text-align: center;
+    height: 20px;
+    
+    & span {
+      display: inline-block;
+      position: absolute;
+      width: 100%;
+      left: 0;
+    }
+  }
+}
+
+.rp-collection-button {
+  grid-column-start: 1;
+}
+
+.rp-collection-table {
+  margin-bottom: 8px;
+  position: relative;
+  & .mdc-data-table__table {
+    white-space: normal;
+  }
+  & .mdc-data-table__cell {
+    vertical-align: middle;
+    
+    &.rp-sort-handle-cell {
+      width: 72px;
+      padding: 0 16px 0 8px;
+      @include media("<tablet") {
+        width: 56px;
+        padding: 0 8px 0 0;
+      }
+    }
+    
+    & .rp-item-field {
+      height: 44px;
+      width: 100%;
+      padding: 0 8px;
+      
+      &:not(.mdc-text-field--disabled) {
+        background-color: #f9f9f9;
+      }
+      & input {
+        position: relative;
+        bottom: 6px;
+      }
+      & .mdc-floating-label {
+        font-size: 0.93rem;
+        left: 8px;
+      }
+    }
+    
+    &.rp-item-action-cell {
+      width: 1px;
+      white-space: nowrap;
+      padding: 0 8px 0 16px;
+      @include media("<tablet") {
+        padding: 0 0 0 8px;
+      }
+      
+      &:nth-last-child(2) { // extra item action when upload/replace is enabled
+        padding: 0;
+        overflow: visible;
+        text-align: right;
+        & button {
+          position: relative;
+          left: 20px;
+          @include media("<tablet") {
+            left: 12px;
+          }
+        }
+      }
+    }
+    
+    & .rp-item-error {
+      color: #af0109;
+    }
+    @include media("<tablet") {
+      padding: 0 8px 0 8px;
+    }
+  }
+}
+
+.rp-formset-error {
+  grid-column-start: 1;
+  position: relative;
+  top: -8px;
+}
+
+.rp-collection-table > .rp-formset-error {
+  position: relative;
+  top: -16px;
+  margin-bottom: 8px;
+}
+
+.rp-formset-error,.rp-collection-field-error .mdc-text-field-helper-text {
+  font-size: 0.85rem;
+}
+
+.rp-save-button {
+  margin-top: 8px;
+  
+  @include media("<tablet") {
+    grid-column-start: 2;
+    grid-column-end: span 1;
+  }
+  @include media(">=tablet") {
+    grid-column-start: 4;
+  }
+}
+
+.rp-continue-button {
+  margin-top: 8px;
+  
+  @include media(">=tablet") {
+    grid-column-end: span 3;
+  }
+}
+
+.rp-submit-button {
+  grid-column-start: 3;
+
+  @include media(">=tablet") {
+    grid-column-start: 6;
+    grid-column-end: span 3;
+  }
+}
+
+.rp-start-button {
+  margin-top: 8px;
+  grid-column-start: 1;
+}
+
+.mdc-card-wrapper__text-section {
+  padding-left: 16px;
+  padding-right: 16px;
+   
+  &:first-child {
+    padding-top: 16px;
+  }
+}
+
+.mdc-text-field-helper-text--persistent {
+  &.mdc-text-field-helper-text--validation-msg {
+    color: #af0109 !important;
+  }
+}
+
+.rp-review-pre,.rp-review-post,.rp-review-label,.rp-review-value-wide {
+  grid-column-start: 1;
+}
+
+.rp-review-item-label {
+  grid-column-start: 1;
+}
+
+.markdown-body {
+  & label,.rp-review-pre,.rp-review-post {
+    & p:last-child {
+      margin-bottom: 0;
+    }
+  }
+}

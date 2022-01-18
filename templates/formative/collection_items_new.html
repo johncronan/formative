@@ -1,0 +1,6 @@
+{% load form_block %}
+{% block_labels field_labels form_block as labels %}
+
+{% for item in items %}
+  {% include "./collection_item.html" %}
+{% endfor %}

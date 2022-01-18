@@ -1,0 +1,32 @@
+{% load form_block %}
+
+  <div class="mdc-layout-grid__cell
+  {% if form_block.type == types.TEXT and form_block.num_lines > 1 %}
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop
+  {% else %}
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-3-tablet
+              mdc-layout-grid__cell--span-3-desktop
+  {% endif %}
+              rp-review-label">
+  {% with styles=form_block.form.label_class.LabelStyle %}
+  {% with label=labels|closest_label %}
+    {{ label.display_inline }}{% if label.style == styles.WIDGET %}:{% endif %}
+  {% endwith %}
+  {% endwith %}
+  </div>
+  <div class="mdc-layout-grid__cell
+  {% if form_block.type == types.TEXT and form_block.num_lines > 1 %}
+              mdc-layout-grid__cell--span-8-tablet
+              mdc-layout-grid__cell--span-8-desktop
+              rp-review-value-wide
+  {% else %}
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-5-tablet
+              mdc-layout-grid__cell--span-5-desktop
+              rp-review-value
+  {% endif %}
+              ">
+    {{ value|default:field.value }}
+  </div>

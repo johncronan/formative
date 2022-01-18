@@ -1,0 +1,26 @@
+{% load form_block %}
+
+{% for name, field in block_fields.items %}
+  <div class="rp-review-label mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-3-tablet
+              mdc-layout-grid__cell--span-3-desktop">
+  {% with wlabels=labels|get_by_choice:name %}
+    {% if wlabels %}
+      {% with label=wlabels|closest_label %}
+      {{ label.display_inline }}:
+      {% endwith %}
+    {% else %}
+      {% with label=labels|closest_label %}
+      {{ label.display_inline }}:
+      {% endwith %}
+    {% endif %}
+  {% endwith %}
+  </div>
+  <div class="rp-review-value mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-5-tablet
+              mdc-layout-grid__cell--span-5-desktop">
+    {{ field.value }}
+  </div>
+{% endfor %}
