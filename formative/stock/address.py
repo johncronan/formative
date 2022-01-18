@@ -21,7 +21,7 @@ class AddressWidget(CompositeStockWidget):
             'postal_code': 'Zip/Postal code',
             'country': 'Country'
         }
-        
+    
     def fields(self):
         ret = []
         for name in ('street_address', 'city', 'state', 'postal_code',
