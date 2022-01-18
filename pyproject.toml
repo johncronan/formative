@@ -6,7 +6,8 @@ authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
+"backports.zoneinfo" = { version = "*", python = "~3.8" }
 django = "~=4.0"
 gunicorn = "*"
 psycopg2 = "*"
@@ -18,7 +19,7 @@ django-widget-tweaks = "*"
 markdown = "*"
 pillow = "*"
 pikepdf = "*"
-ffmpeg-python = "^0.2.0"
+ffmpeg-python = "*"
 django-localflavor = "^3.1"
 
 [tool.poetry.dev-dependencies]
