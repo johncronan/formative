@@ -26,16 +26,16 @@ def test_program_form(program_form):
     assert program_form
 
 @pytest.fixture(scope='session')
-def stock_phone_block(program_form):
-    b = FormBlock(form=program_form, name='phone', options={'type': 'phone'})
+def stock_url_block(program_form):
+    b = FormBlock(form=program_form, name='website', options={'type': 'url'})
     b.save()
     yield b
     
-def test_stock_block(stock_phone_block):
-    assert stock_phone_block
+def test_stock_block(stock_url_block):
+    assert stock_url_block
 
 @pytest.fixture(scope='session')
-def stock_address_block(program_form, stock_phone_block):
+def stock_address_block(program_form, stock_url_block):
     b = FormBlock(form=program_form, name='address',
                   options={'type': 'address'})
     b.save()
