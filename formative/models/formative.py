@@ -30,7 +30,7 @@ class Program(AutoSlugModel):
                             editable=False)
     db_slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
                                editable=False)
-    description = models.CharField(max_length=200, blank=True)
+    description = models.CharField(max_length=250, blank=True)
     options = models.JSONField(default=dict, blank=True)
     hidden = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
