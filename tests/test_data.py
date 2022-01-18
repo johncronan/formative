@@ -35,16 +35,17 @@ def test_stock_block(stock_name_block):
     assert stock_name_block
 
 @pytest.fixture(scope='session')
-def stock_email_block(program_form, stock_name_block):
-    b = FormBlock(form=program_form, name='contact', options={'type': 'email'})
+def stock_address_block(program_form, stock_name_block):
+    b = FormBlock(form=program_form, name='address',
+                  options={'type': 'address'})
     b.save()
     yield b
 
-def test_stock_email_block(stock_email_block):
-    assert stock_email_block
+def test_stock_address_block(stock_address_block):
+    assert stock_address_block
 
 @pytest.fixture(scope='session')
-def dependence_choice_block(program_form, stock_email_block):
+def dependence_choice_block(program_form, stock_address_block):
     b = CustomBlock(form=program_form, name='choice',
                     type=CustomBlock.InputType.CHOICE,
                     options={'choices': ['foo', 'bar', 'baz', 'qux']})
@@ -78,11 +79,11 @@ def test_custom_text_block(custom_text_block):
     assert custom_text_block
 
 @pytest.fixture(scope='session')
-def custom_textarea_block(program_form, stock_email_block, custom_text_block):
+def custom_textarea_block(program_form, stock_address_block, custom_text_block):
     b = CustomBlock(form=program_form, name='response', page=2,
                     type=CustomBlock.InputType.TEXT,
                     min_chars=1, max_chars=1000, num_lines=5, min_words=10,
-                    dependence=stock_email_block)
+                    dependence=stock_address_block)
     b.save()
     FormDependency(block=b, value='yes').save()
     yield b

@@ -44,3 +44,4 @@ class NameWidget(CompositeStockWidget):
             if all(not data[w] for w in self.widget_names()):
                 msg = _('One of the name fields must be provided.')
                 return { None: ValidationError(msg) }
+        return data

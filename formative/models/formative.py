@@ -453,7 +453,7 @@ class CustomBlock(FormBlock):
     
     def clean_field(self, data, field):
         # currently, all are handled from validators set up on the form
-        return None
+        return data
     
     def conditional_value(self, value):
         if self.type in (self.InputType.TEXT, self.InputType.NUMERIC):

@@ -42,7 +42,9 @@ def send_email(instance, template, to, subject, context={},
     new_context = { context_object_name: instance, 'settings': settings }
     new_context.update(context)
     context = Context(new_context)
-
+    
+    if type(template) != Template: context = new_context # wtf, Django
+    
     sub = ''.join(subject.render(context).splitlines())
     message = template.render(context)
     

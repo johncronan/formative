@@ -1,0 +1,44 @@
+{% with field=block_fields.street_address %}
+<div class="rp-stock-cell rp-stock-cell-1
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-4
+            mdc-layout-grid__cell--span-6-tablet
+            mdc-layout-grid__cell--span-7-desktop">
+  {% include "./textfield.html" with labels=labels.street_address %}
+</div>
+{% endwith %}
+
+{% with field=block_fields.city %}
+<div class="rp-stock-cell rp-stock-cell-1
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-2
+            mdc-layout-grid__cell--span-3-tablet
+            mdc-layout-grid__cell--span-3-desktop">
+  {% include "./textfield.html" with labels=labels.city %}
+</div>
+{% endwith %}
+
+{% with field=block_fields.state %}
+<div class="rp-stock-cell rp-stock-cell-2
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-1
+            mdc-layout-grid__cell--span-2-tablet
+            mdc-layout-grid__cell--span-2-desktop">
+  {% include "./textfield.html" with labels=labels.state %}
+</div>
+{% endwith %}
+
+{% with field=block_fields.postal_code %}
+<div class="rp-stock-cell rp-stock-cell-3
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-1
+            mdc-layout-grid__cell--span-1-tablet
+            mdc-layout-grid__cell--span-2-desktop">
+  {% include "./textfield.html" with labels=labels.postal_code %}
+</div>
+{% endwith %}
+
+{% with field=block_fields.country %}
+<div class="rp-stock-cell rp-stock-cell-1
+            mdc-layout-grid__cell mdc-layout-grid__cell--span-1
+            mdc-layout-grid__cell--span-2-tablet
+            mdc-layout-grid__cell--span-2-desktop">
+  {{ field }}
+</div>
+{% endwith %}

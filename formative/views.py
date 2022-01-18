@@ -205,7 +205,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         for item in form.visible_items(self.object, **args):
             if item._block not in items: items[item._block] = []
             items[item._block].append(item)
-            context.update(visible_items=items, formsets=self.formsets)
+        context.update(visible_items=items, formsets=self.formsets)
         
         if self.page:
             context.update({

@@ -1,6 +1,6 @@
 from django.utils.text import capfirst
 
-__all__ = ["StockWidget", "EmailWidget", "NameWidget"]
+__all__ = ["StockWidget", "EmailWidget", "NameWidget", "AddressWidget"]
 
 
 class StockWidget:
@@ -90,3 +90,4 @@ class CompositeStockWidget(StockWidget):
 
 from .email import EmailWidget
 from .name import NameWidget
+from .address import AddressWidget

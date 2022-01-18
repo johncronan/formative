@@ -47,7 +47,20 @@ class SubmissionForm(forms.ModelForm):
         stocks = {}
         
         for name, field in self.fields.items():
-            if name in self.stock_blocks:
+            if name in self.custom_blocks:
+                block = self.custom_blocks[name]
+                if self.has_error(name): continue
+                
+                try: data = block.clean_field(cleaned_data[name], field)
+                except ValidationError as e: self.add_error(name, e.message)
+                else: self.cleaned_data[name] = data
+                
+                if block.type in (CustomBlock.InputType.TEXT,
+                                  CustomBlock.InputType.CHOICE):
+                    # NULL for fields that're never seen; '' for no choice made
+                    if cleaned_data[name] is None: self.cleaned_data[name] = ''
+        
+            elif name in self.stock_blocks:
                 stock = self.stock_blocks[name]
                 if stock.name not in stocks: stocks[stock.name] = [stock, {}]
                 
@@ -57,30 +70,25 @@ class SubmissionForm(forms.ModelForm):
                 
                 if self.has_error(name): stocks[stock.name][0] = False
             
-            elif name in self.custom_blocks:
-                block = self.custom_blocks[name]
-                if self.has_error(name): continue
-
-                err = block.clean_field(cleaned_data[name], field)
-                if err: self.add_error(name, err)
-                
-                if block.type in (CustomBlock.InputType.TEXT,
-                                  CustomBlock.InputType.CHOICE):
-                    # NULL for fields that're never seen; '' for no choice made
-                    if cleaned_data[name] is None: self.cleaned_data[name] = ''
-        
         for name, (stock, data) in stocks.items():
             if not stock: continue # show validator errors on form fields first
             
-            err = stock.clean(data)
-            if not err: continue
+            fields = stock.clean(data)
             
             if not stock.composite:
-                self.add_error(name, err)
+                if type(fields) == ValidationError:
+                    self.add_error(name, err)
+                else: self.cleaned_data[name] = fields
                 continue
-            for widget, err in err.items():
-                if widget: self.add_error(stock.field_name(widget), err)
-                else: self.add_error(None, err)
+            err = False
+            for widget, val in fields.items():
+                if type(val) == ValidationError:
+                    if widget: self.add_error(stock.field_name(widget), val)
+                    else: self.add_error(None, val)
+                    err = True
+            if not err:
+                for widget, val in fields.items():
+                    self.cleaned_data[stock.field_name(widget)] = val
 
 
 class ItemFileForm(forms.Form):
