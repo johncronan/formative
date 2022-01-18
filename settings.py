@@ -22,7 +22,14 @@ WSGI_APPLICATION = "config.wsgi.application"
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='').split(',')
 csrf_hosts = [ host[0] == '.' and '*' + host or host for host in ALLOWED_HOSTS ]
 
-CSRF_TRUSTED_ORIGINS = [ 'http://localhost' ]
+DEFAULT_SERVER_HOSTNAME = env('SERVER_HOSTNAME')
+SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME')
+if not SERVER_HOSTNAME: SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME
+
+port = env('DJANGO_SERVER_PORT', default=None)
+DJANGO_SERVER = SERVER_HOSTNAME + (port and ':' + port or '')
+
+CSRF_TRUSTED_ORIGINS = [ f'https://{DJANGO_SERVER}' ]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS = [ f'http://{host}:8000' for host in csrf_hosts ]
 
@@ -94,10 +101,6 @@ CONTACT_EMAIL = env('CONTACT_EMAIL')
 SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
 ADMINS = [(env('ADMIN_NAME', default=''),
            env('ADMIN_EMAIL', default=CONTACT_EMAIL))]
-
-SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME', default=env('SERVER_HOSTNAME'))
-port = env('DJANGO_SERVER_PORT', default=None)
-DJANGO_SERVER = SERVER_HOSTNAME + (port and ':' + port or '')
 
 
 prefix = 'django.contrib.auth.password_validation'
