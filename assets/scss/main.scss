@@ -8,7 +8,9 @@
 @use '@material/layout-grid/mdc-layout-grid';
 @use '@material/button/mdc-button';
 @use '@material/button';
+@use '@material/icon-button';
 @use '@material/icon-button/styles' as icon-button-styles;
+@use '@material/top-app-bar/mdc-top-app-bar';
 @use '@material/card';
 @use '@material/form-field';
 @use '@material/floating-label/mdc-floating-label';
@@ -214,6 +216,9 @@ $maxlines: 30;
       width: 100%;
       padding: 0 8px;
       
+      &:not(.mdc-text-field--disabled) {
+        background-color: #f9f9f9;
+      }
       & input {
         position: relative;
         bottom: 6px;

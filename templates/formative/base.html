@@ -13,6 +13,20 @@
 {% block body_attributes %} class="mdc-typography"{% endblock %}
 
 {% block body %}
+<header class="mdc-top-app-bar">
+  <div class="mdc-top-app-bar__row">
+    <section class="mdc-top-app-bar__section
+                    mdc-top-app-bar__section--align-start">
+      {% url 'program_index' as index_url %}
+      <a class="material-icons mdc-top-app-bar__navigation-icon
+                mdc-icon-button" href="{{ home_url|default:index_url }}">
+        home
+      </a>
+      <span class="mdc-top-app-bar__title">{{ program_form.name }}</span>
+    </section>
+  </div>  
+</header>
+<main class="mdc-top-app-bar--fixed-adjust">
   {% block pre_layout %}{% endblock %}
   <div class="mdc-layout-grid rp-maxwidth-grid">
     <div class="mdc-layout-grid__inner markdown-body">
@@ -20,5 +34,6 @@
     </div>
   </div>
   {% block post_layout %}{% endblock %}
-  {% render_bundle 'formative' 'js' %}
+</main>
+{% render_bundle 'formative' 'js' %}
 {% endblock %}

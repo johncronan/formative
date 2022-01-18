@@ -1,4 +1,5 @@
 import {MDCRipple} from '@material/ripple/index';
+import {MDCTopAppBar} from '@material/top-app-bar';
 import {MDCFormField} from '@material/form-field';
 import {MDCTextField} from '@material/textfield';
 import {MDCTextFieldCharacterCounter}
@@ -13,6 +14,8 @@ import Sortable from 'sortablejs';
 
 import axios from 'axios';
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
+
+const appBar = new MDCTopAppBar(document.querySelector('.mdc-top-app-bar'));
 
 const texts = [];
 document.querySelectorAll('.mdc-text-field')

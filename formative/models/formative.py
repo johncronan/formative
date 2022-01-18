@@ -47,6 +47,10 @@ class Program(AutoSlugModel):
     
     def visible_forms(self):
         return self.forms.exclude(status=Form.Status.DRAFT)
+    
+    def home_url(self):
+        if 'home_url' in self.options: return self.options['home_url']
+        return None
 
 
 class Form(AutoSlugModel):
