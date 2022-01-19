@@ -14,7 +14,11 @@
               mdc-text-field--outlined">
   {% endwith %}
   {% if form_block.num_lines == 1 or not form_block.num_lines %}
-    {% render_field field class+="mdc-text-field__input" %}
+    {% if input_type %}
+      {% render_field field class+="mdc-text-field__input" type=input_type %}
+    {% else %}
+      {% render_field field class+="mdc-text-field__input" %}
+    {% endif %}
   {% endif %}
     <div class="mdc-notched-outline">
       <div class="mdc-notched-outline__leading"></div>
