@@ -18,7 +18,7 @@ class AddressWidget(CompositeStockWidget):
             'street_address': 'Street address',
             'city': 'City',
             'state': 'State',
-            'postal_code': 'Zip/Postal code',
+            'postal_code': 'Zip/postal code',
             'country': 'Country'
         }
     
@@ -34,7 +34,7 @@ class AddressWidget(CompositeStockWidget):
             if name != 'country':
                 ret.append((f, models.CharField(max_length=length, blank=True)))
             else:
-                ret.append((f, models.CharField(max_length=2,
+                ret.append((f, models.CharField(max_length=2, default='US',
                                                 choices=COUNTRIES)))
         return ret
 
