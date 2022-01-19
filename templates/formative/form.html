@@ -2,6 +2,8 @@
 
 {% load widget_tweaks %}
 
+{% block page_title %}{{ program_form.name }}{% endblock %}
+
 {% block pre_layout %}
 <form method="post">
 {% csrf_token %}
