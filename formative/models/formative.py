@@ -207,6 +207,8 @@ class Form(AutoSlugModel):
         return query.filter(page__gt=0)
     
     def visible_items(self, submission, page=None, skip=None):
+        if not self.item_model: return []
+        
         query = self.item_model.objects.filter(_submission=submission)
         if skip: query = query.exclude(_block__in=skip)
         if page and page > 0:
