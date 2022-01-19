@@ -14,7 +14,7 @@ class AddressWidget(CompositeStockWidget):
         self.template_name = 'address.html'
         self.review_template_name = 'address_review.html'
         
-        self.widgets = {
+        self.labels = {
             'street_address': 'Street address',
             'city': 'City',
             'state': 'State',
@@ -48,7 +48,7 @@ class AddressWidget(CompositeStockWidget):
             for name, us_field in (('state', 'USStateField'),
                                    ('postal_code', 'USZipCodeField')):
                 if not data[name]:
-                    return { name: ValidationError('This field is required.') }
+                    return {name: ValidationError('This field is required.')}
                 else:
                     try:
                         val = getattr(us_forms, us_field)().clean(data[name])

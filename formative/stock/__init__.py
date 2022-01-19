@@ -1,7 +1,7 @@
 from django.utils.text import capfirst
 
 __all__ = ["StockWidget", "EmailWidget", "NameWidget", "AddressWidget",
-           "PhoneNumberWidget", "URLWidget"]
+           "PhoneNumberWidget", "URLWidget", "ChoiceSetWidget"]
 
 
 class StockWidget:
@@ -52,12 +52,16 @@ class StockWidget:
             self.name: (FormLabel.LabelStyle.WIDGET, self.default_label())
         }
     
+    # (need to clarify 'widget' in this context) form_widget is Django's
+    def form_widget(self, name):
+        return None # use default
+    
     def conditional_value(self, **kwargs):
         # default is to return a boolean that's True if we got some input
         return bool([v for v in kwargs.values() if v])
     
     def clean(self, data):
-        pass
+        return data
 
 
 class CompositeStockWidget(StockWidget):
@@ -68,9 +72,9 @@ class CompositeStockWidget(StockWidget):
         super().__init__(name, **kwargs)
         
         # dict mapping path names to default widget labels
-        self.widgets = {}
+        self.labels = {}
 
-    def widget_names(self): return self.widgets.keys()
+    def widget_names(self): return self.labels.keys()
     
     def field_names(self):
         return tuple(self.field_name(f) for f in self.widget_names())
@@ -86,7 +90,7 @@ class CompositeStockWidget(StockWidget):
         from ..models import FormLabel
         
         return { f'{self.name}.{name}': (FormLabel.LabelStyle.WIDGET, label)
-                 for name, label in self.widgets.items() }
+                 for name, label in self.labels.items() }
 
 
 from .email import EmailWidget
@@ -94,3 +98,4 @@ from .name import NameWidget
 from .address import AddressWidget
 from .phone import PhoneNumberWidget
 from .url import URLWidget
+from .choiceset import ChoiceSetWidget

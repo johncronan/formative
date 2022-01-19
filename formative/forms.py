@@ -24,13 +24,16 @@ class SubmissionForm(forms.ModelForm):
         for name, field in self.fields.items():
             if name in stock_blocks:
                 stock = stock_blocks[name]
-
+                
                 widget = stock.get_widget(name)
                 field.validators += stock.field_validators(widget)
-
+                
                 if stock.field_required(widget): field.required = True
+                
+                if type(field) == forms.TypedChoiceField:
+                    if not field.initial: field.choices = field.choices[1:]
                 continue
-
+            
             block = custom_blocks[name]
             if type(field) == forms.TypedChoiceField:
                 # TODO: report bug with passing empty_label to .formfield()

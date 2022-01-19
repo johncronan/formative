@@ -140,6 +140,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                         widgets[name] = forms.CheckboxInput
                 elif block.block_type() == 'stock':
                     stocks[name] = block.stock
+                    for name in block.stock.widget_names():
+                        field_name = block.stock.field_name(name)
+                        if (widget := block.stock.form_widget(name)):
+                            widgets[field_name] = widget
         
         # this reuses self.query:
         self.formsets = self.get_formsets()
