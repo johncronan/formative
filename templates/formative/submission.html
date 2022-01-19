@@ -56,7 +56,8 @@
            {% url 'submission_page' form.program.slug form.slug id prev_page %}
            {% else %}
            {% url 'submission' form.program.slug form.slug id %}
-           {% endif %}"{% if not prev_page %} style="display: none;"{% endif %}
+           {% endif %}"
+           {% if not prev_page %} style="visibility: hidden;"{% endif %}
      class="rp-prevpage-button mdc-icon-button material-icons"
      data-mdc-ripple-is-unbounded>
     <div class="mdc-icon-button__ripple"></div>
