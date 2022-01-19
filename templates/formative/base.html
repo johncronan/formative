@@ -19,7 +19,12 @@
                     mdc-top-app-bar__section--align-start">
       {% url 'program_index' as index_url %}
       <a class="material-icons mdc-top-app-bar__navigation-icon
-                mdc-icon-button" href="{{ home_url|default:index_url }}">
+                mdc-icon-button"
+       {% if program_form %}
+         href="{{ program_form.program.home_url|default:index_url }}"
+       {% else %}
+         href="{{ program.home_url|default:index_url }}"
+       {% endif %}>
         home
       </a>
       <span class="mdc-top-app-bar__title">{{ program_form.name }}</span>
