@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev": "webpack --mode development --env env=dev",
-    "build_prod": "webpack --mode production --env env=prod"
+    "prod": "webpack --mode production --env env=prod"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",

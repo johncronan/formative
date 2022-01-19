@@ -10,3 +10,5 @@ __pycache__/
 assets/node_modules
 assets/bundles/webpack-bundle.dev.json
 assets/bundles/dev
+assets/bundles/webpack-bundle.prod.json
+assets/bundles/prod

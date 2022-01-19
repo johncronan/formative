@@ -7,16 +7,18 @@ const autoprefixer = require("autoprefixer");
 const resolve = path.resolve.bind(path, __dirname);
 
 module.exports = (env, argv) => {
-  let output, outputPath, publicPath;
+  let output, outputPath, publicPath, cssFilename;
 
   switch (env.env) {
     case "prod":
-      publicPath = "https://example.com/static/bundles/prod/";
+      publicPath = "/static/bundles/prod/";
       outputPath = resolve("bundles/prod");
+      cssFilename = "[name].[contenthash].css";
       break;
     case "dev":
       publicPath = "/static/bundles/dev/";
       outputPath = resolve("bundles/dev");
+      cssFilename = "[name].css";
       break;
   }
 
@@ -24,8 +26,8 @@ module.exports = (env, argv) => {
     case "production":
       output = {
         path: outputPath,
-        filename: "[chunkhash]/[name].js",
-        chunkFilename: "[chunkhash]/[name].[id].js",
+        filename: "[name].[contenthash].js",
+        chunkFilename: "[name]-[id].[contenthash].js",
         publicPath: publicPath
       };
       break;
@@ -34,7 +36,7 @@ module.exports = (env, argv) => {
       output = {
         path: outputPath,
         filename: "[name].js",
-        chunkFilename: "[name].js",
+        chunkFilename: "[name]-[id].js",
         publicPath: publicPath
       };
       break;
@@ -99,7 +101,9 @@ module.exports = (env, argv) => {
       new BundleTracker({
         filename: `bundles/webpack-bundle.${env.env}.json`
       }),
-      new MiniCssExtractPlugin()
+      new MiniCssExtractPlugin({
+        filename: cssFilename
+      })
     ],
     devtool: "source-map"
   };
