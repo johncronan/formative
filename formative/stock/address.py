@@ -37,6 +37,11 @@ class AddressWidget(CompositeStockWidget):
                 ret.append((f, models.CharField(max_length=2, default='US',
                                                 choices=COUNTRIES)))
         return ret
+    
+    def field_required(self, part):
+        if not super().field_required(part): return False
+        if part in ('street_address', 'city', 'country'): return True
+        return False
 
     def clean(self, data):
         if data['country'] == 'US':

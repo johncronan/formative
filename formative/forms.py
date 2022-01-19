@@ -166,7 +166,7 @@ class ItemsForm(forms.ModelForm):
         if self.instance and self.instance._error:
             for name in self.fields.keys():
                 if name in self.errors: self.errors.pop(name)
-                self.fields[name].required = False
+                self.fields[name].required = False # TODO move
 
 
 class ItemsFormSet(forms.BaseModelFormSet):
