@@ -99,8 +99,9 @@ DATABASES = {
 EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
 CONTACT_EMAIL = env('CONTACT_EMAIL')
 SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
+TECH_EMAIL = env('DJANGO_SU_EMAIL')
 ADMINS = [(env('ADMIN_NAME', default=''),
-           env('ADMIN_EMAIL', default=CONTACT_EMAIL))]
+           env('ADMIN_EMAIL', default=TECH_EMAIL))]
 
 
 prefix = 'django.contrib.auth.password_validation'
