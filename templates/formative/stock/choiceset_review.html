@@ -1,0 +1,17 @@
+{% load form_block %}
+  <div class="rp-review-label mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-3-tablet
+              mdc-layout-grid__cell--span-3-desktop">
+  {% with styles=form_block.form.label_class.LabelStyle %}
+    {% with label=labels|get_by_style:styles.VERTICAL %}
+      {{ label.display_inline }}
+    {% endwith %}
+  {% endwith %}
+  </div>
+  <div class="rp-review-value mdc-layout-grid__cell
+              mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-5-tablet
+              mdc-layout-grid__cell--span-5-desktop">
+    [todo]
+  </div>

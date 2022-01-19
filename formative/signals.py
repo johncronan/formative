@@ -58,7 +58,7 @@ def customblock_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=FormBlock)
 def formblock_post_save(sender, instance, created, **kwargs):
-    if not created: return
+    if not created: return # TODO: need to check for name change (others too)
 
     block, stock = instance, instance.stock
 

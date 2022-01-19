@@ -12,7 +12,7 @@ class EmailWidget(StockWidget):
         self.review_template_name = 'review.html'
     
     def fields(self):
-        field = models.EmailField(blank=True)
+        field = models.EmailField(blank=True, null=True)
         if self.name == 'email':
             # only the validation block can use the name 'email' - needs unique
             field = models.EmailField(blank=True, unique=True)

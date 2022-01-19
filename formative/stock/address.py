@@ -14,11 +14,11 @@ class AddressWidget(CompositeStockWidget):
         self.template_name = 'address.html'
         self.review_template_name = 'address_review.html'
         
-        self.widgets = {
+        self.labels = {
             'street_address': 'Street address',
             'city': 'City',
             'state': 'State',
-            'postal_code': 'Zip/Postal code',
+            'postal_code': 'Zip/postal code',
             'country': 'Country'
         }
     
@@ -34,16 +34,21 @@ class AddressWidget(CompositeStockWidget):
             if name != 'country':
                 ret.append((f, models.CharField(max_length=length, blank=True)))
             else:
-                ret.append((f, models.CharField(max_length=2,
+                ret.append((f, models.CharField(max_length=2, default='US',
                                                 choices=COUNTRIES)))
         return ret
+    
+    def field_required(self, part):
+        if not super().field_required(part): return False
+        if part in ('street_address', 'city', 'country'): return True
+        return False
 
     def clean(self, data):
         if data['country'] == 'US':
             for name, us_field in (('state', 'USStateField'),
                                    ('postal_code', 'USZipCodeField')):
                 if not data[name]:
-                    return { name: ValidationError('This field is required.') }
+                    return {name: ValidationError('This field is required.')}
                 else:
                     try:
                         val = getattr(us_forms, us_field)().clean(data[name])

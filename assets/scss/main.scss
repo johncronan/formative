@@ -30,6 +30,8 @@
 
 @use 'libs/markdown';
 
+@use 'stock/address';
+
 // there seems to be some bug in mdc preventing @use with this one:
 @import '@material/layout-grid/mixins';
 
@@ -104,6 +106,10 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
   
   & .mdc-text-field {
     width: 100%;
+    @include media("<tablet") {
+      padding-left: 14px;
+      padding-right: 14px;
+    }
   }
 }
 

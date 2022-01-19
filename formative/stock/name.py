@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import CompositeStockWidget
 
+
 class NameWidget(CompositeStockWidget):
     TYPE = 'name'
     
@@ -18,11 +19,13 @@ class NameWidget(CompositeStockWidget):
         self.template_name = 'name.html'
         self.review_template_name = 'name_review.html'
         
-        self.widgets = {
+        self.labels = {
             'firstname': 'First name',
             'lastname': 'Last name'
         }
         self.required_part = required_part
+    
+    def widget_names(self): return ('firstname', 'lastname')
     
     def fields(self):
         cls = models.CharField
@@ -43,5 +46,5 @@ class NameWidget(CompositeStockWidget):
         if self.required_part == self.Parts.ANY:
             if all(not data[w] for w in self.widget_names()):
                 msg = _('One of the name fields must be provided.')
-                return { None: ValidationError(msg) }
+                return {None: ValidationError(msg)}
         return data
