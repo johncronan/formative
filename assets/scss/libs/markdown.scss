@@ -59,8 +59,8 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
+  margin-top: 32px;
+  margin-bottom: 8px;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -78,13 +78,13 @@
 }
 
 .markdown-body h4 {
-  margin-top: 16px;
+  margin-top: 24px;
   font-weight: 600;
   font-size: 1em;
 }
 
 .markdown-body h5 {
-  margin-top: 16px;
+  margin-top: 24px;
   font-weight: 400;
   font-size: 1em;
 }
@@ -214,7 +214,7 @@
 
 .markdown-body dl dd {
   padding: 0 16px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .markdown-body code,
