@@ -3,6 +3,8 @@
 {% load form_block %}
 {% load utils %}
 
+{% block page_title %}Edit - {{ program_form.name }}{% endblock %}
+
 {% block pre_layout %}
 <form id="submission" method="post">
 {% csrf_token %}
