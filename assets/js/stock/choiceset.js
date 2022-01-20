@@ -5,6 +5,9 @@ document.querySelectorAll('.rp-choiceset-textinput')
   let textInput = row.querySelector('.rp-text-field input');
   control.onchange = evt => {
     if (!evt.target.checked) textInput.value = '';
+    if (evt.target.checked && evt.target.type == 'radio')
+      row.parentElement.firstElementChild.querySelectorAll('input')
+         .forEach(radio => radio.checked = false);
   };
   textInput.oninput = evt => {
     if (evt.target.value) {
