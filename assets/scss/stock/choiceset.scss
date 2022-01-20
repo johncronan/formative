@@ -1,0 +1,30 @@
+@use '@material/textfield/mixins' as textfield-mixins;
+
+.rp-stock-cell {
+  & .rp-choiceset-choice {
+    width: 100%;
+    & .rp-text-field {
+      @include textfield-mixins.outlined-density(-4);
+      // density scale?
+      width: 294px;
+      & label.mdc-floating-label {
+        font-size: 85%;
+      }
+    }
+    & .rp-text-field.mdc-text-field--label-floating {
+      & label.mdc-floating-label.mdc-floating-label--float-above {
+        font-size: 85%;
+      }
+    }
+    & .mdc-checkbox {
+      margin: 0;
+    }
+    & input[type="checkbox"] {
+      width: 40px;
+      height: 40px;
+    }
+    & .rp-choice-field:not(:first-child) .mdc-radio {
+      margin-left: 4px;
+    }
+  }
+}

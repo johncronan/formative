@@ -1,4 +1,3 @@
-{% load patched_widget_tweaks %}
 {% load form_block %}
 
 {% with styles=form_block.form.label_class.LabelStyle %}
@@ -39,46 +38,10 @@ mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% 
   {% include "./custom_block_text.html" %}
   
 {% elif form_block.type == types.CHOICE %}
-  {% for subfield in field %}
-  <div class="rp-choice-field mdc-form-field">
-  {% with clabels=labels|get_by_choice:subfield.data.value %}
-  {% with cwlabel=clabels|get_by_style:styles.WIDGET %}
-    <div class="mdc-radio mdc-radio--touch">
-      {{ subfield|add_class:"mdc-radio__native-control" }}
-      <div class="mdc-radio__background">
-        <div class="mdc-radio__outer-circle"></div>
-        <div class="mdc-radio__inner-circle"></div>
-      </div>
-      <div class="mdc-radio__ripple"></div>
-      <div class="mdc-radio__focus-ring"></div>
-    </div>
-    {% if cwlabel %}
-    <label for="{{ subfield.id_for_label }}">
-      {{ cwlabel.display_inline }}
-    </label>
-    {% endif %}
-  {% endwith %}
-  {% endwith %}
-  </div>
-  {% endfor %}
-  
+  {% include "./custom_block_choice.html" %}
+    
 {% elif form_block.type == types.BOOLEAN %}
-  <div class="rp-boolean-field mdc-form-field">
-    <div class="mdc-checkbox mdc-checkbox--touch">
-      {% render_field field class+="mdc-checkbox__native-control" %}
-      <div class="mdc-checkbox__background">
-        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-          <path class="mdc-checkbox__checkmark-path" fill="none"
-                d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-        </svg>
-        <div class="mdc-checkbox__mixedmark"></div>
-      </div>
-      <div class="mdc-checkbox__ripple"></div>
-    </div>
-    {% if wlabel %}
-    <label for="{{ field.id_for_label }}">{{ wlabel.display_inline }}</label>
-    {% endif %}
-  </div>
+  {% include "./custom_block_boolean.html" %}
   
 {% endif %}
 {% endwith %}

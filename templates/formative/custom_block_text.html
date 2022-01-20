@@ -5,10 +5,10 @@
 {% with wlabel=labels|get_by_style:'widget' %}
   {% with types=form_block.InputType %}
   <div class="mdc-text-field rp-text-field
-        {% if form_block.type == types.NUMERIC %}
-              rp-text-field-numeric
-        {% elif form_block.num_lines > 1 %}
+        {% if form_block.num_lines > 1 %}
               rp-textarea rp-textarea-rows-{{ form_block.num_lines }}
+        {% elif form_block.type != types.TEXT %}
+              rp-text-field-numeric
         {% endif %}
               {% if field.errors %}rp-text-field--invalid{% endif %}
               mdc-text-field--outlined">

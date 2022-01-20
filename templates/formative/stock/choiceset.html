@@ -1,8 +1,35 @@
+{% load form_block %}
+
 <div class="rp-stock-cell rp-stock-cell-1
             mdc-layout-grid__cell
-            mdc-layout-grid__cell--span-6-tablet
-            mdc-layout-grid__cell--span-6-desktop">
+            mdc-layout-grid__cell--span-7-tablet
+            mdc-layout-grid__cell--span-7-desktop">
 {% for name, field in block_fields.items %}
-  {{ field }} {{ name }}<br>
+  {% with flabels=labels|get_by_choice:name %}
+  {% if name != form_block.options.text_input %}
+    <div class="rp-choiceset-choice">
+      {% if form_block.options.single %}
+        {% include "formative/custom_block_choice.html" %}
+      {% else %}
+        {% include "formative/custom_block_boolean.html" with labels=flabels %}
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="rp-choiceset-choice rp-choiceset-textinput">
+      {% if form_block.options.single %}
+        {% unbound_radio_field form_block name as unbound_form %}
+        {% for f in unbound_form %}
+    {% include "formative/custom_block_choice.html" with field=f labels=None %}
+        {% endfor %}
+      {% else %}
+        {% unbound_checkbox_field form_block name as unbound_form %}
+        {% for f in unbound_form %}
+    {% include "formative/custom_block_boolean.html" with field=f labels=None %}
+        {% endfor %}
+      {% endif %}
+    {% include "formative/custom_block_text.html" with labels=flabels %}
+    </div>
+  {% endif %}
+  {% endwith %}
 {% endfor %}
 </div>

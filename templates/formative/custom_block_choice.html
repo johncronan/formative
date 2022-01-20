@@ -1,0 +1,29 @@
+{% load form_block %}
+{% load patched_widget_tweaks %}
+
+{% with styles=form_block.form.label_class.LabelStyle %}
+  {% for subfield in field %}
+  <div class="rp-choice-field mdc-form-field">
+    <div class="mdc-radio mdc-radio--touch">
+      {{ subfield|add_class:"mdc-radio__native-control" }}
+      <div class="mdc-radio__background">
+        <div class="mdc-radio__outer-circle"></div>
+        <div class="mdc-radio__inner-circle"></div>
+      </div>
+      <div class="mdc-radio__ripple"></div>
+      <div class="mdc-radio__focus-ring"></div>
+    </div>
+{% if labels %}
+  {% with clabels=labels|get_by_choice:subfield.data.value %}
+  {% with cwlabel=clabels|get_by_style:styles.WIDGET %}
+    {% if cwlabel %}
+    <label for="{{ subfield.id_for_label }}">
+      {{ cwlabel.display_inline }}
+    </label>
+    {% endif %}
+  {% endwith %}
+  {% endwith %}
+{% endif %}
+  </div>
+  {% endfor %}
+{% endwith %}

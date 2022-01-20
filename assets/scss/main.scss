@@ -31,6 +31,7 @@
 @use 'libs/markdown';
 
 @use 'stock/address';
+@use 'stock/choiceset';
 
 // there seems to be some bug in mdc preventing @use with this one:
 @import '@material/layout-grid/mixins';
@@ -99,6 +100,14 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
 
 .rp-choice-field.mdc-form-field,.rp-boolean-field.mdc-form-field {
   font-size: inherit;
+}
+
+.rp-boolean-field .mdc-checkbox {
+  margin-left: 0;
+}
+
+.rp-choice-field .mdc-radio {
+  margin-left: 0;
 }
 
 .rp-text-field {

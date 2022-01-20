@@ -36,6 +36,10 @@ class ProgramFormMixin(generic.edit.FormMixin):
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
+        
+        if form.status != Form.Status.ENABLED:
+            kwargs = {'slug': self.program_form.program.slug}
+            return HttpResponseRedirect(reverse('program', kwargs=kwargs))
 
         return super().dispatch(request, *args, **kwargs)
     

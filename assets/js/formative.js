@@ -15,7 +15,8 @@ import Sortable from 'sortablejs';
 import axios from 'axios';
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
-import "./stock/address.js"
+import "./stock/address.js";
+import "./stock/choiceset.js";
 
 const appBar = new MDCTopAppBar(document.querySelector('.mdc-top-app-bar'));
 
