@@ -3,7 +3,6 @@
 .rp-stock-cell {
   & .rp-choiceset-choice {
     width: 100%;
-    margin-left: -4px;
     
     & .rp-text-field {
       @include textfield-mixins.outlined-density(-4);
@@ -30,6 +29,13 @@
     }
     & .rp-choice-field .mdc-checkbox {
       margin-left: 4px;
+    }
+    &.rp-choiceset-textinput {
+      white-space: nowrap;
+    }
+    & > div {
+      position: relative;
+      left: -4px;
     }
   }
 }
