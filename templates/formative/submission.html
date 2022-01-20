@@ -11,9 +11,9 @@
 {% endblock %}
 
 {% block content %}
+    {% with styles=program_form.label_class.LabelStyle %}
     {% if page == 1 %}
     
-    {% with styles=program_form.label_class.LabelStyle %}
     {% with label=field_labels.email|get_by_style:styles.VERTICAL %}
     {% if label %}
       {% include "./label_vertical.html" %}
