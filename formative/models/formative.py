@@ -46,7 +46,8 @@ class Program(AutoSlugModel):
         return markdown.Markdown()
     
     def visible_forms(self):
-        return self.forms.exclude(status=Form.Status.DRAFT)
+        pub = self.forms.exclude(status=Form.Status.DRAFT)
+        return pub.exclude(options__hidden__isnull=False)
     
     def home_url(self):
         if 'home_url' in self.options: return self.options['home_url']
@@ -244,6 +245,13 @@ class Form(AutoSlugModel):
         elif self.status == self.Status.COMPLETED:
             return _('Closed')
         return _('Open for submissions')
+    
+    def hidden(self):
+        return self.status == self.Status.DRAFT or 'hidden' in self.options
+    
+    def hidden_access(self):
+        if 'hidden_access' in self.options: return self.options['hidden_access']
+        return None
 
     def review_pre(self):
         if 'review_pre' in self.options:

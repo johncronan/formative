@@ -38,15 +38,17 @@ class ProgramFormMixin(generic.edit.FormMixin):
         self.program_form = form
         
         if form.status != Form.Status.ENABLED:
-            kwargs = {'slug': self.program_form.program.slug}
-            return HttpResponseRedirect(reverse('program', kwargs=kwargs))
+            key, params = form.hidden_access(), self.request.GET
+            if not key or 'access' not in params or params['access'] != key:
+                kwargs = {'slug': self.program_form.program.slug}
+                return HttpResponseRedirect(reverse('program', kwargs=kwargs))
 
         return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        if not self.program_form.model: raise Http404
+        if not self.program_form.model: raise Http404()
         
         context['program_form'] = self.program_form
         context['tooltips'] = get_tooltips
@@ -369,7 +371,10 @@ class SubmissionBase(generic.View):
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
-        if not self.program_form.item_model: raise Http404
+        if not self.program_form.item_model: raise Http404()
+        
+        # TODO: automated form close, timing this relative to rest
+        if form.status != Form.Status.ENABLED: return HttpResponseBadRequest()
         
         self.submission = get_object_or_404(self.program_form.model,
                                             _id=self.kwargs['sid'])
