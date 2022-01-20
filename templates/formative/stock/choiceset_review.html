@@ -5,7 +5,9 @@
               mdc-layout-grid__cell--span-3-desktop">
   {% with styles=form_block.form.label_class.LabelStyle %}
     {% with label=labels|get_by_style:styles.VERTICAL %}
-      {{ label.display_inline }}
+      {% with default_label=form_block.name|capfirst|add:':' %}
+      {{ label.display_inline|default:default_label }}
+      {% endwith %}
     {% endwith %}
   {% endwith %}
   </div>
@@ -13,5 +15,31 @@
               mdc-layout-grid__cell--span-2
               mdc-layout-grid__cell--span-5-tablet
               mdc-layout-grid__cell--span-5-desktop">
-    
+{% for name, field in block_fields.items %}
+  {% if field.value %}
+    {% if form_block.options.single %}
+      {% with clabels=labels|get_by_choice:field.value %}
+        {% with label=clabels|closest_label %}
+        <span class="rp-choiceset-review-val">
+          {% if label %}
+            {{ label.display_inline }}
+          {% else %}
+            {{ field.value }}
+          {% endif %}
+        </span>
+        {% endwith %}
+      {% endwith %}
+    {% else %}
+      {% if name != form_block.options.text_input %}
+      {% with clabels=labels|get_by_choice:name %}
+        {% with label=clabels|closest_label %}
+        <span class="rp-choiceset-review-val">{{ label.display_inline }}</span>
+        {% endwith %}
+      {% endwith %}
+      {% else %}
+        <span class="rp-choiceset-review-val">{{ field.value }}</span>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
   </div>

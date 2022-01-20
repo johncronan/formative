@@ -26,3 +26,11 @@ document.querySelectorAll('.rp-choiceset-textinput')
     });
   }
 });
+
+window.addEventListener("pageshow", function() {
+  document.querySelectorAll('.rp-choiceset-textinput')
+          .forEach(row => {
+    if (row.querySelector('.rp-text-field input').value)
+      row.firstElementChild.querySelector('input').checked = true;
+  });
+});

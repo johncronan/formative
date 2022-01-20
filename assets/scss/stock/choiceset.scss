@@ -28,3 +28,9 @@
     }
   }
 }
+
+.rp-review-value {
+  & .rp-choiceset-review-val:not(:last-child)::after {
+    content: ', ';
+  }
+}
