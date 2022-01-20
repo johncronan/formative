@@ -151,6 +151,11 @@ $maxlines: 30;
     line-height: 1.25rem;
     font-weight: 400;
   }
+  
+  & a[disabled] {
+    pointer-events: none;
+    color: #d5d5d5;
+  }
 }
 
 .rp-form-top {

@@ -16,6 +16,7 @@
   </div>
   <div class="mdc-card__actions">
       <a class="mdc-button mdc-card__action mdc-card__action--button"
+    {% if form.status != form.Status.ENABLED %}disabled tabindex="-1"{% endif %}
          href="{% url 'form' program.slug form.slug %}">
         <span class="mdc-button__label">Apply</span>
       </a>

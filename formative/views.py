@@ -37,12 +37,12 @@ class ProgramFormMixin(generic.edit.FormMixin):
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
         
-        if form.status != Form.Status.ENABLED:
-            key, params = form.hidden_access(), self.request.GET
+        if self.program_form.hidden() and 'sid' not in kwargs:
+            key, params = self.program_form.hidden_access(), self.request.GET
             if not key or 'access' not in params or params['access'] != key:
                 kwargs = {'slug': self.program_form.program.slug}
                 return HttpResponseRedirect(reverse('program', kwargs=kwargs))
-
+        
         return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):

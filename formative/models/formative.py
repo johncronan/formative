@@ -247,7 +247,7 @@ class Form(AutoSlugModel):
         return _('Open for submissions')
     
     def hidden(self):
-        return self.status == self.Status.DRAFT or 'hidden' in self.options
+        return self.status != self.Status.DRAFT or 'hidden' in self.options
     
     def hidden_access(self):
         if 'hidden_access' in self.options: return self.options['hidden_access']
