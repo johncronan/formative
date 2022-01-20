@@ -3,6 +3,8 @@
 .rp-stock-cell {
   & .rp-choiceset-choice {
     width: 100%;
+    margin-left: -4px;
+    
     & .rp-text-field {
       @include textfield-mixins.outlined-density(-4);
       // density scale?
@@ -23,7 +25,10 @@
       width: 40px;
       height: 40px;
     }
-    & .rp-choice-field:not(:first-child) .mdc-radio {
+    & .rp-choice-field .mdc-radio {
+      margin-left: 4px;
+    }
+    & .rp-choice-field .mdc-checkbox {
       margin-left: 4px;
     }
   }
