@@ -383,7 +383,7 @@ class FormBlock(PolymorphicModel, RankedModel):
         return query.values_list('id', flat=True)
     
     def show_in_review(self):
-        return True
+        return 'no_review' not in self.options
 
 
 class CustomBlock(FormBlock):
@@ -416,7 +416,7 @@ class CustomBlock(FormBlock):
         if 'max_chars' not in kwargs:
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
-
+    
     def choices(self):
         if 'choices' not in self.options or not self.options['choices']:
             raise FieldError('choices not defined')
