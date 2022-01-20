@@ -89,8 +89,12 @@ class CompositeStockWidget(StockWidget):
     def widget_labels(self):
         from ..models import FormLabel
         
-        return { f'{self.name}.{name}': (FormLabel.LabelStyle.WIDGET, label)
-                 for name, label in self.labels.items() }
+        labels = {}
+        for name, label in self.labels.items():
+            LabelStyle = FormLabel.LabelStyle
+            if name is None: labels[self.name] = (LabelStyle.VERTICAL, label)
+            else: labels[f'{self.name}.{name}'] = (LabelStyle.WIDGET, label)
+        return labels
 
 
 from .email import EmailWidget

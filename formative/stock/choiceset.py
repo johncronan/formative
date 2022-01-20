@@ -30,6 +30,14 @@ class ChoiceSetWidget(CompositeStockWidget):
         if self.text_input: return names + [self.text_input]
         return names
     
+    def widget_labels(self):
+        from ..models import FormLabel
+        
+        labels = super().widget_labels()
+        labels[self.name] = (FormLabel.LabelStyle.VERTICAL,
+                             self.default_label() + ':')
+        return labels
+    
     def fields(self):
         cls = models.BooleanField
         args = {'null': True}
@@ -52,6 +60,7 @@ class ChoiceSetWidget(CompositeStockWidget):
     
     def field_required(self, part):
         req = super().field_required(part)
+        # TODO: single choice, required == True needs special handling w/ clean
         if self.single and req and part != self.text_input: return True
         return False
     

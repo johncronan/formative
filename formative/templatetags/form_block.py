@@ -92,18 +92,18 @@ def for_item_field(labels, field):
     return None
 
 @register.simple_tag
-def unbound_checkbox_field(form_block, name):
+def unbound_checkbox_field(form_block, name, radio=False):
     anon_form = forms.Form()
-    field = forms.BooleanField(widget=forms.CheckboxInput)
+    if radio: field = forms.ChoiceField(choices=[(name, name)],
+                                        widget=forms.RadioSelect)
+    else: field = forms.BooleanField(widget=forms.CheckboxInput)
     anon_form.fields['_' + form_block.stock.field_name(name)] = field
+    field.required = False
     return anon_form
 
 @register.simple_tag
 def unbound_radio_field(form_block, name):
-    anon_form = forms.Form()
-    field = forms.ChoiceField(choices=[(name, name)], widget=forms.RadioSelect)
-    anon_form.fields['_' + form_block.stock.field_name(name)] = field
-    return anon_form
+    return unbound_checkbox_field(form_block, name, radio=True)
 
 @register.simple_tag(takes_context=True)
 def include_stock(context, block, labels, review=False):
