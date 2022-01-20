@@ -125,6 +125,7 @@ class ItemFileForm(forms.Form):
     def clean(self):
         super().clean()
         cleaned_data = self.cleaned_data
+        if 'name' not in cleaned_data: return
         
         extension = get_file_extension(self.cleaned_data['name'])
         filetype = FileType.by_extension(extension)
