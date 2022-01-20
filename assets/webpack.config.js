@@ -2,7 +2,9 @@ const path = require("path");
 const webpack = require("webpack");
 const BundleTracker = require("webpack-bundle-tracker");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const autoprefixer = require("autoprefixer");
+const TerserPlugin = require('terser-webpack-plugin');
 
 const resolve = path.resolve.bind(path, __dirname);
 
@@ -105,6 +107,12 @@ module.exports = (env, argv) => {
         filename: cssFilename
       })
     ],
+    optimization: {
+      minimizer: [
+        new TerserPlugin(),
+        new CssMinimizerPlugin()
+      ]
+    },
     devtool: "source-map"
   };
 };
