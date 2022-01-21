@@ -236,8 +236,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         
         for block in skipped:
             if block.block_type() == 'collection':
-                for item in self.object._items.filter(_block=block.pk):
-                    item.delete()
+                items = self.object._items.filter(_block=block.pk)
+                for item in items:
+                    if item._file: delete_file(item._file)
+                items.delete()
             else:
                 for name, f in block.fields():
                     setattr(self.object, name, None)

@@ -628,7 +628,7 @@ class Submission(models.Model):
     # valid up to page N:
     _valid = models.PositiveIntegerField(default=0, editable=False)
     # an array of N block id arrays, those skipped for form dependency not met:
-    _skipped = models.JSONField(default=list, blank=True)
+    _skipped = models.JSONField(default=list, blank=True, editable=False)
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True, editable=False)
