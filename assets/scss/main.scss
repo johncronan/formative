@@ -83,7 +83,7 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
 }
 
 .rp-vertical-label-cell {
-  margin-bottom: -4px;
+  margin-bottom: -8px;
   
   & label {
     line-height: 20px;
@@ -123,11 +123,14 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
 }
 
 .rp-textarea {
+  margin-bottom: 8px;
+  
   & textarea.mdc-text-field__input {
     resize: none;
     margin-top: 13px;
     line-height: 1.25rem;
     height: auto;
+    
   }
 }
 
