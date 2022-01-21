@@ -94,6 +94,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def get_object(self):
         submission = get_object_or_404(self.program_form.model,
                                        _id=self.kwargs['sid'])
+        self.program_form.item_model
         
         return submission
 
@@ -234,8 +235,12 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         else: skipped = self.skipped.values()
         
         for block in skipped:
-            for name, f in block.fields():
-                setattr(self.object, name, None)
+            if block.block_type() == 'collection':
+                for item in self.object._items.filter(_block=block.pk):
+                    item.delete()
+            else:
+                for name, f in block.fields():
+                    setattr(self.object, name, None)
     
     def new_page_valid(self, form):
         changed = [ self.blocks_by_name[n].id for n in form.changed_data ]

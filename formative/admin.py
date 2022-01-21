@@ -35,6 +35,7 @@ admin.site.register(FormDependency)
 @admin.register(FormBlock)
 class FormBlockAdmin(PolymorphicParentModelAdmin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
+    list_display = ('form', 'name', 'page', 'rank')
     list_filter = (PolymorphicChildModelFilter,)
 
 @admin.register(CustomBlock)
