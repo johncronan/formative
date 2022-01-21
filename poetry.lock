@@ -220,6 +220,17 @@ importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
 testing = ["coverage", "pyyaml"]
 
 [[package]]
+name = "markdown-link-attr-modifier"
+version = "0.2.0"
+description = "A Python-Markdown extension to modify attributes of <a> tag links"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+markdown = ">=3"
+
+[[package]]
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
@@ -394,7 +405,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "74a464b76b826e788843a936ef359ea6fa4568ae2b60c8a2c5a7071bf72f21fc"
+content-hash = "b2c96a25c1679eef73dfec050f4aaaa110348b64ac3a0b2edceb98d395d8be02"
 
 [metadata.files]
 asgiref = [
@@ -543,6 +554,10 @@ lxml = [
 markdown = [
     {file = "Markdown-3.3.6-py3-none-any.whl", hash = "sha256:9923332318f843411e9932237530df53162e29dc7a4e2b91e35764583c46c9a3"},
     {file = "Markdown-3.3.6.tar.gz", hash = "sha256:76df8ae32294ec39dcf89340382882dfa12975f87f45c3ed1ecdb1e8cefc7006"},
+]
+markdown-link-attr-modifier = [
+    {file = "markdown_link_attr_modifier-0.2.0-py3-none-any.whl", hash = "sha256:01b07d7a466ff7c721f97d66b08ec60a54e8d46c287695b649507ae57a42ff4b"},
+    {file = "markdown_link_attr_modifier-0.2.0.tar.gz", hash = "sha256:94eacc4b7cfda9b5c883fb8c9f218b0602889c64d12977b31994d10b7b720a59"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},

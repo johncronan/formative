@@ -12,6 +12,7 @@ from django.utils import timezone
 from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
+from markdown_link_attr_modifier import LinkAttrModifierExtension
 import os
 
 from ..stock import StockWidget
@@ -43,7 +44,9 @@ class Program(AutoSlugModel):
     
     @cached_property
     def markdown(self):
-        return markdown.Markdown()
+        return markdown.Markdown(extensions=[
+            LinkAttrModifierExtension(new_tab='on')
+        ])
     
     def visible_forms(self):
         pub = self.forms.exclude(status=Form.Status.DRAFT)
@@ -256,17 +259,17 @@ class Form(AutoSlugModel):
     def review_pre(self):
         if 'review_pre' in self.options:
             md = self.program.markdown
-            return mark_safe(md.convert(self.options['review_pre']))
+            return mark_safe(md.reset().convert(self.options['review_pre']))
     
     def review_post(self):
         if 'review_post' in self.options:
             md = self.program.markdown
-            return mark_safe(md.convert(self.options['review_post']))
+            return mark_safe(md.reset().convert(self.options['review_post']))
     
     def thanks(self):
         if 'thanks' in self.options:
             md = self.program.markdown
-            return mark_safe(md.convert(self.options['thanks']))
+            return mark_safe(md.reset().convert(self.options['thanks']))
     
     def emails(self):
         if 'emails' in self.options: return self.options['emails']
@@ -296,7 +299,7 @@ class FormLabel(models.Model):
         return self.path
     
     def display(self, inline=False):
-        s = self.form.program.markdown.convert(self.text)
+        s = self.form.program.markdown.reset().convert(self.text)
         if inline: return mark_safe(remove_p(s))
         return mark_safe(s)
     
@@ -372,6 +375,7 @@ class FormBlock(PolymorphicModel, RankedModel):
         if page: query = query.filter(page=page)
         
         if type(value) == bool: value = value and 'yes' or 'no' # TODO: numeric
+        if value is None: value = ''
         
         val = FormDependency.objects.filter(block_id=OuterRef('id'),
                                             value=Value(value))

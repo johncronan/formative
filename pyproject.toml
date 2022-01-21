@@ -21,6 +21,7 @@ pillow = "*"
 pikepdf = "*"
 ffmpeg-python = "*"
 django-localflavor = "^3.1"
+markdown-link-attr-modifier = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
