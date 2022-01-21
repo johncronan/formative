@@ -152,7 +152,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                             widgets[field_name] = widget
         
         # this reuses self.query:
-        self.formsets = self.get_formsets()
+        self.formsets = self.get_formsets(enabled)
         
         def callback(model_field, **kwargs):
             name = model_field.name
@@ -169,10 +169,11 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                        **self.get_form_kwargs())
         return f
     
-    def get_formsets(self):
+    def get_formsets(self, enabled):
         formsets = {}
         for block in self.query:
             if block.block_type() != 'collection': continue
+            if block.dependence and block.id not in enabled: continue
             
             kwargs = self.get_form_kwargs()
             kwargs.pop('prefix')

@@ -45,11 +45,14 @@
       {% endif %}
       
     {% elif form_block.block_type == 'collection' %}
-      {% include "./review_collection.html" %}
-    
+      {% if form_block.id in formsets %}
+        {% include "./review_collection.html" %}
+      {% endif %}
+      
     {% else %}
-      {% include_stock_review form_block labels %}
-    
+      {% if form_block.stock.field_names.0 in form.fields %}
+        {% include_stock_review form_block labels %}
+      {% endif %}
     {% endif %}
   {% endif %}
   {% endfor %}
