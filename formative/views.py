@@ -241,8 +241,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                     if item._file: delete_file(item._file)
                 items.delete()
             else:
+                val = None
+                if block.block_type() == 'custom': val = block.default_value()
                 for name, f in block.fields():
-                    setattr(self.object, name, None)
+                    setattr(self.object, name, val)
     
     def new_page_valid(self, form):
         changed = [ self.blocks_by_name[n].id for n in form.changed_data ]

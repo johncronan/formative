@@ -469,6 +469,12 @@ class CustomBlock(FormBlock):
         # currently, all are handled from validators set up on the form
         return data
     
+    def default_value(self):
+        if self.type == self.InputType.TEXT: return None
+        
+        if 'default_value' in self.options: return self.options['default_value']
+        return None
+    
     def conditional_value(self, value):
         if self.type in (self.InputType.TEXT, self.InputType.NUMERIC):
             # in this case, condition is whether the field was filled out
