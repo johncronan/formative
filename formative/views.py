@@ -343,6 +343,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         
     def render_to_response(self, context):
         if self.object._submitted:
+            
             return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))
         
@@ -391,6 +392,8 @@ class SubmissionBase(generic.View):
         
         self.submission = get_object_or_404(self.program_form.model,
                                             _id=self.kwargs['sid'])
+        if self.submission._submitted: return HttpResponseBadRequest()
+        
         return super().dispatch(request, *args, **kwargs)
 
 
