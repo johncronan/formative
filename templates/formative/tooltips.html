@@ -1,0 +1,7 @@
+{% for key, tooltip in tooltips.items %}
+<div id="{{ key }}" class="mdc-tooltip" role="tooltip" aria-hidden="true">
+  <div class="mdc-tooltip__surface mdc-tooltip__surface-animation">
+    {{ tooltip }}
+  </div>
+</div>
+{% endfor %}

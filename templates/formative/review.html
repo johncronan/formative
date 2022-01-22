@@ -68,7 +68,7 @@
   
   {% with program_form as form %}
   {% with submission|underscore:'id' as id %}
-  <a href="{% if prev_page > 1 %}
+  <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
            {% url 'submission_page' form.program.slug form.slug id prev_page %}
            {% else %}
            {% url 'submission' form.program.slug form.slug id %}
@@ -97,4 +97,7 @@
 
 {% block post_layout %}
 </form>
+
+{% include "./tooltips.html" %}
+
 {% endblock %}
