@@ -278,7 +278,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if len(self.object._skipped) < self.page:
             # assumes only by 1; TODO: skipping an entire page or multiple pages
             self.object._skipped.append([])
-        self.object._skipped[self.page-1] = list(self.skipped.keys())
+        
+        can_ignore = [ k for k, v in self.skipped.items()
+                       if v.block_type() != 'custom' or not v.default_value() ]
+        self.object._skipped[self.page-1] = can_ignore
         self.reset_skipped()
         
         for formset in self.formsets.values():
