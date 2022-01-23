@@ -32,7 +32,7 @@ class ProgramView(generic.DetailView):
 
 class ProgramFormMixin(generic.edit.FormMixin):
     def dispatch(self, request, *args, **kwargs):
-        form = get_object_or_404(Form,
+        form = get_object_or_404(Form.objects.select_related('program'),
                                  program__slug=self.kwargs['program_slug'],
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
