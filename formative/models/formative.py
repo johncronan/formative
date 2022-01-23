@@ -256,15 +256,24 @@ class Form(AutoSlugModel):
         if 'hidden_access' in self.options: return self.options['hidden_access']
         return None
 
-    def review_pre(self):
-        if 'review_pre' in self.options:
+    def review_pre(self, prefix=''):
+        name = prefix + 'review_pre'
+        if name in self.options:
             md = self.program.markdown
-            return mark_safe(md.reset().convert(self.options['review_pre']))
+            return mark_safe(md.reset().convert(self.options[name]))
+        return ''
     
     def review_post(self):
         if 'review_post' in self.options:
             md = self.program.markdown
             return mark_safe(md.reset().convert(self.options['review_post']))
+        return ''
+    
+    def submitted_review_pre(self):
+        return self.review_pre(prefix='submitted_')
+    
+    def review_after_submit(self):
+        return 'no_review_after_submit' not in self.options
     
     def thanks(self):
         if 'thanks' in self.options:

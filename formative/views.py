@@ -343,19 +343,20 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         
     def render_to_response(self, context):
         if self.object._submitted:
-            
-            return HttpResponseRedirect(reverse('form_thanks',
-                                                kwargs=self.url_args(id=False)))
+            if self.page or not self.program_form.review_after_submit():
+                url = reverse('form_thanks', kwargs=self.url_args(id=False))
+                return HttpResponseRedirect(reverse('form_thanks', url))
+            else: context['submitted'] = True
         
         if (self.page and context['page'] <= self.object._valid + 1
          or self.object._valid == self.program_form.num_pages()):
             return super().render_to_response(context)
-
+        
         # tried to skip ahead - go back to the last page that can be displayed
         p, name, args = self.object._valid, 'submission_page', self.url_args()
         if p: args['page'] = p + 1
         else: name = 'submission'
-
+        
         return HttpResponseRedirect(reverse(name, kwargs=args))
     
     def get_success_url(self):
