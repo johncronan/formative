@@ -632,6 +632,7 @@ class CollectionBlock(FormBlock):
 class Submission(models.Model):
     class Meta:
         abstract = True
+        managed = False
     
     _id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                            editable=False)
@@ -667,6 +668,7 @@ def file_path(instance, filename):
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:
         abstract = True
+        managed = False
     
     _id = models.BigAutoField(primary_key=True, editable=False)
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
