@@ -9,8 +9,8 @@ from .utils import any_name_field
 
 
 @receiver(post_save, sender=Form)
-def form_post_save(sender, instance, created, **kwargs):
-    if not created: return
+def form_post_save(sender, instance, created, raw, **kwargs):
+    if raw or not created: return
 
     form = instance
     if form.validation_type == Form.Validation.EMAIL:
@@ -27,8 +27,8 @@ def form_pre_delete(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=CustomBlock)
-def customblock_post_save(sender, instance, created, **kwargs):
-    if not created: return
+def customblock_post_save(sender, instance, created, raw, **kwargs):
+    if raw or not created: return
 
     block = instance
     if not block.page: return # no autocreated labels for autocreated fields
@@ -57,8 +57,8 @@ def customblock_post_save(sender, instance, created, **kwargs):
             l.save()
 
 @receiver(post_save, sender=FormBlock)
-def formblock_post_save(sender, instance, created, **kwargs):
-    if not created: return # TODO: need to check for name change (others too)
+def formblock_post_save(sender, instance, created, raw, **kwargs):
+    if raw or not created: return # TODO: need to check for name change(&others)
 
     block, stock = instance, instance.stock
 
@@ -68,8 +68,9 @@ def formblock_post_save(sender, instance, created, **kwargs):
         l.save()
 
 @receiver(post_save, sender=CollectionBlock)
-def collectionblock_post_save(sender, instance, created, **kwargs):
+def collectionblock_post_save(sender, instance, created, raw, **kwargs):
     block = instance
+    if raw: return
     
     fields = block.collection_fields()
     
