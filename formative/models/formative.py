@@ -17,7 +17,7 @@ import os
 
 from ..stock import StockWidget
 from ..filetype import FileType
-from ..utils import create_model, remove_p, send_email
+from ..utils import create_model, remove_p, send_email, submission_link
 from .ranked import RankedModel, UnderscoredRankedModel
 from .automatic import AutoSlugModel
 
@@ -651,7 +651,7 @@ class Submission(models.Model):
     _skipped = models.JSONField(default=list, blank=True, editable=False)
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
-    _submitted = models.DateTimeField(null=True, blank=True, editable=False)
+    _submitted = models.DateTimeField(null=True, blank=True)
 
     def _send_email(self, form, name, **kwargs):
         if name in form.emails():
@@ -662,9 +662,15 @@ class Submission(models.Model):
             subject = loader.get_template('formative/emails/' + name +
                                           '_subject.html')
         
-        return send_email(self, template=template, to=self._email,
-                          subject=subject, context={'form': form},
-                          context_object_name='submission', **kwargs)
+        context = {
+            'submission': self, 'form': form,
+            'submission_link': submission_link(self, form)
+        }
+        if self._submitted:
+            context['review_link'] = submission_link(self, form, rest='review')
+        
+        return send_email(template=template, to=self._email,
+                          subject=subject, context=context, **kwargs)
     
     def _submit(self):
         self._submitted = timezone.now()

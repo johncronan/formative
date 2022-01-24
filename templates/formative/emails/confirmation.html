@@ -1,3 +1,5 @@
 Thanks for submitting an application.
 
-Please customize this message.
+{% if form.review_after_submit %}You can review your application here:
+
+{{ review_link }}{% endif %}

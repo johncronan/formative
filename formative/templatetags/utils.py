@@ -7,14 +7,6 @@ from ..utils import thumbnail_path
 register = template.Library()
 
 @register.simple_tag
-def submission_link(form, s, rest=''):
-    server = settings.DJANGO_SERVER
-    if ':' in server or server.endswith('.local'): proto = 'http'
-    else: proto = 'https'
-    
-    return f'{proto}://{server}/{form.program.slug}/{form.slug}/{s._id}/{rest}'
-
-@register.simple_tag
 def file_thumbnail(file):
     path = thumbnail_path(file.path)
     if os.path.isfile(path): return thumbnail_path(file.url)

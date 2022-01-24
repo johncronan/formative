@@ -37,9 +37,8 @@ def remove_p(text):
     
     return text
 
-def send_email(instance, template, to, subject, context={},
-               context_object_name='obj'):
-    new_context = { context_object_name: instance, 'settings': settings }
+def send_email(template, to, subject, context={}):
+    new_context = { 'settings': settings }
     new_context.update(context)
     context = Context(new_context)
     
@@ -50,6 +49,13 @@ def send_email(instance, template, to, subject, context={},
     
     mail = EmailMessage(sub, message, settings.CONTACT_EMAIL, [to])
     mail.send()
+
+def submission_link(s, form, rest=''):
+    server = settings.DJANGO_SERVER
+    if ':' in server or server.endswith('.local'): proto = 'http'
+    else: proto = 'https'
+    
+    return f'{proto}://{server}/{form.program.slug}/{form.slug}/{s._id}/{rest}'
 
 def get_file_extension(name):
     return Path(name).suffix[1:].lower()

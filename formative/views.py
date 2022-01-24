@@ -72,8 +72,11 @@ class ProgramFormView(ProgramFormMixin, generic.edit.ProcessFormView,
         self.object, created = model.objects.get_or_create(
             _email=form.cleaned_data['email']
         )
-
-        self.object._send_email(form=self.program_form, name='continue')
+        
+        if not self.object._submitted: template = 'continue'
+        else: template = 'confirmation'
+        
+        self.object._send_email(form=self.program_form, name=template)
         return super().form_valid(form)
 
 
@@ -345,7 +348,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if self.object._submitted:
             if self.page or not self.program_form.review_after_submit():
                 url = reverse('form_thanks', kwargs=self.url_args(id=False))
-                return HttpResponseRedirect(reverse('form_thanks', url))
+                return HttpResponseRedirect(url)
             else: context['submitted'] = True
         
         if (self.page and context['page'] <= self.object._valid + 1
