@@ -525,25 +525,37 @@ class SubmissionItemUploadView(SubmissionItemBase):
         # the extension was supposed to be already validated
         if not filetype_class and types: return HttpResponseBadRequest()
         
+        msg_maxlen = SubmissionItem._message_maxlen()
+        def item_error(item, meta):
+            msg = meta['error']
+            item._error = True
+            item._message = msg[:msg_maxlen]
+            delete_file(item._file)
+            return msg
+        
         msg = ''
         if filetype_class:
             filetype = filetype_class()
             meta = filetype.meta(path)
-            if 'error' in meta:
-                msg = meta['error']
-                item._error = True
-                item._message = msg[:SubmissionItem._message_maxlen()]
-                delete_file(item._file)
+            if 'error' in meta: msg = item_error(item, meta)
             else:
                 file_limits = block.file_limits()
                 if filetype.TYPE in file_limits:
                     msg = filetype.limit_error(meta, file_limits[filetype.TYPE])
                     if msg:
                         item._error = True
-                        item._message = msg[:SubmissionItem._message_maxlen()]
+                        item._message = msg[:msg_maxlen]
                     else: msg = ''
                 
-                if not item._error: item._filemeta = meta
+                if not item._error:
+                    opts = block.process_options(filetype.TYPE)
+                    newmeta = filetype.process(path, meta, **opts)
+                    if 'error' in newmeta: msg = item_error(item, newmeta)
+                    else:
+                        if 'message' in newmeta:
+                            warn_msg = newmeta.pop('message')
+                            item._message = warn_msg[:msg_maxlen]
+                        item._filemeta = newmeta
             item.save()
         
         return HttpResponse(msg)

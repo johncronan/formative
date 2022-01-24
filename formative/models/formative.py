@@ -595,12 +595,18 @@ class CollectionBlock(FormBlock):
         
         return self.options['choices']
     
+    def num_choices(self):
+        return len(self.fixed_choices())
+    
     def file_limits(self):
         if 'file_limits' in self.options: return self.options['file_limits']
         return {}
     
-    def num_choices(self):
-        return len(self.fixed_choices())
+    def process_options(self, filetype):
+        if 'file_processing' not in self.options: return {}
+        if filetype in self.options['file_processing']:
+            return self.options['file_processing'][filetype]
+        return {}
     
     def span(self, media=None):
         width = 10

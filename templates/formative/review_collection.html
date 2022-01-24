@@ -71,6 +71,11 @@
         {% endwith %}
       </div>
       {% endfor %}
+    {% if item|underscore:'message' %}
+      <div>
+        note: {{ item|underscore:'message' }}
+      </div>
+    {% endif %}
     </div>
   {% endfor %}    
   {% endif %}

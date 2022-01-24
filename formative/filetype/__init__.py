@@ -59,6 +59,9 @@ class FileType:
         
         return None
     
+    def process(self, path, meta, **kwargs):
+        return meta
+    
     def submitted(self, items):
         pass
 

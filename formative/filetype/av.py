@@ -112,8 +112,11 @@ class VideoFile(AudioFile):
         for item in items:
             file = item._file
             
-            vid = ffmpeg.input(file.path, ss=item._filemeta['seconds']/4)
-            outpath = thumbnail_path(file.path)
-            if os.path.isfile(outpath): continue
-            
-            vid.filter('scale', 120, -1).output(outpath, vframes=1).run()
+            try:
+                v = ffmpeg.input(file.path, ss=item._filemeta['seconds']/4)
+                outpath = thumbnail_path(file.path)
+                if not os.path.isfile(outpath):
+                    v.filter('scale', 120, -1).output(outpath, vframes=1).run()
+            except:
+                self.logger.critical('Error generating video thumbnail.',
+                                     exc_info=True)
