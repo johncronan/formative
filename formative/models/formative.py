@@ -471,12 +471,24 @@ class CustomBlock(FormBlock):
         if self.type == self.InputType.TEXT:
             return model_field.formfield(min_length=self.min_chars, **kwargs)
         
+        elif self.type == self.InputType.NUMERIC:
+            return model_field.formfield(min_value=self.numeric_min(),
+                                         max_value=self.numeric_max(), **kwargs)
+        
         # or use the ModelForm factory's default:
         return model_field.formfield(**kwargs)
     
     def clean_field(self, data, field):
         # currently, all are handled from validators set up on the form
         return data
+    
+    def numeric_min(self):
+        if 'numeric_min' in self.options: return self.options['numeric_min']
+        return None
+    
+    def numeric_max(self):
+        if 'numeric_max' in self.options: return self.options['numeric_max']
+        return None
     
     def default_value(self):
         if self.type == self.InputType.TEXT: return None
