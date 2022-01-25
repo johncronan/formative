@@ -20,6 +20,7 @@
     "webpack-cli": "^4.9.1"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.12.1",
     "@material/button": "^13.0.0",
     "@material/card": "^13.0.0",
     "@material/checkbox": "^13.0.0",
@@ -34,9 +35,23 @@
     "@material/tooltip": "^13.0.0",
     "@material/top-app-bar": "^13.0.0",
     "axios": "^0.24.0",
+    "core-js": "^3.20.3",
     "es6-promise": "^4.2.8",
     "include-media": "^1.4.10",
     "material-icons": "^1.10.4",
     "sortablejs": "^1.14.0"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "useBuiltIns": "usage",
+          "corejs": {
+            "version": "3.20"
+          }
+        }
+      ]
+    ]
   }
 }

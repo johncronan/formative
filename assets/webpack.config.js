@@ -53,6 +53,7 @@ module.exports = (env, argv) => {
       'es6-promise': './js/es6-promise.js',
       'formative': './formative.js'
     },
+    target: ['web', 'es5'],
     output,
     module: {
       rules: [
