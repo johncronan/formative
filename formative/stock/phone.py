@@ -15,7 +15,7 @@ class PhoneNumberWidget(StockWidget):
         self.review_template_name = 'review.html'
         
     def fields(self):
-        field = models.CharField(max_length=32)
+        field = models.CharField(max_length=32, blank=True)
         return [(self.field_name(), field)]
 
     def field_validators(self, widget=None):
