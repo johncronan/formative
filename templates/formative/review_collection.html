@@ -47,9 +47,16 @@
         {% if thumbnail %}
         <img src="{{ thumbnail }}" style="max-width: 85px; max-height: 85px;" />
         {% else %}
-          {% if type %}{{ type }}{% else %}file{% endif %}
+          <div class="rp-review-item-icon">
+          {% if type == 'document' %}
+            <span class="material-icons-outlined">description</span>
+          {% elif type == 'audio' %}
+            <span class="material-icons-outlined">audio_file</span>
+          {% else %}
+            <span class="material-icons-outlined">insert_drive_file</span>
+          {% endif %}
+          </div>
         {% endif %}
-      {% else %}
       {% endif %}
       {% endwith %}
     </div>
@@ -69,6 +76,10 @@
         {% endif %}
         {% endwith %}
         {% endwith %}
+      </div>
+      {% empty %}
+      <div style="margin-bottom: 8px;">
+        {{ item|underscore:'filesize'|human_readable }}
       </div>
       {% endfor %}
     {% if item|underscore:'message' %}

@@ -73,7 +73,7 @@
             download_done
           </span>
           <span style="line-height: 48px;">
-            ({{ item|underscore:'filesize' }} bytes)
+            ({{ item|underscore:'filesize'|human_readable }})
           </span>
         {% endif %}
         {{ hidden_id }}

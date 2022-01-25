@@ -37,6 +37,7 @@
 @import '@material/layout-grid/mixins';
 
 @import 'material-icons/iconfont/filled.css';
+@import 'material-icons/iconfont/outlined.css';
 
 @include theme.core-styles;
 @include card.core-styles;
@@ -354,6 +355,13 @@ $maxlines: 30;
 
 .rp-review-item-label {
   grid-column-start: 1;
+  
+  & .rp-review-item-icon {
+    padding-left: 31px;
+    & .material-icons-outlined {
+      user-select: none;
+    }
+  }
 }
 
 .markdown-body {
