@@ -122,8 +122,9 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 if d_id not in skipped_ids:
                     b = FormBlock.objects.get(id=d_id)
                     if b.block_type() == 'stock':
-                        values = { n: getattr(self.object, n)
-                                   for n in b.stock.field_names() }
+                        stock = b.stock
+                        values = { n: getattr(self.object, stock.field_name(n))
+                                   for n in stock.widget_names() }
                         v = b.stock.conditional_value(**values)
                     elif b.block_type() == 'custom':
                         v = b.conditional_value(getattr(self.object, b.name))

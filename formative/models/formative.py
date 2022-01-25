@@ -670,7 +670,19 @@ class Submission(models.Model):
     _created = models.DateTimeField(auto_now_add=True)
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True)
-
+    
+    def _update_context(self, form, context):
+        for block in form.visible_blocks():
+            if block.block_type() == 'custom':
+                context[block.name] = getattr(self, block.name)
+            elif block.block_type() == 'stock':
+                class Obj: pass
+                obj = Obj()
+                obj.__dict__ = { n: getattr(self, block.stock.field_name(n))
+                                 for n in block.stock.widget_names() }
+                if len(obj.__dict__) > 1: context[block.name] = obj
+                else: context[block.name] = next(iter(obj.__dict__.values()))
+    
     def _send_email(self, form, name, **kwargs):
         if name in form.emails():
             template=Template(form.emails()[name]['content'])
@@ -686,6 +698,7 @@ class Submission(models.Model):
         }
         if self._submitted:
             context['review_link'] = submission_link(self, form, rest='review')
+            self._update_context(form, context)
         
         return send_email(template=template, to=self._email,
                           subject=subject, context=context, **kwargs)
