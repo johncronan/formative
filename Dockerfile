@@ -13,7 +13,7 @@ RUN apt-get update \
     && pip install poetry && poetry config virtualenvs.create false \
     && poetry install --no-dev --no-root \
     && apt-get purge -y --auto-remove build-essential
-# --system flag because we don't need an extra virtualenv
+# virtualenvs.create option because we don't need an extra virtualenv here
 
 # copy the project code
 COPY . /opt/services/djangoapp/src
