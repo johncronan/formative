@@ -45,7 +45,7 @@ class Program(AutoSlugModel):
     @cached_property
     def markdown(self):
         return markdown.Markdown(extensions=[
-            LinkAttrModifierExtension(new_tab='on')
+            LinkAttrModifierExtension(new_tab='external_only')
         ])
     
     def visible_forms(self):
