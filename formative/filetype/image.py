@@ -10,7 +10,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class ImageFile(FileType):
     TYPE = 'image'
-    EXTENSIONS = ('jpg', 'jpeg', 'gif')
+    EXTENSIONS = ('jpg', 'jpeg', 'gif', 'png')
     
     def meta(self, path):
         ret = super().meta(path)
@@ -20,6 +20,7 @@ class ImageFile(FileType):
                 width, height = img.size
             ret.update(width=width, height=height,
                        megapixels=width*height/1000000)
+            # TODO: check that img.format matches the extension
             return ret
         except:
             msg = _('Error occurred reading the image file.')
@@ -34,9 +35,10 @@ class ImageFile(FileType):
         try:
             with Image.open(path) as img:
                 img.load()
+                profile = img.info.get('icc_profile', '')
                 img.thumbnail((max_width, max_height), Image.ANTIALIAS)
                 new_width, new_height = img.size
-                img.save(path, img.format)
+                img.save(path, img.format, icc_profile=profile)
             meta['width'], meta['height'] = new_width, new_height
             meta['megapixels'] = new_width * new_height / 1000000
             msg = _('Image was resized to %(width)sx%(height)s.')
@@ -52,12 +54,13 @@ class ImageFile(FileType):
             file = item._file
             try:
                 with Image.open(file.path) as img:
+                    profile = img.info.get('icc_profile', '')
                     if img.mode != 'RGB': img = img.convert('RGB')
                     img.thumbnail((120, 120), Image.ANTIALIAS)
                     # TODO: need an alternative name thing
                     outpath = thumbnail_path(file.path)
                     if not os.path.isfile(outpath):
-                        img.save(outpath, img.format)
+                        img.save(outpath, img.format, icc_profile=profile)
             except:
                 self.logger.critical('Error generating thumbnail.',
                                      exc_info=True)

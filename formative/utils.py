@@ -61,7 +61,8 @@ def get_file_extension(name):
     return Path(name).suffix[1:].lower()
 
 def thumbnail_path(path):
-    return path[:path.rindex('.')] + '_tn.jpg'
+    idx = path.rindex('.')
+    return path[:idx] + '_tn' + path[idx:]
 
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)
