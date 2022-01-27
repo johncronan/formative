@@ -1,14 +1,13 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from .models import CustomBlock, SubmissionItem
 from .filetype import FileType
 from .validators import MinWordsValidator, MaxWordsValidator, \
-    FileExtensionValidator
-from .utils import get_file_extension
+    FileExtensionValidator, FileSizeValidator
+from .utils import get_file_extension, human_readable_filesize
 
 
 class OpenForm(forms.Form):
@@ -100,10 +99,7 @@ class ItemFileForm(forms.Form):
                            error_messages={
         'max_length': _('File name cannot exceed %(limit_value)d characters.')
     })
-    size = forms.IntegerField(error_messages={
-        # TODO: human readable (and in clean method)
-        'max_value': _('Maximum file size is %(limit_value)d bytes.')
-    })
+    size = forms.IntegerField()
     
     def __init__(self, block=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,7 +112,7 @@ class ItemFileForm(forms.Form):
         
         maxsize = block.max_filesize()
         if maxsize:
-            self.fields['size'].validators.append(MaxValueValidator(maxsize))
+            self.fields['size'].validators.append(FileSizeValidator(maxsize))
         
         extensions = self.block.allowed_extensions()
         validator = FileExtensionValidator(allowed_extensions=extensions)
@@ -136,16 +132,16 @@ class ItemFileForm(forms.Form):
                 maxval = limits[filetype.TYPE]['max_filesize']
                 if cleaned_data['size'] > maxval:
                     msg = _('Maximum file size for this type of file is '
-                            '%(limit_value)d bytes.')
-                    params = {'limit_value': maxval}
+                            '%(limit_value)s.')
+                    params = {'limit_value': human_readable_filesize(maxval)}
                     raise ValidationError(msg, code='max_value', params=params)
             
             if 'min_filesize' in limits[filetype.TYPE]:
                 maxval = limits[filetype.TYPE]['min_filesize']
                 if cleaned_data['size'] < maxval:
                     msg = _('Minimum file size for this type of file is '
-                            '%(limit_value)d bytes.')
-                    params = {'limit_value': minval}
+                            '%(limit_value)s.')
+                    params = {'limit_value': human_readable_filesize(minval)}
                     raise ValidationError(msg, code='min_value', params=params)
 
 

@@ -68,6 +68,12 @@ def delete_file(file):
     thumb = thumbnail_path(file.path)
     if os.path.isfile(thumb): os.remove(thumb)
 
+def human_readable_filesize(size, decimal_places=2):
+    for unit in ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB']:
+        if size < 1024 or unit == 'PB': break
+        size /= 1024
+    return f"{size:.{decimal_places}f} {unit}"
+
 def any_name_field(**kwargs):
     Qs = [ Q(**{ namen + (k != '_' and k or ''): v for k, v in kwargs.items() })
            for namen in ('name1', 'name2', 'name3') ]

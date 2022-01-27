@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import re
 
-from .utils import get_file_extension
+from .utils import get_file_extension, human_readable_filesize
 
 
 class WordValidator(validators.BaseValidator):
@@ -52,3 +52,12 @@ class FileExtensionValidator(validators.FileExtensionValidator):
         f.name = value
         
         super().__call__(f)
+
+
+class FileSizeValidator(validators.MaxValueValidator):
+    message = _('Maximum file size is %(val_with_unit)s.')
+    
+    def __call__(self, value):
+        params = {'val_with_unit': human_readable_filesize(self.limit_value)}
+        if self.compare(value, self.limit_value):
+            raise ValidationError(self.message, code=self.code, params=params)
