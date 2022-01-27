@@ -45,16 +45,21 @@
       {% if form_block.has_file and file %}
         {% file_thumbnail file as thumbnail %}
         {% if thumbnail %}
-        <img src="{{ thumbnail }}" style="max-width: 85px; max-height: 85px;" />
+        <a href="{{ file.url }}" target="_blank">
+          <img src="{{ thumbnail }}"
+               style="max-width: 85px; max-height: 85px;" />
+        </a>
         {% else %}
           <div class="rp-review-item-icon">
-          {% if type == 'document' %}
-            <span class="material-icons-outlined">description</span>
-          {% elif type == 'audio' %}
-            <span class="material-icons-outlined">audio_file</span>
-          {% else %}
-            <span class="material-icons-outlined">insert_drive_file</span>
-          {% endif %}
+            <a href="{{ file.url }}" target="_blank">
+            {% if type == 'document' %}
+              <span class="material-icons-outlined">description</span>
+            {% elif type == 'audio' %}
+              <span class="material-icons-outlined">audio_file</span>
+            {% else %}
+              <span class="material-icons-outlined">insert_drive_file</span>
+            {% endif %}
+            </a>
           </div>
         {% endif %}
       {% endif %}
