@@ -18,7 +18,14 @@ class ImageFile(FileType):
         try:
             with Image.open(path) as img:
                 width, height = img.size
+                icc = img.info.get('icc_profile', '')
+                profile = ''
+                if icc:
+                    profile = ''.join(chr(x) for x in icc[4:8] if x) + ' '
+                    profile += ''.join(chr(x) for x in icc[48:56] if x)
+            
             ret.update(width=width, height=height,
+                       icc_profile=profile,
                        megapixels=width*height/1000000)
             # TODO: check that img.format matches the extension
             return ret
@@ -28,11 +35,21 @@ class ImageFile(FileType):
             return {'error': msg}
     
     def process(self, path, meta, max_width=None, max_height=None, **kwargs):
-        if not max_width and not max_height: return meta
-        if meta['width'] <= max_width and meta['height'] <= max_height:
-            return meta
-        
         try:
+            if 'icc_profile' not in meta or not meta['icc_profile']:
+                # some browsers mess up w/ untagged images - should assume sRGB
+                pass
+                # TODO needs more research
+#                with Image.open(path) as img:
+#                    srgb = ImageCms.createProfile('sRGB')
+#                    img = ImageCms.profileToProfile(orig, srgb).tobytes()
+#                    img.save(path, img.format, icc_profile=srgb_profile)
+#                    meta['icc_profile'] = ' '
+            
+            if not max_width and not max_height: return meta
+            if meta['width'] <= max_width and meta['height'] <= max_height:
+                return meta
+        
             with Image.open(path) as img:
                 img.load()
                 profile = img.info.get('icc_profile', '')
