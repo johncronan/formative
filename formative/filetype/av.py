@@ -114,7 +114,7 @@ class VideoFile(AudioFile):
             
             try:
                 v = ffmpeg.input(file.path, ss=item._filemeta['seconds']/4)
-                outpath = thumbnail_path(file.path)
+                outpath = thumbnail_path(file.path, ext='jpg')
                 if not os.path.isfile(outpath):
                     v.filter('scale', 120, -1).output(outpath, vframes=1).run()
             except:

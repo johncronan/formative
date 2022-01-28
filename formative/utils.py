@@ -60,9 +60,9 @@ def submission_link(s, form, rest=''):
 def get_file_extension(name):
     return Path(name).suffix[1:].lower()
 
-def thumbnail_path(path):
+def thumbnail_path(path, ext=None):
     idx = path.rindex('.')
-    return path[:idx] + '_tn' + path[idx:]
+    return path[:idx] + '_tn' + (ext and '.'+ext or path[idx:])
 
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)

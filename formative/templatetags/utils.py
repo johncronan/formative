@@ -8,8 +8,11 @@ register = template.Library()
 
 @register.simple_tag
 def file_thumbnail(file):
+    path = thumbnail_path(file.path, ext='jpg')
+    if os.path.isfile(path): return thumbnail_path(file.url, ext='jpg')
     path = thumbnail_path(file.path)
     if os.path.isfile(path): return thumbnail_path(file.url)
+    
     return None
 
 register.filter('human_readable', human_readable_filesize)
