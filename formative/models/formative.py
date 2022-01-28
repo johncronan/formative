@@ -170,6 +170,7 @@ class Form(AutoSlugModel):
         self.publish_model(self.model)
         if self.item_model: self.publish_model(self.item_model)
         
+        self.modified = timezone.now()
         self.save()
     
     def unpublish(self):
@@ -182,6 +183,7 @@ class Form(AutoSlugModel):
         if 'model' in self.__dict__: del self.model
         if 'item_model' in self.__dict__: del self.item_model
         
+        self.modified = timezone.now()
         self.save()
 
     def default_text_label_style(self):
