@@ -16,7 +16,13 @@
               mdc-layout-grid__cell--span-8-tablet
               mdc-layout-grid__cell--span-8-desktop">
   {% if not submitted %}
-    {{ program_form.review_pre }}
+    {% if form.non_field_errors %}
+    <div class="rp-review-error">
+      {{ form.non_field_errors }}
+    </div>
+    {% else %}
+      {{ program_form.review_pre }}
+    {% endif %}
   {% else %}
     {{ program_form.submitted_review_pre }}
   {% endif %}
@@ -69,13 +75,18 @@
   {% endif %}
   
 {% if not submitted %}
-  {% with program_form as form %}
+  {% with program_form as f %}
   {% with submission|underscore:'id' as id %}
-  <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
-           {% url 'submission_page' form.program.slug form.slug id prev_page %}
-           {% else %}
-           {% url 'submission' form.program.slug form.slug id %}
-           {% endif %}"
+  <a aria-describedby="previoustip" href="
+       {% if form.non_field_errors %}
+         {% url 'submission_review' f.program.slug f.slug id %}
+       {% else %}
+         {% if prev_page > 1 %}
+           {% url 'submission_page' f.program.slug f.slug id prev_page %}
+         {% else %}
+           {% url 'submission' f.program.slug f.slug id %}
+         {% endif %}
+       {% endif %}"
      class="rp-prevpage-button mdc-icon-button material-icons"
      data-mdc-ripple-is-unbounded>
     <div class="mdc-icon-button__ripple"></div>

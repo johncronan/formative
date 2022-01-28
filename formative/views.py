@@ -174,6 +174,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                                        fields=fields, widgets=widgets)
         
         f = form_class(custom_blocks=customs, stock_blocks=stocks,
+                       program_form=self.program_form, page=self.page,
                        **self.get_form_kwargs())
         return f
     

@@ -1,9 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.functional import cached_property
+from django.utils.formats import date_format, time_format
 from django.utils.translation import gettext_lazy as _
 
-from .models import CustomBlock, SubmissionItem
+from .models import Form, CustomBlock, SubmissionItem
 from .filetype import FileType
 from .validators import MinWordsValidator, MaxWordsValidator, \
     FileExtensionValidator, FileSizeValidator
@@ -15,10 +16,13 @@ class OpenForm(forms.Form):
 
 
 class SubmissionForm(forms.ModelForm):
-    def __init__(self, custom_blocks=None, stock_blocks=None, *args, **kwargs):
+    def __init__(self, program_form=None, custom_blocks=None, stock_blocks=None,
+                 page=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.program_form = program_form
         self.custom_blocks = custom_blocks
         self.stock_blocks = stock_blocks
+        self.page = page
         
         for name, field in self.fields.items():
             if name in stock_blocks:
@@ -46,8 +50,22 @@ class SubmissionForm(forms.ModelForm):
     def clean(self):
         super().clean()
         cleaned_data = self.cleaned_data
-        stocks = {}
         
+        if not self.page and self.program_form.status != Form.Status.ENABLED:
+            msg, params = _('Application cannot be submitted. '), {}
+            if self.program_form.status == Form.Status.COMPLETED:
+                msg += _('This form closed on %(date)s at %(time)s.')
+                comp = self.program_form.completed
+                params = {
+                    'time': time_format(comp.time(), format='TIME_FORMAT'),
+                    'date': date_format(comp.date(), format='SHORT_DATE_FORMAT')
+                }
+            else: msg += _('Submissions are temporarily disabled.')
+            
+            self.add_error(None, ValidationError(msg, params=params))
+            return
+        
+        stocks = {}
         for name, field in self.fields.items():
             if name in self.custom_blocks:
                 block = self.custom_blocks[name]

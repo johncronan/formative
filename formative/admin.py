@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.utils import timezone
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
@@ -17,6 +18,14 @@ class FormAdmin(admin.ModelAdmin):
         action, kwargs = None, {}
         if '_publish' in request.POST: action = 'publish'
         elif '_unpublish' in request.POST: action = 'unpublish'
+        
+        if obj.status == Form.Status.DRAFT:
+            obj.modified = timezone.now()
+        elif obj.status in (Form.Status.DISABLED, Form.Status.COMPLETED):
+            obj.completed = timezone.now()
+        else:
+            obj.completed = None
+        obj.save()
         
         if action:
             getattr(obj, action)(**kwargs)
