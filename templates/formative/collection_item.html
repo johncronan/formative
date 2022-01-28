@@ -104,13 +104,13 @@
       {% with hide=columns.upload|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-action-cell rp-item-upload-action
                    mdc-data-table__cell"{{ hide }}>
+          <input type="file" name="itemfile{{ item|underscore:'id' }}"
+                 style="display: none; opacity: 0; width: 0;"/>
           <button class="rp-item-upload mdc-icon-button material-icons"
                   type="button">
             <div class="mdc-icon-button__ripple"></div>
             upload
           </button>
-          <input type="file" name="itemfile{{ item|underscore:'id' }}"
-                 style="display: none;"/>
         </td>
       {% endwith %}
     {% endwith %}

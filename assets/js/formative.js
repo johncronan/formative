@@ -317,23 +317,29 @@ function newItems(blockId, restore, files, itemId) {
       table.parentElement.parentElement.style.display = 'flex';
       pageError();
     });
-  
 }
 
 function filesSelected(event, blockId, restore, itemId) {
   var fileInput = event.target;
-  newItems(blockId, restore, fileInput.files, itemId);
+  if (fileInput.files.length)
+    newItems(blockId, restore, fileInput.files, itemId);
   fileInput.value = '';
+  fileInput.style.display = 'none';
 }
 
 function collectionClick(event) {
-  var buttonEl = event.target.parentElement;
+  var buttonEl = event.target;
+  if (buttonEl.parentElement.tagName.toLowerCase() == 'button')
+    buttonEl = buttonEl.parentElement;
   var blockId = buttonEl.dataset.blockId;
   var restore = unsaved;
   
   if (buttonEl.dataset.needsFile) {
     var fileInput = document.querySelector('input[name="file' + blockId + '"]');
     fileInput.onchange = event => filesSelected(event, blockId, restore);
+    
+    // opacity and width zero will have to do, while we're working with it
+    fileInput.style.display = 'inline-block';
     fileInput.click();
   } else {
     newItems(blockId, restore);
@@ -350,6 +356,7 @@ function uploadClick(event) {
   var fileInput = document.querySelector('input[name="itemfile' + id + '"]');
   var restore = unsaved;
   fileInput.onchange = event => filesSelected(event, blockId, restore, id);
+  fileInput.style.display = 'inline-block';
   fileInput.click();
 }
 
