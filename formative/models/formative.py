@@ -252,8 +252,8 @@ class Form(AutoSlugModel):
     def hidden(self):
         return self.status != self.Status.ENABLED or 'hidden' in self.options
     
-    def hidden_access(self):
-        if 'hidden_access' in self.options: return self.options['hidden_access']
+    def access_enable(self):
+        if 'access_enable' in self.options: return self.options['access_enable']
         return None
 
     def review_pre(self, prefix=''):

@@ -38,10 +38,13 @@ class ProgramFormMixin(generic.edit.FormMixin):
         self.program_form = form
         
         if self.program_form.hidden() and 'sid' not in kwargs:
-            key, params = self.program_form.hidden_access(), self.request.GET
-            if not key or 'access' not in params or params['access'] != key:
-                kwargs = {'slug': self.program_form.program.slug}
-                return HttpResponseRedirect(reverse('program', kwargs=kwargs))
+            key, params = self.program_form.access_enable(), self.request.GET
+            template = self.template_name
+            if 'thanks' not in template and 'continue' not in template:
+                if not key or 'access' not in params or params['access'] != key:
+                    kwargs = {'slug': self.program_form.program.slug}
+                    return HttpResponseRedirect(reverse('program',
+                                                        kwargs=kwargs))
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -263,6 +266,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     
     def form_valid(self, form):
         if not self.page:
+            # TODO if program_form.status is not enabled
+            
             # the draft submission will now be marked as submitted
             self.object._submit()
             self.object._send_email(form=self.program_form, name='confirmation')
