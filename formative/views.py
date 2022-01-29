@@ -398,8 +398,8 @@ class SubmissionBase(generic.View):
         self.program_form = form
         if not self.program_form.item_model: raise Http404()
         
-        # TODO: automated form close, timing this relative to rest
-        if form.status != Form.Status.ENABLED: return HttpResponseBadRequest()
+        # TODO: automated form close, timing here relative to rest?
+        if form.status == Form.Status.DRAFT: return HttpResponseBadRequest()
         
         self.submission = get_object_or_404(self.program_form.model,
                                             _id=self.kwargs['sid'])
