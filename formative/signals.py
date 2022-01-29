@@ -90,7 +90,7 @@ def customblock_post_save(sender, instance, created, raw, **kwargs):
         paths.append(l.path)
     
     delete_sub_labels(block.form, block.name, paths)
-    if block._old_name != block.name:
+    if not new and block._old_name != block.name:
         delete_sub_labels(block.form, block._old_name)
 
 @receiver(pre_save, sender=FormBlock)
@@ -116,6 +116,8 @@ def formblock_post_save(sender, instance, created, raw, **kwargs):
                 path = '.'.join((block._old_name, widget))
             else: path = block._old_name
         else: path = new_path
+        
+        l = None
         if not new:
             try:
                 l = FormLabel.objects.get(form=block.form, path=path,
@@ -130,7 +132,7 @@ def formblock_post_save(sender, instance, created, raw, **kwargs):
         paths.append(l.path)
     
     delete_sub_labels(block.form, block.name, paths)
-    if block._old_name != block.name:
+    if not new and block._old_name != block.name:
         delete_sub_labels(block.form, block._old_name)
 
 @receiver(post_save, sender=CollectionBlock)
