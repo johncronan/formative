@@ -153,11 +153,11 @@ class Form(AutoSlugModel):
         ctype.save()
         ContentType.objects.clear_cache()
         
-        from django.contrib.admin import site
+        from ..admin import site
         site.register(model)
     
     def unpublish_model(self, model):
-        from django.contrib.admin import site
+        from ..admin import site
         match = None
         for m in site._registry.keys():
             if m._meta.db_table == model._meta.db_table: match = m
