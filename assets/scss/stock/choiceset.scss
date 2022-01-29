@@ -6,8 +6,8 @@
     
     & .rp-text-field {
       @include textfield-mixins.outlined-density(-4);
-      // density scale?
       width: 294px;
+      
       & label.mdc-floating-label {
         font-size: 85%;
       }

@@ -1,12 +1,13 @@
-{% for name, field in block_fields.items %}
-<div class="rp-stock-cell rp-stock-cell-{{ forloop.counter }}
-            mdc-layout-grid__cell mdc-layout-grid__cell--span-2
-            mdc-layout-grid__cell--span-3-tablet
-            mdc-layout-grid__cell--span-3-desktop">
-  {% if name == 'firstname' %}
-    {% include "./textfield.html" with labels=labels.firstname %}
-  {% elif name == 'lastname' %}
-    {% include "./textfield.html" with labels=labels.lastname %}
-  {% endif %}
+<div class="mdc-layout-grid__inner">
+  {% for name, field in block_fields.items %}
+  <div class="rp-stock-cell mdc-layout-grid__cell mdc-layout-grid__cell--span-2
+              mdc-layout-grid__cell--span-3-tablet
+              mdc-layout-grid__cell--span-3-desktop">
+    {% if name == 'firstname' %}
+      {% include "./textfield.html" with labels=labels.firstname %}
+    {% elif name == 'lastname' %}
+      {% include "./textfield.html" with labels=labels.lastname %}
+    {% endif %}
+  </div>
+  {% endfor %}
 </div>
-{% endfor %}

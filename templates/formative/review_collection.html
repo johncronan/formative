@@ -4,20 +4,21 @@
 {% collection_items visible_items form_block as items %}
 {% block_formset formsets form_block as formset %}
 
+<div class="mdc-layout-grid__inner">
 {% with styles=form_block.form.label_class.LabelStyle %}
   {% with label=labels|get_by_style:styles.VERTICAL %}
   {% if label %}
-  <div class="rp-review-label mdc-layout-grid__cell
-    {% if form_block.fixed %}
-              mdc-layout-grid__cell--span-2
-              mdc-layout-grid__cell--span-3-tablet
-              mdc-layout-grid__cell--span-3-desktop
-    {% else %}
-              mdc-layout-grid__cell--span-8-tablet
-              mdc-layout-grid__cell--span-8-desktop
-    {% endif %}">
-    {{ label.display_inline }}
-  </div>
+    <div class="rp-review-label mdc-layout-grid__cell
+      {% if form_block.fixed %}
+                mdc-layout-grid__cell--span-2
+                mdc-layout-grid__cell--span-3-tablet
+                mdc-layout-grid__cell--span-3-desktop
+      {% else %}
+                mdc-layout-grid__cell--span-8-tablet
+                mdc-layout-grid__cell--span-8-desktop
+      {% endif %}">
+      {{ label.display_inline }}
+    </div>
   {% endif %}
   {% endwith %}
   
@@ -34,7 +35,13 @@
       {% endwith %}
     {% endfor %}
   </div>
+</div>
   {% else %}
+</div>
+
+{% if items %}
+<div class="mdc-layout-grid__inner">
+{% endif %}
   {% for item in items %}
     {% item_form formset item as item_form %}
     <div class="rp-review-item-label mdc-layout-grid__cell
@@ -93,6 +100,9 @@
       </div>
     {% endif %}
     </div>
-  {% endfor %}    
+  {% endfor %}
+{% if items %}
+</div>
+{% endif %}
   {% endif %}
 {% endwith %}

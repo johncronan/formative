@@ -3,17 +3,21 @@
 {% block page_title %}{{ program_form.name }}{% endblock %}
 
 {% block content %}
+  <div class="mdc-layout-grid__inner">
     <div class="rp-form-top mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-8-tablet
                 mdc-layout-grid__cell--span-8-desktop">
       We sent an email to the address you gave,
       with a link to your application form.
     </div>
+  </div>
 
-  <a href="{% url 'form' program_form.program.slug program_form.slug %}"
-     class="rp-prevpage-button mdc-icon-button material-icons"
-     data-mdc-ripple-is-unbounded>
-    <div class="mdc-icon-button__ripple"></div>
-    chevron_left
-  </a>
+  <div class="mdc-layout-grid__inner">
+    <a href="{% url 'form' program_form.program.slug program_form.slug %}"
+       class="rp-prevpage-button mdc-icon-button material-icons"
+       data-mdc-ripple-is-unbounded>
+      <div class="mdc-icon-button__ripple"></div>
+      chevron_left
+    </a>
+  </div>
 {% endblock %}

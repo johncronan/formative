@@ -33,10 +33,8 @@
 </header>
 <main class="mdc-top-app-bar--fixed-adjust">
   {% block pre_layout %}{% endblock %}
-  <div class="mdc-layout-grid rp-maxwidth-grid">
-    <div class="mdc-layout-grid__inner markdown-body">
-      {% block content %}{% endblock %}
-    </div>
+  <div class="mdc-layout-grid rp-maxwidth-grid markdown-body">
+    {% block content %}{% endblock %}
   </div>
   {% block post_layout %}{% endblock %}
 </main>

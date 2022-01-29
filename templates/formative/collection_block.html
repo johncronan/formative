@@ -5,11 +5,16 @@
 {% with styles=form_block.form.label_class.LabelStyle %}
 {% with label=labels|get_by_style:styles.VERTICAL %}
 {% if label %}
+<div class="mdc-layout-grid__inner">
   {% include "./label_vertical.html" %}
+</div>
 {% endif %}
 {% endwith %}
 {% endwith %}
 
+{% if items %}
+<div class="mdc-layout-grid__inner">
+{% endif %}
   {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
   <div class="rp-collection-table mdc-data-table mdc-layout-grid__cell
               mdc-layout-grid__cell--span-{{ tsp }}-tablet
@@ -62,9 +67,13 @@
       </table>
     </div>
   </div>
+{% if items %}
+</div>
+{% endif %}
 
 {% if not form_block.fixed %}
-  <button class="rp-collection-button mdc-button mdc-button--outlined
+<div class="mdc-layout-grid__inner">
+  <button class="mdc-button mdc-button--outlined
                 mdc-layout-grid__cell mdc-layout-grid__cell--span-2
                 mdc-layout-grid__cell--span-3-tablet
                 mdc-layout-grid__cell--span-3-desktop"
@@ -84,11 +93,13 @@
          {% if form_block.max_items > 1 %}multiple{% endif %}
          style="display: none; opacity: 0; width: 0;"/>
   {% endif %}
+</div>
 {% endif %}
 
 {{ formset.management_form }}
 
 {% if formset.non_form_errors %}
+<div class="mdc-layout-grid__inner">
   <div class="rp-formset-error mdc-layout-grid__cell
               mdc-layout-grid__cell--span-8-tablet
               mdc-layout-grid__cell--span-8-desktop
@@ -97,4 +108,5 @@
        role="alert">
     {{ formset.non_form_errors.0 }}
   </div>
+</div>
 {% endif %}

@@ -5,16 +5,20 @@
 {% with hlabel=labels|get_by_style:styles.HORIZONTAL %}
 {% with wlabel=labels|get_by_style:styles.WIDGET %}
 {% if label %}
+<div class="mdc-layout-grid__inner">
   {% if not hlabel and not wlabel %}
     {% include "./label_vertical.html" with for_field=field %}
   {% else %}
     {% include "./label_vertical.html" %}
   {% endif %}
+</div>
 {% endif %}
+
+<div class="mdc-layout-grid__inner">
 
 {% with s=hlabel|yesno:"-2,0" sp=form_block.span %}
 {% if hlabel %}
-<div class="rp-horizontal-label-cell rp-layout-cell-start
+<div class="rp-horizontal-label-cell
             mdc-layout-grid__cell--span-{% if sp == 1 %}1{% else %}2{% endif %}
             mdc-layout-grid__cell--span-2-tablet
             mdc-layout-grid__cell--span-2-desktop">
@@ -26,8 +30,8 @@
 
 {% with types=form_block.InputType %}
 {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
-<div class="rp-layout-cell {% if not hlabel %}rp-layout-cell-start{% endif %}
-            rp-layout-cell-{{ form_block.type }} mdc-layout-grid__cell
+<div class="rp-layout-cell rp-layout-cell-{{ form_block.type }}
+            mdc-layout-grid__cell
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ sp }}{% else %}{{ sp|add:s }}{% endif %}
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ tsp }}{% else %}{{ tsp|add:s }}{% endif %}-tablet
 mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% endif %}-desktop
@@ -52,4 +56,5 @@ mdc-layout-grid__cell--span-{% if sp < 4 %}{{ dsp }}{% else %}{{ dsp|add:s }}{% 
 {% endwith %}
 {% endwith %}
 {% endwith %}
+</div>
 </div>

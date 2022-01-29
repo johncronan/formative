@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="mdc-layout-grid__inner">
   <div class="rp-review-pre mdc-layout-grid__cell
               mdc-layout-grid__cell--span-4
               mdc-layout-grid__cell--span-8-tablet
@@ -27,12 +28,14 @@
     {{ program_form.submitted_review_pre }}
   {% endif %}
   </div>
+</div>
 
   {% for form_block in program_form.visible_blocks %}
   {% if form_block.show_in_review %}
     {% block_labels field_labels form_block as labels %}
     
     {% if form_block.block_type == 'custom' %}
+  <div class="mdc-layout-grid__inner">
       {% block_field form form_block as field %}
       {% if field %}
         {% with types=form_block.InputType %}
@@ -51,7 +54,8 @@
         {% endif %}
         {% endwith %}
       {% endif %}
-      
+  </div>
+    
     {% elif form_block.block_type == 'collection' %}
       {% if form_block.id in formsets %}
         {% include "./review_collection.html" %}
@@ -59,22 +63,27 @@
       
     {% else %}
       {% if form_block.stock.field_names.0 in form.fields %}
+  <div class="mdc-layout-grid__inner">
         {% include_stock_review form_block labels %}
+  </div>
       {% endif %}
     {% endif %}
   {% endif %}
   {% endfor %}
   
   {% if program_form.review_post %}
-  <div class="rp-review-post mdc-layout-grid__cell
-              mdc-layout-grid__cell--span-4
-              mdc-layout-grid__cell--span-8-tablet
-              mdc-layout-grid__cell--span-8-desktop">
-    {{ program_form.review_post }}
+  <div class="mdc-layout-grid__inner">
+    <div class="rp-review-post mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-4
+                mdc-layout-grid__cell--span-8-tablet
+                mdc-layout-grid__cell--span-8-desktop">
+      {{ program_form.review_post }}
+    </div>
   </div>
   {% endif %}
   
 {% if not submitted %}
+<div class="mdc-layout-grid__inner">
   {% with program_form as f %}
   {% with submission|underscore:'id' as id %}
   <a aria-describedby="previoustip" href="
@@ -105,6 +114,7 @@
     <span class="mdc-button__focus-ring"></span>
     <span class="mdc-button__label">submit</span>
   </button>
+</div>
 {% endif %}
 
 {% endblock %}

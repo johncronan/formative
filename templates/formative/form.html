@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block content %}
+  <div class="mdc-layout-grid__inner">
     <div class="rp-form-top mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-8-tablet
                 mdc-layout-grid__cell--span-8-desktop">
@@ -17,6 +18,9 @@
       one that you've already started. We will email you a link that takes
       you to the next step.
     </div>
+  </div>
+  
+  <div class="mdc-layout-grid__inner">
   {% for field in form.visible_fields %}
     <div class="rp-layout-cell mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-6-tablet
@@ -24,9 +28,13 @@
       {% include "./stock/textfield.html" %}
     </div>
   {% endfor %}
-  <input class="rp-start-button mdc-button mdc-button--raised
-                mdc-layout-grid__cell mdc-layout-grid__cell--span-3"
-         type="submit" value="start application"/>
+  </div>
+  
+  <div class="mdc-layout-grid__inner">
+    <input class="rp-start-button mdc-button mdc-button--raised
+                  mdc-layout-grid__cell mdc-layout-grid__cell--span-3"
+           type="submit" value="start application"/>
+  </div>
 {% endblock %}
 
 {% block post_layout %}

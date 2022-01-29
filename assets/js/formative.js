@@ -73,7 +73,7 @@ function errorMessage(err, msg) {
 
 function pageError() {
   var bottom = document.querySelector('#rp-page-error');
-  bottom.style.display = 'block';
+  bottom.parentElement.style.display = 'block';
   bottom.firstElementChild.innerHTML = 'Page needs to be reloaded.';
   document.querySelectorAll('button').forEach(b => b.disabled = true);
   for (let i=0; i < sortables.length; i++) sortables[i].option('sort', false);
@@ -82,6 +82,7 @@ function pageError() {
 function setError(rowEl, err, msg) {
   setStatus(rowEl, 'error');
   var td = rowEl.querySelector('td.rp-item-message-cell');
+  if (!td) td = rowEl.querySelector('td:last-child');
   td.firstElementChild.innerHTML = errorMessage(err, msg);
   pageError();
 }

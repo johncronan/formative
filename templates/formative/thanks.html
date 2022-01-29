@@ -3,6 +3,7 @@
 {% block page_title %}Thanks - {{ program_form.name }}{% endblock %}
 
 {% block content %}
+  <div class="mdc-layout-grid__inner">
     <div class="rp-form-top mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-8-tablet
                 mdc-layout-grid__cell--span-8-desktop">
@@ -12,11 +13,14 @@
         Thank you for applying! We sent a confirmation to your email address.
       {% endif %}
     </div>
-
-  <a href="{% url 'program_index' %}"
-     class="rp-prevpage-button mdc-icon-button material-icons"
-     data-mdc-ripple-is-unbounded>
-    <div class="mdc-icon-button__ripple"></div>
-    chevron_left
-  </a>
+  </div>
+  
+  <div class="mdc-layout-grid__inner">
+    <a href="{% url 'program_index' %}"
+       class="rp-prevpage-button mdc-icon-button material-icons"
+       data-mdc-ripple-is-unbounded>
+      <div class="mdc-icon-button__ripple"></div>
+      chevron_left
+    </a>
+  </div>
 {% endblock %}

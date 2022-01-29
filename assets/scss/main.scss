@@ -63,10 +63,17 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
   @include media(">=desktop") {
     padding: 32px;
   }
-}
-
-.rp-layout-cell-start {
-  grid-column-start: 1;
+  
+  & .mdc-layout-grid__inner {
+    margin-bottom: 16px;
+    
+    @include media(">=tablet") {
+      margin-bottom: 20px;
+    }
+    @include media(">=desktop") {
+      margin-bottom: 24px;
+    }
+  }
 }
 
 .rp-layout-cell {
@@ -77,10 +84,6 @@ $breakpoints: (phone: 375px, tablet: 600px, desktop: 940px);
   & .mdc-form-field {
     width: 100%;
   }
-}
-
-.rp-stock-cell-1 {
-  grid-column-start: 1;
 }
 
 .rp-vertical-label-cell {
@@ -168,7 +171,6 @@ $maxlines: 30;
 }
 
 .rp-form-bottom {
-  grid-column-start: 1;
   & .rp-error {
     color: #af0109;
   }
@@ -179,7 +181,6 @@ $maxlines: 30;
 }
 
 .rp-prevpage-button {
-  grid-column-start: 1;
   position: relative;
   top: 2px;
 }
@@ -211,10 +212,6 @@ $maxlines: 30;
       left: 0;
     }
   }
-}
-
-.rp-collection-button {
-  grid-column-start: 1;
 }
 
 .rp-collection-table {
@@ -285,7 +282,6 @@ $maxlines: 30;
 }
 
 .rp-formset-error {
-  grid-column-start: 1;
   position: relative;
   top: -8px;
 }
@@ -300,6 +296,7 @@ $maxlines: 30;
   font-size: 0.85rem;
 }
 
+// TODO: grid-column directives dont apply to IE11, which is using flex
 .rp-save-button {
   margin-top: 8px;
   
@@ -331,7 +328,6 @@ $maxlines: 30;
 
 .rp-start-button {
   margin-top: 8px;
-  grid-column-start: 1;
 }
 
 .mdc-card-wrapper__text-section {
@@ -349,17 +345,11 @@ $maxlines: 30;
   }
 }
 
-.rp-review-pre,.rp-review-post,.rp-review-label,.rp-review-value-wide {
-  grid-column-start: 1;
-}
-
 .rp-review-error {
   color: #af0109;
 }
 
 .rp-review-item-label {
-  grid-column-start: 1;
-  
   & .rp-review-item-icon {
     padding-left: 31px;
     & .material-icons-outlined {
@@ -374,7 +364,7 @@ $maxlines: 30;
       margin-bottom: 0;
     }
   }
-  em {
+  & em {
     font-style: italic;
   }
 }

@@ -11,16 +11,19 @@
 {% endblock %}
 
 {% block content %}
-    {% with styles=program_form.label_class.LabelStyle %}
-    {% if page == 1 %}
+  {% with styles=program_form.label_class.LabelStyle %}
+  {% if page == 1 %}
     
     {% with label=field_labels.email|get_by_style:styles.VERTICAL %}
     {% if label %}
+    <div class="mdc-layout-grid__inner">
       {% include "./label_vertical.html" %}
+    </div>
     {% endif %}
     {% endwith %}
     
-    <div class="rp-form-top rp-layout-cell-start mdc-layout-grid__cell
+  <div class="mdc-layout-grid__inner">
+    <div class="rp-form-top mdc-layout-grid__cell
                 mdc-layout-grid__cell--span-1">
       Email:
     </div>
@@ -28,14 +31,15 @@
                 mdc-layout-grid__cell--span-3">
       {{ submission|underscore:'email' }}
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
     
     {% for form_block in visible_blocks %}
       {% block_labels field_labels form_block as labels %}
       {% if form_block.block_type == 'custom' %}
         {% block_field form form_block as field %}
         {% include "./custom_block.html" %}
-        
+      
       {% elif form_block.block_type == 'collection' %}
         {% collection_items visible_items form_block as items %}
         {% include "./collection_block.html" %}
@@ -43,7 +47,9 @@
       {% else %}
         {% with label=labels|get_by_style:styles.VERTICAL %}
         {% if label %}
+        <div class="mdc-layout-grid__inner">
           {% include "./label_vertical.html" %}
+        </div>
         {% endif %}
         {% endwith %}
         
@@ -51,52 +57,57 @@
       {% endif %}
     {% endfor %}
     
-    {% endwith %}
+  {% endwith %}
     
-    {% if 0 and program_form.num_pages > 1 %}
-      <div class="rp-form- mdc-layout-grid__cell">
-        Page {{ page }} of {{ program_form.num_pages }}
-      </div>
-    {% endif %}
-    <div {% if not form.non_field_errors %}style="display: none;"{% endif %}
-         id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell
+  {% if 0 and program_form.num_pages > 1 %}
+    <div class="rp-form- mdc-layout-grid__cell">
+      Page {{ page }} of {{ program_form.num_pages }}
+    </div>
+  {% endif %}
+  
+  <div class="mdc-layout-grid__inner"
+    {% if not form.non_field_errors %}style="display: none;"{% endif %}>
+    
+    <div id="rp-page-error" class="rp-form-bottom mdc-layout-grid__cell
                                    mdc-layout-grid__cell--span-8-tablet
                                    mdc-layout-grid__cell--span-8-desktop">
       <span class="rp-error">{{ form.non_field_errors }}</span>
     </div>
+  </div>
   
-  {% with program_form as form %}
-  {% with submission|underscore:'id' as id %}
-  <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
+  <div class="mdc-layout-grid__inner">
+    {% with program_form as form %}
+    {% with submission|underscore:'id' as id %}
+    <a aria-describedby="previoustip" href="{% if prev_page > 1 %}
            {% url 'submission_page' form.program.slug form.slug id prev_page %}
            {% else %}
            {% url 'submission' form.program.slug form.slug id %}
            {% endif %}"
            {% if not prev_page %} style="visibility: hidden;"{% endif %}
-     class="rp-prevpage-button mdc-icon-button material-icons"
-     data-mdc-ripple-is-unbounded>
-    <div class="mdc-icon-button__ripple"></div>
-    chevron_left
-  </a>
-  {% endwith %}
-  {% endwith %}
+       class="rp-prevpage-button mdc-icon-button material-icons"
+       data-mdc-ripple-is-unbounded>
+      <div class="mdc-icon-button__ripple"></div>
+      chevron_left
+    </a>
+    {% endwith %}
+    {% endwith %}
 
-  <button class="rp-save-button mdc-button mdc-button--outlined
-                mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
-         type="submit" name="save" value="save">
-    <span class="mdc-button__ripple"></span>
-    <span class="mdc-button__focus-ring"></span>
-    <span class="mdc-button__label">save</span>
-  </button>
+    <button class="rp-save-button mdc-button mdc-button--outlined
+                   mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
+            type="submit" name="save" value="save">
+      <span class="mdc-button__ripple"></span>
+      <span class="mdc-button__focus-ring"></span>
+      <span class="mdc-button__label">save</span>
+    </button>
   
-  <button class="rp-continue-button mdc-button mdc-button--raised
-                mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
-         type="submit" name="continue" value="continue">
-    <span class="mdc-button__ripple"></span>
-    <span class="mdc-button__focus-ring"></span>
-    <span class="mdc-button__label">continue</span>
-  </button>
-  
+    <button class="rp-continue-button mdc-button mdc-button--raised
+                   mdc-layout-grid__cell mdc-layout-grid__cell--span-2"
+            type="submit" name="continue" value="continue">
+      <span class="mdc-button__ripple"></span>
+      <span class="mdc-button__focus-ring"></span>
+      <span class="mdc-button__label">continue</span>
+    </button>
+  </div>
 {% endblock %}
 
 {% block post_layout %}
