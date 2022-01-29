@@ -35,9 +35,9 @@
     {% block_labels field_labels form_block as labels %}
     
     {% if form_block.block_type == 'custom' %}
-  <div class="mdc-layout-grid__inner">
       {% block_field form form_block as field %}
       {% if field %}
+  <div class="mdc-layout-grid__inner">
         {% with types=form_block.InputType %}
         {% if form_block.type == types.CHOICE %}
           {% with clabel=labels|for_choice_value:field.value %}
@@ -53,8 +53,8 @@
           {% include "./review_block.html" %}
         {% endif %}
         {% endwith %}
-      {% endif %}
   </div>
+      {% endif %}
     
     {% elif form_block.block_type == 'collection' %}
       {% if form_block.id in formsets %}
