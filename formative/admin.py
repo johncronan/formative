@@ -14,7 +14,7 @@ class FormativeAdminSite(admin.AdminSite):
     def get_app_list(self, request):
         # unlike normal Django, we might have had changes to the admin urls
         urls.clear_url_caches()
-        importlib.reload(sys.modules['urls'])
+        if 'urls' in sys.modules: importlib.reload(sys.modules['urls'])
         
         return super().get_app_list(request)
 
