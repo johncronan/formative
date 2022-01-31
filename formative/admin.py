@@ -51,28 +51,64 @@ class FormLabelAdmin(admin.ModelAdmin):
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield= super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == 'text':
-            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+            attrs = formfield.widget.attrs
+            attrs['class'], attrs['cols'] = 'vTextArea', 60
+            formfield.widget = forms.Textarea(attrs=attrs)
         return formfield
 
 
-site.register(FormDependency)
+class FormBlockAdminForm(forms.ModelForm):
+    class Meta:
+        model = FormBlock
+        fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
+                  'options')
+
+
+class FormDependencyInline(admin.TabularInline):
+    model = FormDependency
+    extra = 0
+    verbose_name_plural = 'dependency values'
+
+
+class FormBlockBase:
+    def get_formsets_with_inlines(self, request, obj=None):
+        for inline in self.get_inline_instances(request, obj):
+            if not isinstance(inline, FormDependencyInline) or obj is not None:
+                yield inline.get_formset(request, obj), inline
 
 
 @admin.register(FormBlock, site=site)
-class FormBlockAdmin(PolymorphicParentModelAdmin):
+class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
     list_display = ('form', 'name', 'page', 'rank')
     list_filter = (PolymorphicChildModelFilter,)
+    form = FormBlockAdminForm
+    inlines = [FormDependencyInline]
+
+
+class FormBlockChildAdmin(PolymorphicChildModelAdmin, FormBlockBase):
+    base_form = FormBlockAdminForm
+    inlines = [FormDependencyInline]
+    
 
 
 @admin.register(CustomBlock, site=site)
-class CustomBlockAdmin(PolymorphicChildModelAdmin):
+class CustomBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
+    radio_fields = {'type': admin.VERTICAL}
+    
+    fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
+              'options', 'type', 'required', 'num_lines',
+              'min_chars', 'max_chars', 'min_words', 'max_words')
 
 
 @admin.register(CollectionBlock, site=site)
-class CollectionBlockAdmin(PolymorphicChildModelAdmin):
+class CollectionBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
+    
+    fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
+              'options', 'fixed', 'min_items', 'max_items', 'has_file',
+              'file_optional', 'name1', 'name2', 'name3')
 
 
 # TODO: ok to do this here if we check if setup has happened first
