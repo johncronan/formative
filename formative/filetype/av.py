@@ -153,6 +153,9 @@ class VideoFile(AudioFile):
             
             meta['subtitles'] = subs
             meta.pop('subtitle_streams')
+            msg = _('Extracted %(num)d embedded subtitle track(s).')
+            meta['message'] = msg % {'num': len(subs)}
+            
             return meta
         except:
             msg = _('Error occurred processing the video file.')
