@@ -60,7 +60,7 @@ class UnderscoredRankedModel(models.Model):
         with transaction.atomic():
             order = positive and '_rank' or '-_rank'
             query = section.order_by(order).select_for_update()
-            last_ranked = None
+            count, last_ranked = 0, None
             for count, last_ranked in enumerate(query): pass # rows are locked
             
             # we could have hit the end early:
