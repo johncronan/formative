@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 import ffmpeg
 import os
 
-from ..utils import get_file_extension, thumbnail_path
+from ..utils import get_file_extension, thumbnail_path, subtitle_path
 from . import FileType
 
 
@@ -17,6 +17,7 @@ class AVFileType(FileType):
             streams, msg = probe['streams'], ''
             audio_streams = [ s for s in streams if s['codec_type'] == 'audio' ]
             video_streams = [ s for s in streams if s['codec_type'] == 'video' ]
+            subtitles = [ s for s in streams if s['codec_type'] == 'subtitle' ]
             ext = get_file_extension(path)
             
             format = probe['format']['format_name']
@@ -41,13 +42,17 @@ class AVFileType(FileType):
             if video_streams: ret.update(self.video_meta(video_streams[0], ext))
             if 'error' in ret: return ret
             
+            if subtitles and video_streams:
+                ret.update(self.subtitle_meta(subtitles, ext))
+                if 'error' in ret: return ret
+            
             if not audio_streams and not video_streams: return self.no_stream()
             return ret
         
         except:
             if self.TYPE == 'audio':
-                msg = _('Error occurred processing the audio file.')
-            else: msg = _('Error occurred processing the video file.')
+                msg = _('Error occurred reading the audio file.')
+            else: msg = _('Error occurred reading the video file.')
             self.logger.critical(msg, exc_info=True)
             return {'error': msg}
 
@@ -79,6 +84,9 @@ class AudioFile(AVFileType):
             'audio_samplerate': float(stream['sample_rate']),
             'audio_channels': stream['channels']
         }
+    
+    def subtitle_meta(self, stream, extension):
+        return {}
 
 
 class VideoFile(AudioFile):
@@ -107,6 +115,49 @@ class VideoFile(AudioFile):
             'video_height': stream['height'],
             'video_width': stream['width']
         }
+    
+    def subtitle_meta(self, streams, extension):
+        subs = []
+        for i, stream in enumerate(streams):
+            codec = stream['codec_name']
+            if codec != 'mov_text':
+                msg = _('Subtitle format must be mov_text (aka MP4TT). '
+                        'It is %(codec)s.')
+                return {'error': msg % {'codec': codec}}
+        
+            lang = 'und'
+            if 'language' in stream['tags']: lang = stream['tags']['language']
+            
+            default = False
+            if 'disposition' in stream and 'default' in stream['disposition']:
+                default = bool(stream['disposition']['default'])
+            
+            subs.append((i, lang, default))
+        
+        return { 'subtitle_streams': subs }
+    
+    def process(self, file, meta, extract_captions=True, **kwargs):
+        if not extract_captions or 'subtitle_streams' not in meta: return meta
+        
+        try:
+            v, subs = ffmpeg.input(file.path), []
+            for idx, lang, default in meta['subtitle_streams']:
+                filename = subtitle_path(file.path, lang)
+                v = v.output(filename, map=f'0:s:{idx}')
+                relpath = subtitle_path(file.name, lang)
+                
+                desc = {'language': lang, 'file': relpath}
+                if default: desc['default'] = True
+                subs.append(desc)
+            v.run()
+            
+            meta['subtitles'] = subs
+            meta.pop('subtitle_streams')
+            return meta
+        except:
+            msg = _('Error occurred processing the video file.')
+            self.logger.critical(msg, exc_info=True)
+            return {'error': msg}
     
     def submitted(self, items):
         for item in items:

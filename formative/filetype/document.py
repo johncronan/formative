@@ -18,6 +18,6 @@ class DocumentFile(FileType):
             return ret
         
         except:
-            msg = _('Error occurred processing the PDF file.')
+            msg = _('Error occurred reading the PDF file.')
             self.logger.critical(msg, exc_info=True)
             return {'error': msg}

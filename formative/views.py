@@ -556,7 +556,7 @@ class SubmissionItemUploadView(SubmissionItemBase):
                 
                 if not item._error:
                     opts = block.process_options(filetype.TYPE)
-                    newmeta = filetype.process(path, meta, **opts)
+                    newmeta = filetype.process(item._file, meta, **opts)
                     if 'error' in newmeta: msg = item_error(item, newmeta)
                     else:
                         if 'message' in newmeta:

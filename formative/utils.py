@@ -5,7 +5,7 @@ from django.core.mail import EmailMessage
 from django.template import Context, Template, loader
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
-import os
+import os, glob
 from pathlib import Path
 
 
@@ -64,10 +64,18 @@ def thumbnail_path(path, ext=None):
     idx = path.rindex('.')
     return path[:idx] + '_tn' + (ext and '.'+ext or path[idx:])
 
+def subtitle_path(path, lang):
+    idx = path.rindex('.')
+    return path[:idx] + '_s_' + lang + '.vtt'
+
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)
+    
     thumb = thumbnail_path(file.path)
     if os.path.isfile(thumb): os.remove(thumb)
+    
+    for path in glob.glob(subtitle_path(file.path, '*')):
+        os.remove(path)
 
 def human_readable_filesize(size, decimal_places=2):
     for unit in ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB']:

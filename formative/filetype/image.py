@@ -34,28 +34,28 @@ class ImageFile(FileType):
             self.logger.critical(msg, exc_info=True)
             return {'error': msg}
     
-    def process(self, path, meta, max_width=None, max_height=None, **kwargs):
+    def process(self, file, meta, max_width=None, max_height=None, **kwargs):
         try:
             if 'icc_profile' not in meta or not meta['icc_profile']:
                 # some browsers mess up w/ untagged images - should assume sRGB
                 pass
                 # TODO needs more research
-#                with Image.open(path) as img:
+#                with Image.open(file.path) as img:
 #                    srgb = ImageCms.createProfile('sRGB')
 #                    img = ImageCms.profileToProfile(orig, srgb).tobytes()
-#                    img.save(path, img.format, icc_profile=srgb_profile)
+#                    img.save(file.path, img.format, icc_profile=srgb_profile)
 #                    meta['icc_profile'] = ' '
             
             if not max_width and not max_height: return meta
             if meta['width'] <= max_width and meta['height'] <= max_height:
                 return meta
-        
-            with Image.open(path) as img:
+            
+            with Image.open(file.path) as img:
                 img.load()
                 profile = img.info.get('icc_profile', '')
                 img.thumbnail((max_width, max_height), Image.ANTIALIAS)
                 new_width, new_height = img.size
-                img.save(path, img.format, icc_profile=profile)
+                img.save(file.path, img.format, icc_profile=profile)
             meta['width'], meta['height'] = new_width, new_height
             meta['megapixels'] = new_width * new_height / 1000000
             msg = _('Image was resized to %(width)sx%(height)s.')

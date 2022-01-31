@@ -59,7 +59,7 @@ class FileType:
         
         return None
     
-    def process(self, path, meta, **kwargs):
+    def process(self, file, meta, **kwargs):
         return meta
     
     def submitted(self, items):
