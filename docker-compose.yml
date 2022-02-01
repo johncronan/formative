@@ -39,6 +39,7 @@ services:
 
   database:
     image: postgres:13
+    command: postgres -c shared_buffers=512MB
     env_file:
       - config/db/database_env
       - .env
