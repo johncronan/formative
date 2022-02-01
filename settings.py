@@ -198,8 +198,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 JAZZMIN_SETTINGS = {
     'related_modal_active': True,
     'hide_models': ['formative.collectionblock', 'formative.customblock'],
-#    'custom_js': 'admin.js',
-#    'custom_css': '',
 }
 
 JAZZMIN_UI_TWEAKS = {
