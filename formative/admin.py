@@ -58,6 +58,9 @@ class FormLabelAdmin(admin.ModelAdmin):
 
 
 class FormBlockAdminForm(forms.ModelForm):
+    negate_dependencies = forms.BooleanField(label='Negate dependency',
+                                             required=False)
+    
     class Meta:
         model = FormBlock
         fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
