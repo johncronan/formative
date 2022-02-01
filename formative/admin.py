@@ -1,5 +1,5 @@
 from django import forms, urls
-from django.contrib import admin
+from django.contrib import admin, auth
 from django.utils import timezone
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
@@ -20,6 +20,8 @@ class FormativeAdminSite(admin.AdminSite):
 
 
 site = FormativeAdminSite()
+site.register(auth.models.Group, auth.admin.GroupAdmin)
+site.register(auth.models.User, auth.admin.UserAdmin)
 
 site.register(Program)
 
