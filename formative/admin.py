@@ -88,16 +88,6 @@ class FormLabelAdmin(admin.ModelAdmin):
         return formfield
 
 
-class FormBlockAdminForm(forms.ModelForm):
-    negate_dependencies = forms.BooleanField(label='Negate dependency',
-                                             required=False)
-    
-    class Meta:
-        model = FormBlock
-        fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
-                  'options')
-
-
 class FormDependencyInline(admin.TabularInline):
     model = FormDependency
     extra = 0
@@ -105,6 +95,8 @@ class FormDependencyInline(admin.TabularInline):
 
 
 class FormBlockBase:
+    # only methods that can be safely overridden in either parent or child admin
+    
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
             # only show the inline on the change form, not add:
@@ -121,6 +113,44 @@ class FormBlockBase:
             return HttpResponseRedirect(url)
         
         return super().response_post_save_change(request, obj)
+    
+    def response_post_save_add(self, request, obj):
+        if request.GET.get('form_id'):
+            return self.response_post_save_change(request, obj)
+        return super().response_post_save_add(request, obj)
+    
+    def save_form(self, request, form, change):
+        form_id = request.GET.get('form_id')
+        obj = form.save(commit=False)
+        
+        if form_id: obj.form_id = form_id
+        return obj
+    
+    def changeform_view(self, request, object_id=None, form_url='', *args):
+        form_id = request.GET.get('form_id')
+        if form_id:
+            form_arg = urlencode({'form_id': form_id})
+            if form_url: form_url += '&' + form_arg
+            else: form_url = '?' + form_arg
+        
+        return super().changeform_view(request, object_id, form_url, *args)
+    
+    def has_add_permission(self, request):
+        match, app_label = request.resolver_match, self.model._meta.app_label
+        # this will hide add button when we don't have the form_id
+        if match and match.url_name == f'{app_label}_formblock_changelist':
+            return False
+        return super().has_add_permission(request)
+
+
+class FormBlockAdminForm(forms.ModelForm):
+    negate_dependencies = forms.BooleanField(label='Negate dependency',
+                                             required=False)
+    
+    class Meta:
+        model = FormBlock
+        fields = ('name', 'page', 'dependence', 'negate_dependencies',
+                  'options')
 
 
 @admin.register(FormBlock, site=site)
@@ -183,7 +213,7 @@ class CustomBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
     radio_fields = {'type': admin.VERTICAL}
     
-    fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
+    fields = ('name', 'page', 'dependence', 'negate_dependencies',
               'options', 'type', 'required', 'num_lines',
               'min_chars', 'max_chars', 'min_words', 'max_words')
 
@@ -192,7 +222,7 @@ class CustomBlockAdmin(FormBlockChildAdmin):
 class CollectionBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
     
-    fields = ('form', 'name', 'page', 'dependence', 'negate_dependencies',
+    fields = ('name', 'page', 'dependence', 'negate_dependencies',
               'options', 'fixed', 'min_items', 'max_items', 'has_file',
               'file_optional', 'name1', 'name2', 'name3')
 
