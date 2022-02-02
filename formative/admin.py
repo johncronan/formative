@@ -127,14 +127,13 @@ class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
         return [url] + urls
     
     def formlist_view(self, request, form_id, **kwargs):
-        request.form_id = form_id
-        
         return self.changelist_view(request, extra_context={'form_id': form_id})
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if '/form/' in request.path:
-            return qs.filter(form_id=request.form_id)
+        match, app_label = request.resolver_match, self.model._meta.app_label
+        if match and match.url_name == f'{app_label}_formblock_formlist':
+            return qs.filter(form_id=match.kwargs['form_id'])
         return qs
     
     def change_view(self, *args, **kwargs):
