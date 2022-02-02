@@ -13,6 +13,17 @@
         margin-left: 0!important;
       }
     }
+    
+    .modal.modal-wide .modal-dialog {
+      width: 70%;
+    }
+    .modal.modal-wide iframe.related-iframe {
+      height: 625px;
+    }
+    
+    #changelist .btn.float-right {
+      margin-left: 0.5em;
+    }
   </style>
 {% endblock %}
 
@@ -22,9 +33,11 @@
     $(document).ready(function () {
       var plugin = $('[data-widget=pushmenu]');
       var opts = plugin.data('lte.pushmenu');
-      opts['_options']['autoCollapseSize'] = 1200;
-      plugin.data('lte.pushmenu', opts);
-      if (document.body.clientWidth < 1200) plugin.PushMenu('collapse');
+      if (opts) {
+        opts['_options']['autoCollapseSize'] = 1200;
+        plugin.data('lte.pushmenu', opts);
+        if (document.body.clientWidth < 1200) plugin.PushMenu('collapse');
+      }
     });
   </script>
 {% endblock %}

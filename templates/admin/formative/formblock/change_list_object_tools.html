@@ -1,0 +1,19 @@
+{% load admin_urls jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block object-tools-items %}
+  {% if has_add_permission %}
+    {% url cl.opts|admin_urlname:'add' as add_url %}
+    <a href="{% add_preserved_filters add_url is_popup to_field %}"
+       class="btn {{ jazzmin_ui.button_classes.success }} float-right">
+      <i class="fa fa-plus-circle"></i> &nbsp; Add block
+    </a>
+  {% endif %}
+  
+  {% if form_id %}
+    <a href="{% url "admin:formative_form_change" form_id %}"
+       class="btn {{ jazzmin_ui.button_classes.primary }} float-right">
+      <i class="fa fa-cog"></i> &nbsp; Settings
+    </a>
+  {% endif %}
+{% endblock %}

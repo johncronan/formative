@@ -1,6 +1,10 @@
 from django import forms, urls
 from django.contrib import admin, auth
+from django.contrib.admin.views.main import ChangeList
+from django.http import HttpResponseRedirect
+from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.html import format_html
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
@@ -26,8 +30,23 @@ site.register(auth.models.User, auth.admin.UserAdmin)
 site.register(Program)
 
 
+class FormChangeList(ChangeList):
+    def url_for_result(self, result):
+        pk = getattr(result, self.pk_attname)
+        url = reverse('admin:%s_formblock_formlist' % (self.opts.app_label,),
+                       args=(int(pk),),
+                       current_app=self.model_admin.admin_site.name)
+        return url
+
+
 @admin.register(Form, site=site)
 class FormAdmin(admin.ModelAdmin):
+    list_display = ('name', 'program')
+    list_filter = ('program',)
+    
+    def get_changelist(self, request, **kwargs):
+        return FormChangeList
+    
     def response_change(self, request, obj):
         ret = super().response_change(request, obj)
         
@@ -46,10 +65,19 @@ class FormAdmin(admin.ModelAdmin):
         if action:
             getattr(obj, action)(**kwargs)
         return ret
+    
+    def response_post_save_change(self, request, obj):
+        opts = self.model._meta
+        url = reverse('admin:%s_formblock_formlist' % (opts.app_label,),
+                      args=(obj.id,), current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
 
 
 @admin.register(FormLabel, site=site)
 class FormLabelAdmin(admin.ModelAdmin):
+    list_display = ('path', 'style', 'form')
+    list_filter = ('form',)
+    
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield= super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == 'text':
@@ -78,6 +106,7 @@ class FormDependencyInline(admin.TabularInline):
 class FormBlockBase:
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
+            # only show the inline on the change form, not add:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
 
@@ -85,10 +114,28 @@ class FormBlockBase:
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
-    list_display = ('form', 'name', 'page', 'rank')
-    list_filter = (PolymorphicChildModelFilter,)
+    list_display = ('name', 'page') # 'polymorphic_ctype_id')
+    list_filter = ('page',)
     form = FormBlockAdminForm
     inlines = [FormDependencyInline]
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        
+        url = path('form/<int:form_id>/', self.formlist_view,
+                   name='%s_formblock_formlist' % (self.model._meta.app_label,))
+        return [url] + urls
+    
+    def formlist_view(self, request, form_id, **kwargs):
+        request.form_id = form_id
+        
+        return self.changelist_view(request, extra_context={'form_id': form_id})
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if '/form/' in request.path:
+            return qs.filter(form_id=request.form_id)
+        return qs
 
 
 class FormBlockChildAdmin(PolymorphicChildModelAdmin, FormBlockBase):
