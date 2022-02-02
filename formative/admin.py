@@ -67,8 +67,8 @@ class FormAdmin(admin.ModelAdmin):
         return ret
     
     def response_post_save_change(self, request, obj):
-        opts = self.model._meta
-        url = reverse('admin:%s_formblock_formlist' % (opts.app_label,),
+        app_label = self.model._meta.app_label
+        url = reverse('admin:%s_formblock_formlist' % (app_label,),
                       args=(obj.id,), current_app=self.admin_site.name)
         return HttpResponseRedirect(url)
 
@@ -136,6 +136,11 @@ class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
         if '/form/' in request.path:
             return qs.filter(form_id=request.form_id)
         return qs
+    
+    def change_view(self, *args, **kwargs):
+        # we still have use the bulk action for delete - it redirects properly
+        kwargs['extra_context'] = {'show_delete': False}
+        return super().change_view(*args, **kwargs)
 
 
 class FormBlockChildAdmin(PolymorphicChildModelAdmin, FormBlockBase):
