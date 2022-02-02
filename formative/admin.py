@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.http import urlencode
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
@@ -109,10 +110,21 @@ class FormBlockBase:
             # only show the inline on the change form, not add:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
+    
+    def response_post_save_change(self, request, obj):
+        app_label = self.model._meta.app_label
+        form_id = request.GET.get('form_id')
+        
+        if form_id:
+            url = reverse('admin:%s_formblock_formlist' % (app_label,),
+                          args=(form_id,), current_app=self.admin_site.name)
+            return HttpResponseRedirect(url)
+        
+        return super().response_post_save_change(request, obj)
 
 
 @admin.register(FormBlock, site=site)
-class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
+class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
     list_display = ('name', 'page') # 'polymorphic_ctype_id')
     list_filter = ('page',)
@@ -140,9 +152,27 @@ class FormBlockAdmin(PolymorphicParentModelAdmin, FormBlockBase):
         # we still have use the bulk action for delete - it redirects properly
         kwargs['extra_context'] = {'show_delete': False}
         return super().change_view(*args, **kwargs)
+    
+    def get_preserved_filters(self, request):
+        match, app_label = request.resolver_match, self.model._meta.app_label
+        
+        # we have to reimplement, because of our custom changelist view
+        if self.preserve_filters and match:
+            current_url = f'{match.app_name}:{match.url_name}'
+            changelists = [ f'admin:{app_label}_formblock_{n}'
+                            for n in ('formlist', 'changelist') ]
+            if current_url in changelists: preserved = request.GET.urlencode()
+            else: preserved = request.GET.get('_changelist_filters')
+            
+            args = {}
+            if preserved: args['_changelist_filters'] = preserved
+            if current_url == changelists[0]:
+                args['form_id'] = match.kwargs['form_id']
+            return urlencode(args)
+        return ''
 
 
-class FormBlockChildAdmin(PolymorphicChildModelAdmin, FormBlockBase):
+class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):
     base_form = FormBlockAdminForm
     inlines = [FormDependencyInline]
     
