@@ -133,7 +133,7 @@ class FormBlockBase:
         form_id = request.GET.get('form_id')
         form = super().get_form(request, obj, **kwargs)
         
-        if not obj and form_id:
+        if obj and form_id:
             qs = form.base_fields['dependence'].queryset
             qs = qs.filter(form_id=int(form_id), page__gt=0)
             qs = qs.exclude(pk=obj.pk).exclude(page__gte=obj.page)
