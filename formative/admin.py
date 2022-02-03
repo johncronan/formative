@@ -219,9 +219,13 @@ class FormBlockBase:
         
         return super().changeform_view(request, object_id, form_url, *args)
     
-    def try_form_id(self, match):
+    def try_form_id(self, request, match):
         form = None
-        try: form = Form.objects.get(pk=match.kwargs['form_id'])
+        if 'form_id' in match.kwargs: pk = match.kwargs['form_id']
+        else: pk = request.GET.get('form_id')
+        if not pk: return form
+        
+        try: form = Form.objects.get(pk=pk)
         except Form.DoesNotExist: pass
         return form
     
@@ -231,8 +235,9 @@ class FormBlockBase:
         if match and match.url_name == f'{app_label}_formblock_changelist':
             return False
         # or when the form is not a draft
-        if match and match.url_name == f'{app_label}_formblock_formlist':
-            form = self.try_form_id(match)
+        pages = (f'{app_label}_formblock_{n}' for n in ('formlist', 'change'))
+        if match and match.url_name in pages:
+            form = self.try_form_id(request, match)
             if form and form.status != Form.Status.DRAFT: return False
         
         return super().has_add_permission(request)
