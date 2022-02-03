@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "formative"
-version = "0.7.3"
+version = "0.7.4"
 description = ""
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"

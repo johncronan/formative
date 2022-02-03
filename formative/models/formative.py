@@ -329,7 +329,8 @@ class FormLabel(models.Model):
 
 class FormDependency(models.Model):
     class Meta:
-        verbose_name_plural = 'form dependencies'
+        verbose_name = 'dependency value'
+        verbose_name_plural = 'dependency values'
         constraints = [
             UniqueConstraint(fields=['block', 'value'], name='unique_blockval')
         ]
@@ -340,7 +341,9 @@ class FormDependency(models.Model):
     value = models.CharField(max_length=64, blank=True)
     
     def __str__(self):
-        return f'{self.block.dependence.name}="{self.value}"'
+        if self.block.dependence:
+            return f'{self.block.dependence.name}="{self.value}"'
+        return f'?="{self.value}"'
 
 
 class FormBlock(PolymorphicModel, RankedModel):
@@ -363,7 +366,8 @@ class FormBlock(PolymorphicModel, RankedModel):
                                    null=True, blank=True,
                                    related_name='dependents',
                                    related_query_name='dependent')
-    negate_dependencies = models.BooleanField(default=False)
+    negate_dependencies = models.BooleanField(default=False,
+                                              verbose_name='negate dependency')
     
     def __str__(self):
         return self.name
