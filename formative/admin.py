@@ -67,8 +67,9 @@ class FormAdmin(admin.ModelAdmin):
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
-        if obj and obj.status == Form.Status.DRAFT:
-            fields = fields + ('status',)
+        if obj:
+            if obj.status == Form.Status.DRAFT: fields += ('status',)
+            else: fields += ('program', 'name')
         return fields
         
     def response_change(self, request, obj):
