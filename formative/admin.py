@@ -97,6 +97,28 @@ class FormDependencyInline(admin.TabularInline):
 class FormBlockBase:
     # only methods that can be safely overridden in either parent or child admin
     
+    def get_fieldsets(self, request, obj=None):
+        fields = self.get_fields(request, obj)
+        fields.remove('dependence')
+        fields.remove('negate_dependencies')
+        
+        main = (None, {'fields': fields})
+        if not obj: return [main]
+        return [main, ('Dependence', {'fields': ['dependence',
+                                                 'negate_dependencies']})]
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form_id = request.GET.get('form_id')
+        form = super().get_form(request, obj, **kwargs)
+        
+        if not obj and form_id:
+            qs = form.base_fields['dependence'].queryset
+            qs = qs.filter(form_id=int(form_id), page__gt=0)
+            qs = qs.exclude(pk=obj.pk).exclude(page__gte=obj.page)
+            form.base_fields['dependence'].queryset = qs
+        
+        return form
+    
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
             # only show the inline on the change form, not add:
@@ -206,6 +228,11 @@ class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):
     base_form = FormBlockAdminForm
     inlines = [FormDependencyInline]
     
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fieldsets[0][1]['fields'] += self.child_fields
+        return fieldsets
+            
 
 
 @admin.register(CustomBlock, site=site)
@@ -213,18 +240,16 @@ class CustomBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
     radio_fields = {'type': admin.VERTICAL}
     
-    fields = ('name', 'page', 'dependence', 'negate_dependencies',
-              'options', 'type', 'required', 'num_lines',
-              'min_chars', 'max_chars', 'min_words', 'max_words')
+    child_fields = ('type', 'required', 'num_lines',
+                    'min_chars', 'max_chars', 'min_words', 'max_words')
 
 
 @admin.register(CollectionBlock, site=site)
 class CollectionBlockAdmin(FormBlockChildAdmin):
     base_model = FormBlock
     
-    fields = ('name', 'page', 'dependence', 'negate_dependencies',
-              'options', 'fixed', 'min_items', 'max_items', 'has_file',
-              'file_optional', 'name1', 'name2', 'name3')
+    child_fields = ('fixed', 'min_items', 'max_items', 'has_file',
+                    'file_optional', 'name1', 'name2', 'name3')
 
 
 # TODO: ok to do this here if we check if setup has happened first
