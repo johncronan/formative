@@ -10,6 +10,7 @@ from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
 import sys, importlib
+from urllib.parse import unquote, parse_qsl
 
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
@@ -130,9 +131,9 @@ class FormBlockBase:
                                                  'negate_dependencies']})]
     
     def get_form(self, request, obj=None, **kwargs):
-        form_id = request.GET.get('form_id')
         form = super().get_form(request, obj, **kwargs)
         
+        form_id = request.GET.get('form_id')
         if obj and form_id:
             qs = form.base_fields['dependence'].queryset
             qs = qs.filter(form_id=int(form_id), page__gt=0)
@@ -140,6 +141,15 @@ class FormBlockBase:
             form.base_fields['dependence'].queryset = qs
         
         return form
+    
+    def get_changeform_initial_data(self, request):
+        changelist_filters = request.GET.get('_changelist_filters')
+        if changelist_filters:
+            filters = dict(parse_qsl(unquote(changelist_filters)))
+            if 'page' in filters:
+                return {'page': filters['page']}
+        
+        return {}
     
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
@@ -154,6 +164,10 @@ class FormBlockBase:
         if form_id:
             url = reverse('admin:%s_formblock_formlist' % (app_label,),
                           args=(form_id,), current_app=self.admin_site.name)
+            changelist_filters = request.GET.get('_changelist_filters')
+            if changelist_filters:
+                filters = dict(parse_qsl(unquote(changelist_filters)))
+                url = url + '?' + urlencode(filters)
             return HttpResponseRedirect(url)
         
         return super().response_post_save_change(request, obj)
