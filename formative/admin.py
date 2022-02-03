@@ -1,6 +1,7 @@
 from django import forms, urls
 from django.contrib import admin, auth
 from django.contrib.admin.views.main import ChangeList
+from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 from django.utils import timezone
@@ -256,11 +257,19 @@ class FormBlockAdminForm(forms.ModelForm):
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
-    list_display = ('name', 'page') # 'polymorphic_ctype_id')
+    list_display = ('name', 'page', 'labels_link')
     list_filter = ('page',)
     form = FormBlockAdminForm
     inlines = [FormDependencyInline]
     actions = [move_blocks]
+    
+    @admin.display(description='labels')
+    def labels_link(self, obj):
+        app_label = self.model._meta.app_label
+        url = reverse('admin:%s_formlabel_changelist' % (app_label,),
+                      current_app=self.admin_site.name)
+        url += f'?form__id__exact={obj.form.pk}&path__startswith={obj.name}'
+        return format_html('<a href="{}">{} labels</a>', url, obj.num_labels)
     
     def get_urls(self):
         urls = super().get_urls()
@@ -276,7 +285,10 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
         qs = super().get_queryset(request)
         match, app_label = request.resolver_match, self.model._meta.app_label
         if match and match.url_name == f'{app_label}_formblock_formlist':
-            return qs.filter(form_id=match.kwargs['form_id'])
+            qs = qs.filter(form_id=match.kwargs['form_id'])
+        
+        path_filter = Q(form__label__path__startswith=F('name'))
+        qs = qs.annotate(num_labels=Count('form__label', filter=path_filter))
         return qs
     
     def change_view(self, *args, **kwargs):
