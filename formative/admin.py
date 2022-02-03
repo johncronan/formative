@@ -44,10 +44,32 @@ class FormChangeList(ChangeList):
 class FormAdmin(admin.ModelAdmin):
     list_display = ('name', 'program')
     list_filter = ('program',)
+    fields = ('program', 'name', 'options', 'status')
+    radio_fields = {'status': admin.VERTICAL}
     
     def get_changelist(self, request, **kwargs):
         return FormChangeList
     
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if not obj: fields = tuple(f for f in fields if f != 'status')
+        return fields
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'status' not in form.base_fields: return form
+        
+        choices = form.base_fields['status'].choices
+        if obj and obj.status != Form.Status.DRAFT:
+            form.base_fields['status'].choices = choices[1:]
+        return form
+    
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if obj and obj.status == Form.Status.DRAFT:
+            fields = fields + ('status',)
+        return fields
+        
     def response_change(self, request, obj):
         ret = super().response_change(request, obj)
         
