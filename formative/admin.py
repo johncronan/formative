@@ -75,19 +75,25 @@ class FormAdmin(admin.ModelAdmin):
         return fields
         
     def response_change(self, request, obj):
+        subs = []
+        if obj.status != Form.Status.DRAFT:
+            qs = obj.model.objects.all()
+            if obj.item_model: qs = qs.annotate(num_items=Count('_item'))
+            subs = qs.values_list('_email', 'num_items')
+        
         context = {
             **self.admin_site.each_context(request),
-            'object': obj,
             'opts': self.model._meta,
-            'media': self.media
+            'media': self.media,
+            'object': obj,
+            'submissions': subs,
         }
 #        if '_publish' in request.POST:
 #            return TemplateResponse(request, 'admin/publish_confirmation.html',
 #                                    context)
         if '_unpublish' in request.POST:
-            return TemplateResponse(request,
-                                    'admin/unpublish_confirmation.html',
-                                    context)
+            template_name = 'admin/formative/unpublish_confirmation.html'
+            return TemplateResponse(request, template_name, context)
         
         action, kwargs = None, {}
         if '_publish' in request.POST: action = 'publish'
@@ -271,12 +277,16 @@ class FormBlockAdminForm(forms.ModelForm):
                   'options')
 
 
+class StockBlockAdminForm(FormBlockAdminForm):
+    pass
+
+
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
     list_display = ('name', 'page', 'labels_link')
     list_filter = ('page',)
-    form = FormBlockAdminForm
+    form = StockBlockAdminForm
     inlines = [FormDependencyInline]
     actions = [move_blocks]
     

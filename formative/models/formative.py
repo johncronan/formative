@@ -664,7 +664,7 @@ class CollectionBlock(FormBlock):
         if 'button_text' in self.options: return self.options['button_text']
         
         if self.has_file and not self.file_optional:
-            if self.max_items > 1: return _('add files')
+            if self.max_items and self.max_items > 1: return _('add files')
             return _('add file')
         return _('add item')
 
