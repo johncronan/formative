@@ -3,6 +3,7 @@ from django.contrib import admin, auth
 from django.contrib.admin.views.main import ChangeList
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
@@ -74,11 +75,25 @@ class FormAdmin(admin.ModelAdmin):
         return fields
         
     def response_change(self, request, obj):
-        ret = super().response_change(request, obj)
+        context = {
+            **self.admin_site.each_context(request),
+            'object': obj,
+            'opts': self.model._meta,
+            'media': self.media
+        }
+#        if '_publish' in request.POST:
+#            return TemplateResponse(request, 'admin/publish_confirmation.html',
+#                                    context)
+        if '_unpublish' in request.POST:
+            return TemplateResponse(request,
+                                    'admin/unpublish_confirmation.html',
+                                    context)
         
         action, kwargs = None, {}
         if '_publish' in request.POST: action = 'publish'
-        elif '_unpublish' in request.POST: action = 'unpublish'
+        elif '_unpublish_confirmed' in request.POST: action = 'unpublish'
+        
+        if not action: ret = super().response_change(request, obj)
         
         if obj.status == Form.Status.DRAFT:
             obj.modified = timezone.now()
@@ -90,6 +105,8 @@ class FormAdmin(admin.ModelAdmin):
         
         if action:
             getattr(obj, action)(**kwargs)
+            return HttpResponseRedirect(request.path)
+        
         return ret
     
     def response_post_save_change(self, request, obj):

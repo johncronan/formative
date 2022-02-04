@@ -1,0 +1,67 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media }}
+<script src="{% static 'admin/js/cancel.js' %}"></script>
+{% endblock %}
+
+{% block bodyclass %}
+{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }}
+{% endblock %}
+
+{% block breadcrumbs %}
+{# TODO #}
+{% endblock %}
+
+{% block content_title %} {% trans 'Unpublish' %} {% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card card-danger card-outline">
+    <div class="card-header with-border">
+      <h4 class="card-title">
+        {% trans 'Unpublish' %} {{ object }}
+      </h4>
+    </div>
+    
+    <div class="card-body">
+      <div id="content-main">
+        <p>
+          Are you sure you want to unpublish the form "{{ object }}"?<br>
+          All of the following related items will be deleted:
+        </p>
+        <div class="row">
+          <div class="col-12 col-sm-9">
+            <h4>{% trans "Objects" %}</h4>
+            <ol>
+              <li>
+                Submission: [All submissions and files will be deleted!]
+                <ul>List is TODO</ul>
+              </li>
+            </ol>
+          </div>
+          <div class="col-12 col-sm-3">
+          <form method="post">{% csrf_token %}
+            <input type="hidden" name="status" value="{{ object.status }}">
+            <div class="form-group">
+              <input type="submit" name="_unpublish_confirmed"
+                     class="btn {{ jazzmin_ui.button_classes.danger }}
+                            form-control" value="{% trans "Yes, I'm sure" %}">
+            </div>
+            <div class="form-group">
+              <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                                 cancel-link form-control">
+                {% trans "No, take me back" %}
+              </a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
