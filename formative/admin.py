@@ -14,6 +14,8 @@ from polymorphic.admin import (PolymorphicParentModelAdmin,
 import sys, importlib
 from urllib.parse import unquote, parse_qsl
 
+from .forms import FormBlockAdminForm, StockBlockAdminForm, \
+    CustomBlockAdminForm, CollectionBlockAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
 
@@ -165,18 +167,21 @@ class FormBlockBase:
         fields = self.get_fields(request, obj)
         fields.remove('dependence')
         fields.remove('negate_dependencies')
+        fields.remove('no_review')
         
         main = (None, {'fields': fields})
         if not obj: return [main]
-        return [main, ('Dependence', {'fields': ['dependence',
-                                                 'negate_dependencies']})]
+        return [
+            main,
+            ('Options', {'fields': ['no_review']}),
+            ('Dependence', {'fields': ['dependence', 'negate_dependencies']})
+        ]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
         
         if obj and obj.form.status != Form.Status.DRAFT:
-            fields += ('name', 'options', 'page',
-                       'dependence', 'negate_dependencies')
+            fields += ('name', 'page', 'dependence', 'negate_dependencies')
         elif obj: fields += ('page',)
         
         return fields
@@ -270,17 +275,6 @@ class FormBlockBase:
         return self.has_add_permission(request)
 
 
-class FormBlockAdminForm(forms.ModelForm):
-    class Meta:
-        model = FormBlock
-        fields = ('name', 'page', 'dependence', 'negate_dependencies',
-                  'options')
-
-
-class StockBlockAdminForm(FormBlockAdminForm):
-    pass
-
-
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
@@ -297,6 +291,19 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
                       current_app=self.admin_site.name)
         url += f'?form__id__exact={obj.form.pk}&path__startswith={obj.name}'
         return format_html('<a href="{}">{} labels</a>', url, obj.num_labels)
+    
+    @admin.display(description='type')
+    def type(self, obj):
+        # read-only version of the StockBlockAdminForm type field
+        return obj.options['type']
+    
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        
+        if obj: fields += ('type',)
+        
+        
+        return fields
     
     def get_urls(self):
         urls = super().get_urls()
@@ -343,44 +350,27 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
 
 
 class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):
-    base_form = FormBlockAdminForm
+    base_model = FormBlock
     inlines = [FormDependencyInline]
-    
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        readonlys = self.get_readonly_fields(request, obj)
-        
-        fields = fieldsets[0][1]['fields']
-        for f in readonlys:
-            if f in fields and f not in ('name', 'options', 'page'):
-                fields.remove(f)
-        fields += self.get_child_fields(request, obj)
-        
-        return fieldsets
-            
 
 
 @admin.register(CustomBlock, site=site)
 class CustomBlockAdmin(FormBlockChildAdmin):
-    base_model = FormBlock
+    form = CustomBlockAdminForm
     radio_fields = {'type': admin.VERTICAL}
     
-    child_fields = ('type', 'required', 'num_lines',
-                    'min_chars', 'max_chars', 'min_words', 'max_words')
-    
-    def get_child_fields(self, request, obj=None):
-        fields = list(self.child_fields)
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fields = fieldsets[0][1]['fields']
         
-        exclude = fields[1:]
-        if obj:
-            exclude = exclude[1:]
-            if obj.type == CustomBlock.InputType.TEXT:
-                exclude = ['required']
-            elif obj.type == CustomBlock.InputType.BOOLEAN:
-                exclude = fields[1:]
+        if not obj: fields = ['type']
+        elif obj.type == CustomBlock.InputType.TEXT:
+            fields = [ f for f in fields if f != 'required' ]
+        elif obj.type == CustomBlock.InputType.BOOLEAN:
+            fields = ['type']
+        else: fields = ['type', 'required']
         
-        fields = [f for f in fields if f not in exclude]
-        return fields
+        return [(None, {'fields': fields})] + fieldsets[1:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -396,23 +386,18 @@ class CustomBlockAdmin(FormBlockChildAdmin):
 
 @admin.register(CollectionBlock, site=site)
 class CollectionBlockAdmin(FormBlockChildAdmin):
-    base_model = FormBlock
+    form = CollectionBlockAdminForm
     
-    child_fields = ('fixed', 'name1', 'name2', 'name3', 'has_file',
-                    'min_items', 'max_items', 'file_optional')
-    
-    def get_child_fields(self, request, obj=None):
-        fields = list(self.child_fields)
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fields = fieldsets[0][1]['fields']
         
-        exclude = fields[5:]
-        if obj:
-            if obj.fixed: exclude = fields[4:] # TODO: fixed and has_file
-            else:
-                exclude = []
-                if not obj.has_file: exclude = ['file_optional']
+        if not obj: fields = ['fixed', 'name1', 'name2', 'name3', 'has_file']
+        elif obj.fixed: fields = ['fixed', 'name1', 'name2', 'name3']
+        elif not obj.has_file:
+            fields = [ f for f in fields if f != 'file_optional' ]
         
-        fields = [f for f in fields if f not in exclude]
-        return fields
+        return [(None, {'fields': fields})] + fieldsets[1:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -422,7 +407,6 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
             fields += ('name1', 'name2', 'name3')
         
         return fields
-        
 
 
 # TODO: ok to do this here if we check if setup has happened first
