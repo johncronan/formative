@@ -8,6 +8,7 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.http import urlencode
+from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
@@ -355,22 +356,26 @@ class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):
 
 
 @admin.register(CustomBlock, site=site)
-class CustomBlockAdmin(FormBlockChildAdmin):
+class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
     form = CustomBlockAdminForm
     radio_fields = {'type': admin.VERTICAL}
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
+        names = ['type', 'required', 'num_lines', 'min_chars', 'max_chars',
+                 'min_words', 'max_words']
         
-        if not obj: fields = ['type']
-        elif obj.type == CustomBlock.InputType.TEXT:
-            fields = [ f for f in fields if f != 'required' ]
-        elif obj.type == CustomBlock.InputType.BOOLEAN:
-            fields = ['type']
-        else: fields = ['type', 'required']
+        if not obj: add = names[:1]
+        elif obj.type == CustomBlock.InputType.TEXT: add = names[:1] + names[2:]
+        elif obj.type == CustomBlock.InputType.BOOLEAN: add = names[:1]
+        elif obj.type == CustomBlock.InputType.CHOICE:
+            add = names[:2] + ['choices']
+        else: add = names[:2]
         
-        return [(None, {'fields': fields})] + fieldsets[1:]
+        names.append('choices')
+        ret = [ f for f in fields if f not in names ] + add
+        return [(None, {'fields': ret})] + fieldsets[1:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -391,13 +396,16 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
+        names = ['fixed', 'name1', 'name2', 'name3', 'has_file',
+                 'min_items', 'max_items', 'file_optional']
         
-        if not obj: fields = ['fixed', 'name1', 'name2', 'name3', 'has_file']
-        elif obj.fixed: fields = ['fixed', 'name1', 'name2', 'name3']
-        elif not obj.has_file:
-            fields = [ f for f in fields if f != 'file_optional' ]
+        if not obj: add = names[:5]
+        elif obj.fixed: add = names[:4]
+        elif not obj.has_file: add = names[:6]
+        else: add = names[:]
         
-        return [(None, {'fields': fields})] + fieldsets[1:]
+        ret = [ f for f in fields if f not in names ] + add
+        return [(None, {'fields': ret})] + fieldsets[1:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)

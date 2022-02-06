@@ -1,8 +1,10 @@
 from django import forms
 from copy import deepcopy
+from django_better_admin_arrayfield.forms.fields import DynamicArrayField
+from django_better_admin_arrayfield.forms.widgets import DynamicArrayWidget
 
 from ..stock import StockWidget
-from ..models import FormBlock
+from ..models import FormBlock, CustomBlock
 
 
 class NullWidget(forms.Widget):
@@ -69,8 +71,6 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
             kwargs['initial'] = initial
         
         super().__init__(*args, **kwargs)
-        import sys
-        print('baz', self.initial, file=sys.stderr)
     
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -86,8 +86,6 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 else:
                     cleaned_data[name][field] = cleaned_data[field]
         
-        import sys
-        print('foo', cleaned_data, file=sys.stderr)
         return cleaned_data
 
 
@@ -103,7 +101,6 @@ def stock_type_display_name(name): # we need a default display name
 
 
 class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
-    # the label mapping is important: 
     type = forms.ChoiceField(choices=[ (n, stock_type_display_name(n))
                                        for n in StockWidget.types.keys() ],
                              widget=forms.RadioSelect)
@@ -116,10 +113,13 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
 
 class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     no_review = NegatedBooleanField(label='show in review', required=False)
+    choices = DynamicArrayField(
+        forms.CharField(max_length=CustomBlock.CHOICE_VAL_MAXLEN),
+    )
     
     class Meta:
         exclude = ('form',)
-        json_fields = {'options': ['no_review']}
+        json_fields = {'options': ['no_review', 'choices']}
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):

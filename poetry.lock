@@ -69,6 +69,14 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-better-admin-arrayfield"
+version = "1.4.2"
+description = "Better ArrayField widget for admin"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "django-environ"
 version = "0.8.1"
 description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
@@ -405,7 +413,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b2c96a25c1679eef73dfec050f4aaaa110348b64ac3a0b2edceb98d395d8be02"
+content-hash = "f440f57f0998bf0038ade4e546ebcc366113ec183bcf82c9ed556fb49946f2f1"
 
 [metadata.files]
 asgiref = [
@@ -445,6 +453,10 @@ colorama = [
 django = [
     {file = "Django-4.0.2-py3-none-any.whl", hash = "sha256:996495c58bff749232426c88726d8cd38d24c94d7c1d80835aafffa9bc52985a"},
     {file = "Django-4.0.2.tar.gz", hash = "sha256:110fb58fb12eca59e072ad59fc42d771cd642dd7a2f2416582aa9da7a8ef954a"},
+]
+django-better-admin-arrayfield = [
+    {file = "django-better-admin-arrayfield-1.4.2.tar.gz", hash = "sha256:b45423e51bbc0aa31ef658248c058ca8b533a541be4dee9fb8bcd059f8a10a58"},
+    {file = "django_better_admin_arrayfield-1.4.2-py2.py3-none-any.whl", hash = "sha256:bfeaa0fa8210a7ea95ee996a6caaa59ecd0c923269f573e6d8319c28dcac5c88"},
 ]
 django-environ = [
     {file = "django-environ-0.8.1.tar.gz", hash = "sha256:6f0bc902b43891656b20486938cba0861dc62892784a44919170719572a534cb"},
