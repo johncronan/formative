@@ -50,8 +50,6 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
                 return field.formfield(**kwargs)
             return JSONPseudoField(required=False)
         
-        import sys
-        if 'Meta' in attrs and hasattr(attrs['Meta'], 'fields'): print('qux', dynamic_fields, attrs['Meta'].fields, bases[0].Meta.__dict__, file=sys.stderr)
         if json_fields:
             attrs['formfield_callback'] = json_field_callback
             exclude_fields = []
@@ -69,7 +67,6 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
         
         new_class = super().__new__(cls, class_name, bases, attrs)
         
-        if 'Meta' in attrs and hasattr(attrs['Meta'], 'fields'): print('quux', exclude_fields, attrs['Meta'].fields, file=sys.stderr)
         new_class._meta.json_fields = json_fields
         new_class._meta.static_fields = static_fields
         return new_class
