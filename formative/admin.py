@@ -191,10 +191,12 @@ class FormBlockBase:
         form = super().get_form(request, obj, **kwargs)
         
         if obj and obj.form.status == Form.Status.DRAFT:
-            qs = form.base_fields['dependence'].queryset
-            qs = qs.filter(form=obj.form, page__gt=0)
-            qs = qs.exclude(pk=obj.pk).exclude(page__gte=obj.page)
-            form.base_fields['dependence'].queryset = qs
+            # TODO: where would we modify form.fields instead?
+            if 'dependence' in form.base_fields:
+                qs = form.base_fields['dependence'].queryset
+                qs = qs.filter(form=obj.form, page__gt=0)
+                qs = qs.exclude(pk=obj.pk).exclude(page__gte=obj.page)
+                form.base_fields['dependence'].queryset = qs
         
         return form
     
@@ -277,7 +279,8 @@ class FormBlockBase:
 
 
 @admin.register(FormBlock, site=site)
-class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
+class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
+                     DynamicArrayMixin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
     list_display = ('name', 'page', 'labels_link')
     list_filter = ('page',)
@@ -297,6 +300,21 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
     def type(self, obj):
         # read-only version of the StockBlockAdminForm type field
         return obj.options['type']
+    
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        fields = fieldsets[0][1]['fields']
+        
+        if not obj: return fieldsets
+        
+        options = fieldsets[1][1]['fields']
+        admin_fields = obj.stock.admin_fields().keys()
+        options += [ f for f in admin_fields if f != 'choices' ]
+        # special case: not really an option, so it goes on the general tab
+        if 'choices' in admin_fields: fields.append('choices')
+        
+        sets = [(None, {'fields': fields}), ('Options', {'fields': options})] 
+        return sets + fieldsets[2:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -327,7 +345,7 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin):
         return qs
     
     def change_view(self, *args, **kwargs):
-        # we still have use the bulk action for delete - it redirects properly
+        # we still have the bulk action for delete - it redirects properly
         kwargs['extra_context'] = {'show_delete': False}
         return super().change_view(*args, **kwargs)
     

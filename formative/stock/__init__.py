@@ -1,3 +1,4 @@
+from django.forms import BooleanField
 from django.utils.text import capfirst
 
 __all__ = ["StockWidget", "EmailWidget", "NameWidget", "AddressWidget",
@@ -61,6 +62,12 @@ class StockWidget:
         return bool([v for v in kwargs.values() if v])
     
     def clean(self, data):
+        return data
+    
+    def admin_fields(self):
+        return {'required': BooleanField(required=False)}
+    
+    def admin_clean(self, data):
         return data
 
 
