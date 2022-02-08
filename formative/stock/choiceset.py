@@ -1,8 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.forms import RadioSelect, CheckboxInput
+from django.forms import RadioSelect, CheckboxInput, CharField, BooleanField, \
+    IntegerField
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
+from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 
 from . import CompositeStockWidget
 
@@ -69,3 +71,28 @@ class ChoiceSetWidget(CompositeStockWidget):
             if self.single: return RadioSelect
             return CheckboxInput
         return super().form_widget(name)
+    
+    def admin_fields(self):
+        from ..models import CustomBlock
+        
+        choices = DynamicArrayField(
+            CharField(max_length=CustomBlock.CHOICE_VAL_MAXLEN)
+        )
+        single = BooleanField(label='single selection', required=False)
+        text_input = CharField(label='text input ID', required=False,
+                               max_length=30)
+        max_length = IntegerField(label='max text characters', required=False,
+                                  min_value=1, max_value=1000)
+        
+        f = super().admin_fields()
+        f.update({'choices': choices, 'single': single,
+                  'text_input': text_input, 'text_input_maxlength': max_length})
+        return f
+    
+    def admin_clean(self, data):
+        if 'text_input' in data and data['text_input']:
+            if not data['text_input_maxlength']:
+                err = ValidationError('required if there is a text input',
+                                      code='required')
+                return {'text_input_maxlength': err}
+        return data

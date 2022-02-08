@@ -47,6 +47,11 @@ class AVFileType(FileType):
                 if 'error' in ret: return ret
             
             if not audio_streams and not video_streams: return self.no_stream()
+            if ext in VideoFile.EXTENSIONS and not video_streams:
+                return self.no_stream()
+            if ext in AudioFile.EXTENSIONS and not audio_streams:
+                return self.no_stream()
+            
             return ret
         
         except:
@@ -72,11 +77,11 @@ class AudioFile(AVFileType):
     
     def audio_meta(self, stream, extension):
         codec = stream['codec_name']
-        msg = _('Audio codec must be MP3. It is %(codec)s')
+        msg = _('Audio codec must be %(req)s. It is %(codec)s')
         if extension == 'mp3' and codec != extension:
-            return {'error': msg % {'codec': codec}}
-        if extension != 'mp3' and codec not in ('mp3', 'aac'):
-            return {'error': msg % {'codec': codec}}
+            return {'error': msg % {'req': 'mp3', 'codec': codec}}
+        if extension == 'm4a' and codec != 'aac':
+            return {'error': msg % {'req': 'aac', 'codec': codec}}
         
         return {
             'audio_codec': codec,

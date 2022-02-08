@@ -3,10 +3,13 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
+from django.conf import settings
 from django.db.models import Min
 from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
 import itertools
+from pathlib import Path
+import os
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
     SubmissionItem
@@ -272,6 +275,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             # the draft submission will now be marked as submitted
             self.object._submit()
             self.object._send_email(form=self.program_form, name='confirmation')
+            if self.program_form.item_model:
+                dir = os.path.join(settings.MEDIA_ROOT, str(self.object._id))
+                if os.path.isdir(dir):
+                    Path(os.path.join(dir, 'submitted')).touch()
             
             return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))
@@ -527,8 +534,13 @@ class SubmissionItemUploadView(SubmissionItemBase):
         
         item.save()
         path = item._file.path
-        filetype_class = FileType.by_extension(get_file_extension(path))
         
+        id_filename = os.path.join(os.path.dirname(path), 'id.txt')
+        if not os.path.isfile(id_filename):
+            with open(id_filename, 'w') as id_file:
+                id_file.write(self.submission._email + '\n')
+        
+        filetype_class = FileType.by_extension(get_file_extension(path))
         # the extension was supposed to be already validated
         if not filetype_class and types: return HttpResponseBadRequest()
         

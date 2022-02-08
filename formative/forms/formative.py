@@ -4,11 +4,11 @@ from django.utils.functional import cached_property
 from django.utils.formats import date_format, time_format
 from django.utils.translation import gettext_lazy as _
 
-from .models import Form, CustomBlock, SubmissionItem
-from .filetype import FileType
-from .validators import MinWordsValidator, MaxWordsValidator, \
+from ..models import Form, CustomBlock, SubmissionItem
+from ..filetype import FileType
+from ..validators import MinWordsValidator, MaxWordsValidator, \
     FileExtensionValidator, FileSizeValidator
-from .utils import get_file_extension, human_readable_filesize
+from ..utils import get_file_extension, human_readable_filesize
 
 
 class OpenForm(forms.Form):

@@ -32,16 +32,26 @@
       <div id="content-main">
         <p>
           Are you sure you want to unpublish the form "{{ object }}"?<br>
-          All of the following related items will be deleted:
         </p>
+        {% if submissions %}
+          <p>
+            It is NOT recommended to unpublish a form that has submissions.<br>
+            Consider making the form hidden, instead. TODO: link to export
+          </p>
+          <p>All of the following related items will be deleted:</p>
+        {% endif %}
         <div class="row">
           <div class="col-12 col-sm-9">
-            <h4>{% trans "Objects" %}</h4>
+            {% if submissions %}<h4>{% trans "Objects" %}</h4>{% endif %}
             <ol>
+            {% for email, items in submissions %}
               <li>
-                Submission: [All submissions and files will be deleted!]
-                <ul>List is TODO</ul>
+                Submission: {{ email }}
+                {% if items %}
+                  <ul>{{ items }} items</ul>
+                {% endif %}
               </li>
+            {% endfor %}
             </ol>
           </div>
           <div class="col-12 col-sm-3">
