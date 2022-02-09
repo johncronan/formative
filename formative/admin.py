@@ -31,10 +31,14 @@ class FormativeAdminSite(admin.AdminSite):
 
 
 site = FormativeAdminSite()
+
 site.register(auth.models.Group, auth.admin.GroupAdmin)
 site.register(auth.models.User, auth.admin.UserAdmin)
 
-site.register(Program)
+
+@admin.register(Program, site=site)
+class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
+    list_display = ('name', 'created')
 
 
 class FormChangeList(ChangeList):
@@ -48,7 +52,7 @@ class FormChangeList(ChangeList):
 
 @admin.register(Form, site=site)
 class FormAdmin(admin.ModelAdmin):
-    list_display = ('name', 'program')
+    list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
     fields = ('program', 'name', 'options', 'status')
     radio_fields = {'status': admin.VERTICAL}

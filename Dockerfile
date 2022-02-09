@@ -18,10 +18,13 @@ RUN apt-get update \
 # copy the project code
 COPY . /opt/services/djangoapp/src
 
+# install the root package too
+RUN poetry install --no-dev
+
 EXPOSE 8000
 
 # TODO: change to an app user?
 
 CMD (cd ../requirements; \
-    touch requirements.txt && pip install -r requirements.txt) \
-    && gunicorn --reload --chdir . --bind :8000 config.wsgi:application
+    touch requirements.txt && pip install -r requirements.txt); \
+    gunicorn --reload --chdir . --bind :8000 config.wsgi:application
