@@ -3,6 +3,7 @@ Django settings for Formative project.
 """
 
 import os, environ
+from pkg_resources import iter_entry_points
 from pathlib import Path
 
 env = environ.Env()
@@ -51,6 +52,12 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'formative',
 ]
+
+PLUGINS = []
+for entry_point in iter_entry_points(group='formative.plugin', name=None):
+    PLUGINS.append(entry_point.module_name)
+    INSTALLED_APPS.append(entry_point.module_name)
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

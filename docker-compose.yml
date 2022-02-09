@@ -10,6 +10,7 @@ services:
     environment:
       DOCKER_ENV: 'on'
     volumes:
+      - requirements_volume:/opt/services/djangoapp/requirements
       - static_volume:/opt/services/djangoapp/static
       - media_volume:/opt/services/djangoapp/media
       # these three are for a development environment:
@@ -71,6 +72,7 @@ networks:
 
 volumes:
   database_volume:
+  requirements_volume:
   static_volume:
   media_volume:
   postfix_volume:

@@ -1,7 +1,8 @@
 from django.db.models import Q, Exists, OuterRef
 from django.db.models.signals import pre_save, post_save, \
     pre_delete, post_delete
-from django.dispatch import receiver
+from django.apps import apps
+from django.dispatch import Signal, dispatcher, receiver
 from django.utils.text import capfirst
 
 from .models import Form, FormBlock, CustomBlock, CollectionBlock, FormLabel
@@ -202,3 +203,45 @@ def collectionblock_post_delete(sender, instance, **kwargs):
     for name in block.collection_fields():
         if not blocks.filter(any_name_field(_=name)):
             block.form.labels.filter(path='.'.join((block.name, name))).delete()
+
+
+app_cache = {}
+
+def populate_app_cache():
+    global app_cache
+    apps.check_apps_ready()
+    for config in apps.app_configs.values(): app_cache[config.name] = config
+
+    
+class FormPluginSignal(Signal):
+    def _is_active(self, sender, receiver):
+        searchpath = receiver.__module__
+        app = None
+        while True:
+            app = app_cache.get(searchpath)
+            if '.' not in searchpath or app: break
+            searchpath, _ = searchpath.rsplit('.', 1)
+        
+        return sender and app and app.name in sender.get_plugins()
+    
+    def send(self, sender, **kwargs):
+        if sender and not isinstance(sender, Form):
+            raise ValueError('Signal sender needs to be a form.')
+        
+        responses = []
+        if not self.receivers: return responses
+        if self.sender_receivers_cache.get(sender) is dispatcher.NO_RECEIVERS:
+            return responses
+        
+        if not app_cache: populate_app_cache()
+        
+        for receiver in self._live_receivers(sender):
+            if self._is_active(sender, receiver):
+                response = receiver(signal=self, sender=sender, **kwargs)
+                responses.append((receiver, response))
+        return responses
+
+
+form_submission_review = FormPluginSignal()
+
+register_program_settings = Signal()
