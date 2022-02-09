@@ -444,8 +444,9 @@ class SubmissionItemCreateView(SubmissionBase,
         self.block = get_object_or_404(CollectionBlock,
                                        form=self.program_form,
                                        pk=self.request.POST['block_id'])
-
-        nitems = self.submission._items.filter(_block=self.block.pk).count()
+        
+        qs = self.submission._items.filter(_block=self.block.pk)
+        nitems = qs.exclude(_file='', _filesize__gt=0).count()
         
         files, uploading = [], True
         for key, val in self.request.POST.items():
@@ -456,9 +457,9 @@ class SubmissionItemCreateView(SubmissionBase,
             if size is None: return HttpResponseBadRequest()
             files.append((val, size))
 
-        if len(files) == 1 and nitems >= self.block.max_items:
-            if 'item_id' not in self.request.POST:
-                return HttpResponseBadRequest()
+        if self.block.max_items and nitems >= self.block.max_items:
+            if 'item_id' not in self.request.POST: return HttpResponse('')
+        
         if 'item_id' in self.request.POST and len(files) != 1:
             return HttpResponseBadRequest()
         if not files:
@@ -477,7 +478,7 @@ class SubmissionItemCreateView(SubmissionBase,
                                          _id=self.request.POST['item_id'])
             else:
                 nitems += 1
-            if nitems > self.block.max_items: break
+            if self.block.max_items and nitems > self.block.max_items: break
             
             if not form.is_valid():
                 item._error = True
