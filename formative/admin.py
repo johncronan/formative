@@ -15,10 +15,11 @@ from polymorphic.admin import (PolymorphicParentModelAdmin,
 import sys, importlib
 from urllib.parse import unquote, parse_qsl
 
-from .forms import FormBlockAdminForm, StockBlockAdminForm, \
+from .forms import ProgramAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
+from .signals import register_program_settings
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -39,6 +40,21 @@ site.register(auth.models.User, auth.admin.UserAdmin)
 @admin.register(Program, site=site)
 class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
     list_display = ('name', 'created')
+    form = ProgramAdminForm
+    
+    def get_fieldsets(self, request, obj=None):
+        fields = self.get_fields(request, obj)
+        
+        main = (None, {'fields': fields})
+        if not obj: return [main]
+        
+        responses = register_program_settings.send(self)
+        admin_fields = { k: v for _, r in responses for k, v in r.items() }
+        if not admin_fields: return [main]
+        return [
+            main,
+            ('Options', {'fields': list(admin_fields)}),
+        ]
 
 
 class FormChangeList(ChangeList):

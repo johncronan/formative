@@ -1,8 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.contrib.admin.widgets import AdminTextInputWidget
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 
+from ..signals import register_program_settings
 from ..stock import StockWidget
 from ..models import FormBlock, CustomBlock
 
@@ -41,7 +43,8 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
         json_fields, fields, dynamic_fields, static_fields = {}, [], [], []
         if 'Meta' in attrs:
             json_fields = deepcopy(getattr(attrs['Meta'], 'json_fields', {}))
-            fields = list(getattr(attrs['Meta'], 'fields', []))
+            fields = getattr(attrs['Meta'], 'fields', [])
+            if fields != forms.ALL_FIELDS: fields = list(fields)
             dynamic_fields = getattr(attrs['Meta'], 'dynamic_fields', False)
             static_fields = list(getattr(attrs['Meta'], 'static_fields', []))
         
@@ -53,17 +56,23 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
         if json_fields:
             attrs['formfield_callback'] = json_field_callback
             exclude_fields = []
-            # Meta.static_fields must be used for dynamic_fields forms
-            if dynamic_fields and hasattr(bases[0].Meta, 'static_fields'):
-                for f in fields:
-                    # requested fields not in parent form class are dynamic ones
-                    if f not in bases[0].Meta.static_fields:
+            if dynamic_fields:
+                # Meta.static_fields must be used for dynamic_fields forms
+                init_fields = static_fields
+                if not init_fields:
+                    if hasattr(bases[0].Meta, 'static_fields'):
+                        init_fields = bases[0].Meta.static_fields
+                for f in init_fields and fields or []:
+                    # requested fields not in base's list are dynamic ones
+                    if f not in init_fields:
                         # non-model fields have to be statically declared
                         exclude_fields.append(f) # remove; added back, in init
             
-            fields = [ f for f in fields
-                       if f not in json_fields and f not in exclude_fields ]
-            if fields: attrs['Meta'].fields = list(json_fields.keys()) + fields
+            if fields != forms.ALL_FIELDS:
+                fields = [ f for f in fields
+                           if f not in json_fields and f not in exclude_fields ]
+                if fields:
+                    attrs['Meta'].fields = list(json_fields.keys()) + fields
         
         new_class = super().__new__(cls, class_name, bases, attrs)
         
@@ -104,6 +113,36 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                     else: cleaned_data[name].pop(field, None)
         
         return cleaned_data
+
+
+class ProgramAdminForm(AdminJSONForm):
+    home_url = forms.URLField(required=False)
+    
+    class Meta:
+        static_fields = ('name', 'description', 'hidden', 'home_url')
+        json_fields = {'options': ['home_url']}
+        dynamic_fields = True
+        widgets = {
+            'name': AdminTextInputWidget(),
+            'description': AdminTextInputWidget()
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.admin_fields = None
+        if 'instance' in kwargs and kwargs['instance']:
+            
+            responses = register_program_settings.send(self)
+            admin_fields = { k: v for _, r in responses for k, v in r.items() }
+            self.admin_fields = tuple(admin_fields.keys())
+            self._meta.json_fields['options'] += list(admin_fields.keys())
+        
+        super().__init__(*args, **kwargs)
+        
+        if self.admin_fields:
+            import sys
+            print('foo', admin_fields, file=sys.stderr)
+            for name, field in admin_fields.items():
+                self.fields[name] = field
 
 
 class FormBlockAdminForm(forms.ModelForm):
