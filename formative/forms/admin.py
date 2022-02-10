@@ -4,6 +4,8 @@ from django.contrib.admin import widgets
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 
+import datetime
+
 from ..signals import register_program_settings, register_form_settings
 from ..stock import StockWidget
 from ..models import Form, FormBlock, CustomBlock
@@ -36,6 +38,23 @@ class NegatedBooleanField(forms.BooleanField):
     def prepare_value(self, value): return not value
     
     def to_python(self, value): return not super().to_python(value)
+
+
+class JSONDateTimeWidget(widgets.AdminSplitDateTime):
+    def decompress(self, val):
+        if not val: return super().decompress(val)
+        
+        return super().decompress(datetime.datetime.fromisoformat(val))
+
+
+class JSONDateTimeField(forms.SplitDateTimeField):
+    widget = JSONDateTimeWidget
+    
+    def compress(self, data):
+        val = super().compress(data)
+        if not val: return val
+        
+        return val.isoformat()
 
 
 class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
