@@ -27,4 +27,4 @@ EXPOSE 8000
 
 CMD (cd ../requirements; \
     touch requirements.txt && pip install -r requirements.txt); \
-    gunicorn --reload --chdir . --bind :8000 config.wsgi:application
+    exec gunicorn --reload --chdir . --bind :8000 config.wsgi:application
