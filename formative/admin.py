@@ -81,12 +81,15 @@ class FormAdmin(admin.ModelAdmin):
         main = (None, {'fields': fields})
         if not obj: return [main]
         
+        for n in ('name', 'status', 'hidden', 'program'): fields.remove(n)
+        main[1]['fields'] = ('program', 'name', 'status', 'hidden')
+        
         responses = register_form_settings.send(obj)
         admin_fields = { k: v for _, r in responses for k, v in r.items() }
         if not admin_fields: return [main]
         return [
             main,
-            ('Options', {'fields': list(admin_fields)}),
+            ('Options', {'fields': fields + list(admin_fields)}),
         ]
     
     def get_readonly_fields(self, request, obj=None):

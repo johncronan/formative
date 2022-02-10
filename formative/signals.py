@@ -246,4 +246,6 @@ register_program_settings = Signal()
 
 register_form_settings = FormPluginSignal()
 
-form_submission_review = FormPluginSignal()
+submission_review_pre = FormPluginSignal()
+
+submission_review_post = FormPluginSignal()

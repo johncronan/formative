@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.admin.widgets import AdminTextInputWidget, AdminRadioSelect
+from django.contrib.admin import widgets
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 
@@ -130,8 +130,8 @@ class ProgramAdminForm(AdminJSONForm):
         json_fields = {'options': ['home_url']}
         dynamic_fields = True
         widgets = {
-            'name': AdminTextInputWidget(),
-            'description': AdminTextInputWidget()
+            'name': widgets.AdminTextInputWidget(),
+            'description': widgets.AdminTextInputWidget()
         }
     
     def __init__(self, *args, **kwargs):
@@ -145,18 +145,38 @@ class ProgramAdminForm(AdminJSONForm):
 
 
 class FormAdminForm(AdminJSONForm):
-    hidden = forms.BooleanField(required=False)
     status = forms.ChoiceField(
         choices=Form.Status.choices,
-        widget=AdminRadioSelect(attrs={'class': 'radiolist'})
+        widget=widgets.AdminRadioSelect(attrs={'class': 'radiolist'})
+    )
+    hidden = forms.BooleanField(required=False)
+    review_pre = forms.CharField(
+        required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
+        label='pre review text'
+    )
+    review_post = forms.CharField(
+        required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
+        label='post review text'
+    )
+    submitted_review_pre = forms.CharField(
+        required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
+        label='submitted pre review text'
+    )
+    no_review_after_submit = forms.BooleanField(required=False)
+    thanks = forms.CharField(
+        required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
+        label='thanks page text'
     )
     
     class Meta:
         static_fields = ('program', 'name', 'status', 'hidden')
-        json_fields = {'options': ['hidden']}
+        json_fields = {'options': [
+            'hidden', 'review_pre', 'review_post', 'submitted_review_pre',
+            'no_review_after_submit', 'thanks'
+        ]}
         dynamic_fields = True
         widgets = {
-            'name': AdminTextInputWidget(),
+            'name': widgets.AdminTextInputWidget(),
         }
     
     def __init__(self, *args, **kwargs):
@@ -189,7 +209,7 @@ def stock_type_display_name(name): # we need a default display name
 class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     type = forms.ChoiceField(choices=[ (n, stock_type_display_name(n))
                                        for n in StockWidget.types.keys() ],
-                             widget=forms.RadioSelect)
+                             widget=widgets.AdminRadioSelect)
     no_review = NegatedBooleanField(label='show in review', required=False)
     
     class Meta:

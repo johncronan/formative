@@ -1,6 +1,7 @@
 {% extends 'formative/base.html' %}
 
 {% load form_block %}
+{% load form_signal %}
 {% load utils %}
 
 {% block page_title %}Review - {{ program_form.name }}{% endblock %}
@@ -23,6 +24,7 @@
     </div>
     {% else %}
       {{ program_form.review_pre }}
+      {% form_signal program_form 'formative.signals.submission_review_pre' %}
     {% endif %}
   {% else %}
     {{ program_form.submitted_review_pre }}
@@ -78,6 +80,18 @@
                 mdc-layout-grid__cell--span-8-tablet
                 mdc-layout-grid__cell--span-8-desktop">
       {{ program_form.review_post }}
+    </div>
+  </div>
+  {% endif %}
+  
+  {% form_signal program_form 'formative.signals.submission_review_post' as p %}
+  {% if p %}
+  <div class="mdc-layout-grid__inner">
+    <div class="rp-review-post mdc-layout-grid__cell
+                mdc-layout-grid__cell--span-4
+                mdc-layout-grid__cell--span-8-tablet
+                mdc-layout-grid__cell--span-8-desktop">
+      {{ p }}
     </div>
   </div>
   {% endif %}

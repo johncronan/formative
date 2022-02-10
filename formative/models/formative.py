@@ -299,18 +299,22 @@ class Form(AutoSlugModel):
     def access_enable(self):
         if 'access_enable' in self.options: return self.options['access_enable']
         return None
-
+    
+    def markdown(self, text):
+        md = self.program.markdown
+        return md.reset().convert(text)
+    
     def review_pre(self, prefix=''):
         name = prefix + 'review_pre'
         if name in self.options:
             md = self.program.markdown
-            return mark_safe(md.reset().convert(self.options[name]))
+            return mark_safe(self.markdown(self.options[name]))
         return ''
     
     def review_post(self):
         if 'review_post' in self.options:
             md = self.program.markdown
-            return mark_safe(md.reset().convert(self.options['review_post']))
+            return mark_safe(self.markdown(self.options['review_post']))
         return ''
     
     def submit_submission(self, submission):
@@ -330,7 +334,7 @@ class Form(AutoSlugModel):
     def thanks(self):
         if 'thanks' in self.options:
             md = self.program.markdown
-            return mark_safe(md.reset().convert(self.options['thanks']))
+            return mark_safe(self.markdown(self.options['thanks']))
     
     def emails(self):
         if 'emails' in self.options: return self.options['emails']
