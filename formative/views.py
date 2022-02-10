@@ -3,12 +3,10 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
-from django.conf import settings
 from django.db.models import Min
 from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
 import itertools
-from pathlib import Path
 import os
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
@@ -273,12 +271,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             # TODO if program_form.status is not enabled
             
             # the draft submission will now be marked as submitted
-            self.object._submit()
+            self.program_form.submit_submission(self.object)
             self.object._send_email(form=self.program_form, name='confirmation')
-            if self.program_form.item_model:
-                dir = os.path.join(settings.MEDIA_ROOT, str(self.object._id))
-                if os.path.isdir(dir):
-                    Path(os.path.join(dir, 'submitted')).touch()
             
             return HttpResponseRedirect(reverse('form_thanks',
                                                 kwargs=self.url_args(id=False)))

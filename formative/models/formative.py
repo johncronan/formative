@@ -1,6 +1,7 @@
 from django.db import models, connection
 from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
     UniqueConstraint, Subquery
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, ValidationError
 from django.template import Template, loader
@@ -13,6 +14,7 @@ from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
 from markdown_link_attr_modifier import LinkAttrModifierExtension
+from pathlib import Path
 import os
 
 from ..stock import StockWidget
@@ -310,6 +312,14 @@ class Form(AutoSlugModel):
             md = self.program.markdown
             return mark_safe(md.reset().convert(self.options['review_post']))
         return ''
+    
+    def submit_submission(self, submission):
+        submission._submit()
+        
+        if self.item_model:
+            dir = os.path.join(settings.MEDIA_ROOT, str(submission._id))
+            if os.path.isdir(dir):
+                Path(os.path.join(dir, 'submitted')).touch()
     
     def submitted_review_pre(self):
         return self.review_pre(prefix='submitted_')

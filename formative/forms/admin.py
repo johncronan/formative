@@ -1,12 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.admin.widgets import AdminTextInputWidget
+from django.contrib.admin.widgets import AdminTextInputWidget, AdminRadioSelect
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 
-from ..signals import register_program_settings
+from ..signals import register_program_settings, register_form_settings
 from ..stock import StockWidget
-from ..models import FormBlock, CustomBlock
+from ..models import Form, FormBlock, CustomBlock
 
 
 class NullWidget(forms.Widget):
@@ -82,7 +82,9 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
 
 
 class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, admin_fields=None, **kwargs):
+        self.admin_fields = admin_fields
+        
         if 'instance' in kwargs and kwargs['instance']:
             instance, initial = kwargs['instance'], {}
             if 'initial' in kwargs: initial = kwargs['initial']
@@ -95,6 +97,10 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
             kwargs['initial'] = initial
         
         super().__init__(*args, **kwargs)
+        
+        if self.admin_fields:
+            for name, field in self.admin_fields.items():
+                self.fields[name] = field
     
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -103,14 +109,15 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
             
             for field in fields:
                 if field not in cleaned_data: continue
-                if isinstance(self.fields[field], forms.BooleanField):
-                    if cleaned_data[field]:
-                        cleaned_data[name][field] = cleaned_data[field]
-                    else: cleaned_data[name].pop(field, None)
-                else:
-                    if cleaned_data[field] is not None:
-                        cleaned_data[name][field] = cleaned_data[field]
-                    else: cleaned_data[name].pop(field, None)
+                
+                test = bool
+                if isinstance(self.fields[field], forms.BooleanField): pass
+                elif isinstance(self.fields[field], forms.CharField): pass
+                else: test = lambda x: x is not None
+                
+                if test(cleaned_data[field]):
+                    cleaned_data[name][field] = cleaned_data[field]
+                else: cleaned_data[name].pop(field, None)
         
         return cleaned_data
 
@@ -128,21 +135,44 @@ class ProgramAdminForm(AdminJSONForm):
         }
     
     def __init__(self, *args, **kwargs):
-        self.admin_fields = None
         if 'instance' in kwargs and kwargs['instance']:
-            
             responses = register_program_settings.send(self)
             admin_fields = { k: v for _, r in responses for k, v in r.items() }
-            self.admin_fields = tuple(admin_fields.keys())
             self._meta.json_fields['options'] += list(admin_fields.keys())
+            kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
+
+
+class FormAdminForm(AdminJSONForm):
+    hidden = forms.BooleanField(required=False)
+    status = forms.ChoiceField(
+        choices=Form.Status.choices,
+        widget=AdminRadioSelect(attrs={'class': 'radiolist'})
+    )
+    
+    class Meta:
+        static_fields = ('program', 'name', 'status', 'hidden')
+        json_fields = {'options': ['hidden']}
+        dynamic_fields = True
+        widgets = {
+            'name': AdminTextInputWidget(),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        form = None
+        if 'instance' in kwargs and kwargs['instance']:
+            form = kwargs['instance']
+            
+            responses = register_form_settings.send(form)
+            admin_fields = { k: v for _, r in responses for k, v in r.items() }
+            self._meta.json_fields['options'] += list(admin_fields.keys())
+            kwargs['admin_fields'] = admin_fields
+            
+        super().__init__(*args, **kwargs)
         
-        if self.admin_fields:
-            import sys
-            print('foo', admin_fields, file=sys.stderr)
-            for name, field in admin_fields.items():
-                self.fields[name] = field
+        if form and form.status != Form.Status.DRAFT:
+            self.fields['status'].choices = self.fields['status'].choices[1:]
 
 
 class FormBlockAdminForm(forms.ModelForm):
@@ -170,19 +200,14 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         dynamic_fields = True
     
     def __init__(self, *args, **kwargs):
-        self.admin_fields = None
         if 'instance' in kwargs and kwargs['instance']:
             stock = kwargs['instance'].stock
             admin_fields = stock.admin_fields()
-            self.admin_fields = tuple(admin_fields.keys())
             # safe to modify the values of json_fields, just not the keys:
             self._meta.json_fields['options'] += list(admin_fields.keys())
+            kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
-        
-        if self.admin_fields:
-            for name, field in admin_fields.items():
-                self.fields[name] = field
     
     def clean(self):
         super().clean()

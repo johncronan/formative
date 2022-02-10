@@ -242,6 +242,8 @@ class FormPluginSignal(Signal):
         return responses
 
 
-form_submission_review = FormPluginSignal()
-
 register_program_settings = Signal()
+
+register_form_settings = FormPluginSignal()
+
+form_submission_review = FormPluginSignal()

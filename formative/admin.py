@@ -15,11 +15,11 @@ from polymorphic.admin import (PolymorphicParentModelAdmin,
 import sys, importlib
 from urllib.parse import unquote, parse_qsl
 
-from .forms import ProgramAdminForm, StockBlockAdminForm, \
+from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
-from .signals import register_program_settings
+from .signals import register_program_settings, register_form_settings
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -70,25 +70,24 @@ class FormChangeList(ChangeList):
 class FormAdmin(admin.ModelAdmin):
     list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
-    fields = ('program', 'name', 'options', 'status')
-    radio_fields = {'status': admin.VERTICAL}
+    form = FormAdminForm
     
     def get_changelist(self, request, **kwargs):
         return FormChangeList
     
-    def get_fields(self, request, obj=None):
+    def get_fieldsets(self, request, obj=None):
         fields = super().get_fields(request, obj)
-        if not obj: fields = tuple(f for f in fields if f != 'status')
-        return fields
-    
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if 'status' not in form.base_fields: return form
         
-        choices = form.base_fields['status'].choices
-        if obj and obj.status != Form.Status.DRAFT:
-            form.base_fields['status'].choices = choices[1:]
-        return form
+        main = (None, {'fields': fields})
+        if not obj: return [main]
+        
+        responses = register_form_settings.send(obj)
+        admin_fields = { k: v for _, r in responses for k, v in r.items() }
+        if not admin_fields: return [main]
+        return [
+            main,
+            ('Options', {'fields': list(admin_fields)}),
+        ]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
