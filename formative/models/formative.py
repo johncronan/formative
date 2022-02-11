@@ -331,6 +331,11 @@ class Form(AutoSlugModel):
     def review_after_submit(self):
         return 'no_review_after_submit' not in self.options
     
+    def submit_button_label(self):
+        if 'submit_button_label' in self.options:
+            return self.options['submit_button_label']
+        return 'submit'
+    
     def thanks(self):
         if 'thanks' in self.options:
             md = self.program.markdown

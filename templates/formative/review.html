@@ -116,7 +116,6 @@
     chevron_left
   </a>
   {% endwith %}
-  {% endwith %}
 
   <button class="rp-continue-button rp-submit-button
                  mdc-button mdc-button--raised mdc-layout-grid__cell
@@ -126,8 +125,9 @@
          type="submit" name="submit" value="submit">
     <span class="mdc-button__ripple"></span>
     <span class="mdc-button__focus-ring"></span>
-    <span class="mdc-button__label">submit</span>
+    <span class="mdc-button__label">{{ f.submit_button_label }}</span>
   </button>
+  {% endwith %}
 </div>
 {% endif %}
 

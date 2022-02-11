@@ -169,6 +169,7 @@ class FormAdminForm(AdminJSONForm):
         widget=widgets.AdminRadioSelect(attrs={'class': 'radiolist'})
     )
     hidden = forms.BooleanField(required=False)
+    access_enable = forms.CharField(required=False, label='?access= password')
     review_pre = forms.CharField(
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='pre review text'
@@ -177,6 +178,7 @@ class FormAdminForm(AdminJSONForm):
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='post review text'
     )
+    submit_button_label = forms.CharField(required=False)
     submitted_review_pre = forms.CharField(
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='submitted pre review text'
@@ -190,7 +192,8 @@ class FormAdminForm(AdminJSONForm):
     class Meta:
         static_fields = ('program', 'name', 'status', 'hidden')
         json_fields = {'options': [
-            'hidden', 'review_pre', 'review_post', 'submitted_review_pre',
+            'hidden', 'access_enable', 'review_pre', 'review_post',
+            'submit_button_label', 'submitted_review_pre',
             'no_review_after_submit', 'thanks'
         ]}
         dynamic_fields = True
