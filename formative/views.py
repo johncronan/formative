@@ -3,14 +3,14 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
-from django.db.models import Min
+from django.db.models import F, Min
 from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
 import itertools
 import os
 
 from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
-    SubmissionItem
+    SubmissionRecord, SubmissionItem
 from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
 from .filetype import FileType
@@ -244,11 +244,24 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         if ids: skipped = self.program_form.blocks.filter(id__in=ids)
         else: skipped = self.skipped.values()
         
+        rec = None
+        if self.program_form.item_model:
+            items = self.object._items.filter(_block__in=list(self.skipped))
+            any_files = items.exclude(_file='').exists()
+            if any_files:
+                rec = SubmissionRecord.objects.get(
+                    submission=self.object.pk,
+                    type=SubmissionRecord.RecordType.FILES
+                )
         for block in skipped:
             if block.block_type() == 'collection':
                 items = self.object._items.filter(_block=block.pk)
                 for item in items:
-                    if item._file: delete_file(item._file)
+                    if item._file:
+                        delete_file(item._file)
+                        rec.number = F('number') - item._filesize
+                        rec.save()
+                        rec.refresh_from_db()
                 items.delete()
             else:
                 val = None
@@ -488,7 +501,16 @@ class SubmissionItemCreateView(SubmissionBase,
                 else: msg = form.non_field_errors()[0]
                 item._message = msg[:SubmissionItem._message_maxlen()]
             else:
-                if item._file: delete_file(item._file)
+                if item._file:
+                    rec = SubmissionRecord.objects.get(
+                        submission=self.submission.pk,
+                        type=SubmissionRecord.RecordType.FILES
+                    )
+                    rec.number = F('number') - item._filesize
+                    rec.save()
+                    
+                    delete_file(item._file)
+                
                 if name:
                     if self.block.autoinit_filename():
                         setattr(item, self.block.name1, name[:name.rindex('.')])
@@ -576,6 +598,15 @@ class SubmissionItemUploadView(SubmissionItemBase):
                             item._message = warn_msg[:msg_maxlen]
                         item._filemeta = newmeta
             item.save()
+            
+            rec, created = SubmissionRecord.objects.get_or_create(
+                program=self.program_form.program, form=self.program_form.slug,
+                submission=self.submission.pk,
+                type=SubmissionRecord.RecordType.FILES
+            )
+            if created: rec.number = item._filesize
+            else: rec.number = F('number') + item._filesize
+            rec.save()
         
         return HttpResponse(msg)
 
@@ -585,7 +616,15 @@ class SubmissionItemRemoveView(SubmissionItemBase):
     
     def post(self, request, *args, **kwargs):
         item = self.get_item()
-        if item._file: delete_file(item._file)
+        if item._file:
+            rec = SubmissionRecord.objects.get(
+                submission=self.submission.pk,
+                type=SubmissionRecord.RecordType.FILES
+            )
+            rec.number = F('number') - item._filesize
+            rec.save()
+            
+            delete_file(item._file)
         
         item.delete()
         return HttpResponse('')

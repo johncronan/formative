@@ -296,6 +296,8 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['choices'], self.fields['no_review']
+        if block and block.type != CustomBlock.InputType.CHOICE:
+            del self.fields['choices']
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):

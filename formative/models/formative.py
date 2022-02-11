@@ -320,6 +320,13 @@ class Form(AutoSlugModel):
     def submit_submission(self, submission):
         submission._submit()
         
+        rec, created = SubmissionRecord.objects.get_or_create(
+            program=self.program, form=self.slug, submission=submission._id,
+            type=SubmissionRecord.RecordType.SUBMISSION
+        )
+        rec.text = submission._email
+        rec.save()
+        
         if self.item_model:
             dir = os.path.join(settings.MEDIA_ROOT, str(submission._id))
             if os.path.isdir(dir):
@@ -512,7 +519,7 @@ class CustomBlock(FormBlock):
             if not self.max_chars or self.max_chars > self.MAX_TEXT_MAXLEN:
                 max_chars = self.MAX_TEXT_MAXLEN
             
-            if self.num_lines > 1 or self.max_chars > self.DEFAULT_TEXT_MAXLEN:
+            if self.num_lines > 1 or max_chars > self.DEFAULT_TEXT_MAXLEN:
                 return models.TextField(null=True, max_length=max_chars,
                                         blank=blank)
             return models.CharField(null=True, max_length=self.max_chars,
@@ -718,6 +725,26 @@ class CollectionBlock(FormBlock):
             return _('add file')
         return _('add item')
 
+
+class SubmissionRecord(models.Model):
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['submission', 'type'],
+                             name='unique_submission_record_type')
+        ]
+    
+    class RecordType(models.TextChoices):
+        FILES = 'files', _('uploaded files')
+        SUBMISSION = 'submission', _('form submission')
+    
+    program = models.ForeignKey(Program, models.SET_NULL, null=True, blank=True)
+    form = models.SlugField(max_length=64, allow_unicode=True)
+    submission = models.UUIDField(editable=False)
+    type = models.CharField(max_length=32)
+    recorded = models.DateTimeField(auto_now=True, verbose_name='recorded at')
+    text = models.TextField(blank=True)
+    number = models.PositiveBigIntegerField(null=True, blank=True)
+    deleted = models.BooleanField(default=False)
 
 # abstract classes, used as templates for the dynamic models:
 
