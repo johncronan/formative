@@ -68,7 +68,7 @@ def customblock_post_save(sender, instance, created, raw, **kwargs):
     
     if block.type != CustomBlock.InputType.CHOICE: return
     paths = []
-    for c in block.choices():
+    for c in 'choices' in block.options and block.choices() or []:
         text = capfirst(c)
         new_path = '.'.join((block.name, c))
         if not new and block.name != block._old_name:

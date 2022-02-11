@@ -200,19 +200,25 @@ class FormAdminForm(AdminJSONForm):
         }
     
     def __init__(self, *args, **kwargs):
-        form = None
+        program_form = None
         if 'instance' in kwargs and kwargs['instance']:
-            form = kwargs['instance']
+            program_form = kwargs['instance']
             
-            responses = register_form_settings.send(form)
+            responses = register_form_settings.send(program_form)
             admin_fields = { k: v for _, r in responses for k, v in r.items() }
             self._meta.json_fields['options'] += list(admin_fields.keys())
             kwargs['admin_fields'] = admin_fields
             
         super().__init__(*args, **kwargs)
         
-        if form and form.status != Form.Status.DRAFT:
+        if program_form and program_form.status != Form.Status.DRAFT:
             self.fields['status'].choices = self.fields['status'].choices[1:]
+        
+        if not program_form:
+            del self.fields['status']
+            for n in ('access_enable', 'review_pre', 'review_post', 'thanks',
+                      'submitted_review_pre', 'no_review_after_submit'):
+                del self.fields[n]
 
 
 class FormBlockAdminForm(forms.ModelForm):
@@ -240,6 +246,7 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         dynamic_fields = True
     
     def __init__(self, *args, **kwargs):
+        stock = None
         if 'instance' in kwargs and kwargs['instance']:
             stock = kwargs['instance'].stock
             admin_fields = stock.admin_fields()
@@ -248,6 +255,8 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
             kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
+        
+        if not stock: del self.fields['no_review']
     
     def clean(self):
         super().clean()
@@ -278,6 +287,15 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     class Meta:
         exclude = ('form',)
         json_fields = {'options': ['no_review', 'choices']}
+    
+    def __init__(self, *args, **kwargs):
+        block = None
+        if 'instance' in kwargs and kwargs['instance']:
+            block = kwargs['instance']
+        
+        super().__init__(*args, **kwargs)
+        
+        if not block: del self.fields['choices'], self.fields['no_review']
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
@@ -286,3 +304,12 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     class Meta:
         exclude = ('form', 'align_type')
         json_fields = {'options': ['no_review']}
+    
+    def __init__(self, *args, **kwargs):
+        block = None
+        if 'instance' in kwargs and kwargs['instance']:
+            block = kwargs['instance']
+        
+        super().__init__(*args, **kwargs)
+        
+        if not block: del fields['no_review']

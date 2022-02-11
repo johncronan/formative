@@ -78,12 +78,13 @@ class FormAdmin(admin.ModelAdmin):
     
     def get_fieldsets(self, request, obj=None):
         fields = super().get_fields(request, obj)
+        main_fields = ['program', 'name', 'status', 'hidden']
         
-        main = (None, {'fields': fields})
+        main = (None, {'fields': main_fields[:2] + main_fields[3:]})
         if not obj: return [main]
         
-        for n in ('name', 'status', 'hidden', 'program'): fields.remove(n)
-        main[1]['fields'] = ('program', 'name', 'status', 'hidden')
+        for n in main_fields: fields.remove(n)
+        main[1]['fields'] = main_fields
         
         ret = [
             main,
