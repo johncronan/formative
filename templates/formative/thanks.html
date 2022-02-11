@@ -1,4 +1,5 @@
 {% extends 'formative/base.html' %}
+{% load form_signal %}
 
 {% block page_title %}Thanks - {{ program_form.name }}{% endblock %}
 
@@ -10,13 +11,17 @@
       {% if program_form.thanks %}
         {{ program_form.thanks }}
       {% else %}
-        Thank you for applying! We sent a confirmation to your email address.
+        <p>
+          Thank you for applying! We sent a confirmation to your email address.
+        </p>
       {% endif %}
+      
+      {% form_signal program_form 'formative.signals.submission_thanks' %}
     </div>
   </div>
   
   <div class="mdc-layout-grid__inner">
-    <a href="{% url 'program_index' %}"
+    <a href="{% url 'program' program_form.program.slug %}"
        class="rp-prevpage-button mdc-icon-button material-icons"
        data-mdc-ripple-is-unbounded>
       <div class="mdc-icon-button__ripple"></div>

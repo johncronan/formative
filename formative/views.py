@@ -273,7 +273,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             
             res = submission_handle_submit.send(self.program_form,
                                                 submission=self.object)
-            if res: return res[0][1]
+            if res and res[0][1]: return res[0][1]
             
             # the draft submission will now be marked as submitted
             self.program_form.submit_submission(self.object)

@@ -252,4 +252,6 @@ submission_review_post = FormPluginSignal()
 
 submission_submit_control = FormPluginSignal()
 
+submission_thanks = FormPluginSignal()
+
 submission_handle_submit = FormPluginSignal()
