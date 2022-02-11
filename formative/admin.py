@@ -19,6 +19,7 @@ from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
+from .plugins import get_matching_plugin
 from .signals import register_program_settings, register_form_settings
 
 
@@ -84,13 +85,15 @@ class FormAdmin(admin.ModelAdmin):
         for n in ('name', 'status', 'hidden', 'program'): fields.remove(n)
         main[1]['fields'] = ('program', 'name', 'status', 'hidden')
         
-        responses = register_form_settings.send(obj)
-        admin_fields = { k: v for _, r in responses for k, v in r.items() }
-        if not admin_fields: return [main]
-        return [
+        ret = [
             main,
-            ('Options', {'fields': fields + list(admin_fields)}),
+            ('Options', {'fields': fields}),
         ]
+        responses = register_form_settings.send(obj)
+        for receiver, response in responses:
+            meta = get_matching_plugin(receiver.__module__)
+            ret.append((meta.name, {'fields': list(response)}))
+        return ret
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)

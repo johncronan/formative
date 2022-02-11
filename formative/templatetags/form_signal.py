@@ -16,4 +16,4 @@ def form_signal(form, signame, **kwargs):
     html_result = []
     for _, response in signal.send(form, **kwargs):
         if response: html_result.append(response)
-    return mark_safe('\n'.join(html_result))
+    return mark_safe(''.join(html_result))

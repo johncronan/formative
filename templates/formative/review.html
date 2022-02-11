@@ -117,16 +117,21 @@
   </a>
   {% endwith %}
 
-  <button class="rp-continue-button rp-submit-button
-                 mdc-button mdc-button--raised mdc-layout-grid__cell
-                 mdc-layout-grid__cell--span-2
-                 mdc-layout-grid__cell--span-3-tablet
-                 mdc-layout-grid__cell--span-3-desktop"
-         type="submit" name="submit" value="submit">
-    <span class="mdc-button__ripple"></span>
-    <span class="mdc-button__focus-ring"></span>
-    <span class="mdc-button__label">{{ f.submit_button_label }}</span>
-  </button>
+  {% form_signal f 'formative.signals.submission_submit_control' submission=submission as sc %}
+  {% if sc %}
+    {{ sc }}
+  {% else %}
+    <button class="rp-continue-button rp-submit-button
+                   mdc-button mdc-button--raised mdc-layout-grid__cell
+                   mdc-layout-grid__cell--span-2
+                   mdc-layout-grid__cell--span-3-tablet
+                   mdc-layout-grid__cell--span-3-desktop"
+           type="submit" name="submit" value="submit">
+      <span class="mdc-button__ripple"></span>
+      <span class="mdc-button__focus-ring"></span>
+      <span class="mdc-button__label">{{ f.submit_button_label }}</span>
+    </button>
+  {% endif %}
   {% endwith %}
 </div>
 {% endif %}

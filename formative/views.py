@@ -14,6 +14,7 @@ from .models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
 from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
 from .filetype import FileType
+from .signals import submission_handle_submit
 from .utils import delete_file, get_file_extension, get_tooltips
 
 
@@ -269,6 +270,10 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     def form_valid(self, form):
         if not self.page:
             # TODO if program_form.status is not enabled
+            
+            res = submission_handle_submit.send(self.program_form,
+                                                submission=self.object)
+            if res: return res[0][1]
             
             # the draft submission will now be marked as submitted
             self.program_form.submit_submission(self.object)

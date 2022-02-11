@@ -249,3 +249,7 @@ register_form_settings = FormPluginSignal()
 submission_review_pre = FormPluginSignal()
 
 submission_review_post = FormPluginSignal()
+
+submission_submit_control = FormPluginSignal()
+
+submission_handle_submit = FormPluginSignal()

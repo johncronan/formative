@@ -178,7 +178,6 @@ class FormAdminForm(AdminJSONForm):
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='post review text'
     )
-    submit_button_label = forms.CharField(required=False)
     submitted_review_pre = forms.CharField(
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='submitted pre review text'
@@ -193,8 +192,7 @@ class FormAdminForm(AdminJSONForm):
         static_fields = ('program', 'name', 'status', 'hidden')
         json_fields = {'options': [
             'hidden', 'access_enable', 'review_pre', 'review_post',
-            'submit_button_label', 'submitted_review_pre',
-            'no_review_after_submit', 'thanks'
+            'submitted_review_pre', 'no_review_after_submit', 'thanks'
         ]}
         dynamic_fields = True
         widgets = {
