@@ -44,11 +44,11 @@
           <div class="col-12 col-sm-9">
             {% if submissions %}<h4>{% trans "Objects" %}</h4>{% endif %}
             <ol>
-            {% for email, items in submissions %}
+            {% for rec in submissions %}
               <li>
-                Submission: {{ email }}
-                {% if items %}
-                  <ul>{{ items }} items</ul>
+                Submission: {{ rec.0 }}
+                {% if rec.1 %}
+                  <ul>{{ rec.1 }} items</ul>
                 {% endif %}
               </li>
             {% endfor %}
