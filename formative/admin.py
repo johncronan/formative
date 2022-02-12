@@ -107,8 +107,10 @@ class FormAdmin(admin.ModelAdmin):
         subs = []
         if obj.status != Form.Status.DRAFT:
             qs = obj.model.objects.all()
-            if obj.item_model: qs = qs.annotate(num_items=Count('_item'))
-            subs = qs.values_list('_email', 'num_items')
+            if obj.item_model:
+                qs = qs.annotate(num_items=Count('_item'))
+                subs = qs.values_list('_email', 'num_items')
+            else: subs = qs.values_list('_email')
         
         context = {
             **self.admin_site.each_context(request),
