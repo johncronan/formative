@@ -17,10 +17,6 @@ services:
       - ./formative:/opt/services/djangoapp/src/formative
       - ./templates:/opt/services/djangoapp/src/templates
       - ./assets/bundles:/opt/services/djangoapp/src/assets/bundles
-    networks:
-      - nginx_network
-      - database_network
-      - postfix_network
     depends_on:
       - database
       - postfix
@@ -35,8 +31,6 @@ services:
       - media_volume:/opt/services/djangoapp/media
     depends_on:
       - djangoapp
-    networks:
-      - nginx_network
 
   database:
     image: postgres:13
@@ -47,8 +41,6 @@ services:
     ports:
       # a port map for the development environment:
       - 5432:5432
-    networks:
-      - database_network
     volumes:
       - database_volume:/var/lib/postgresql/data
 
@@ -57,18 +49,8 @@ services:
     env_file:
       - config/postfix_env
       - .env
-    networks:
-      - postfix_network
     volumes:
       - postfix_volume:/var/spool/postfix
-
-networks:
-  nginx_network:
-    driver: bridge
-  database_network:
-    driver: bridge
-  postfix_network:
-    driver: bridge
 
 volumes:
   database_volume:
