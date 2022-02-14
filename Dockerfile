@@ -28,4 +28,6 @@ EXPOSE 8000
 
 CMD (cd ../requirements; \
     touch requirements.txt && pip install -r requirements.txt); \
-    exec gunicorn --chdir . --bind :8000 config.wsgi:application
+    python3 manage.py collectstatic --noinput && \
+    python3 manage.py migrate && \
+    exec gunicorn --bind :8000 config.wsgi:application
