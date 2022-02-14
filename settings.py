@@ -24,7 +24,7 @@ ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='').split(',')
 csrf_hosts = [ host[0] == '.' and '*' + host or host for host in ALLOWED_HOSTS ]
 
 DEFAULT_SERVER_HOSTNAME = env('SERVER_HOSTNAME')
-SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME')
+SERVER_HOSTNAME = env('DJANGO_SERVER_HOSTNAME', default='')
 if not SERVER_HOSTNAME: SERVER_HOSTNAME = DEFAULT_SERVER_HOSTNAME
 
 port = env('DJANGO_SERVER_PORT', default=None)
@@ -105,9 +105,9 @@ DATABASES = {
 
 
 EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
-CONTACT_EMAIL = env('CONTACT_EMAIL')
-SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
 TECH_EMAIL = env('DJANGO_SU_EMAIL')
+CONTACT_EMAIL = env('CONTACT_EMAIL', default=TECH_EMAIL)
+SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
 ADMINS = [(env('ADMIN_NAME', default=''),
            env('ADMIN_EMAIL', default=TECH_EMAIL))]
 
