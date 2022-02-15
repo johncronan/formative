@@ -12,9 +12,7 @@
 {% endwith %}
 {% endwith %}
 
-{% if items %}
-<div class="mdc-layout-grid__inner">
-{% endif %}
+<div class="mdc-layout-grid__inner" style="margin-bottom: 8px;">
   {% with tsp=form_block.tablet_span dsp=form_block.desktop_span %}
   <div class="rp-collection-table mdc-data-table mdc-layout-grid__cell
               mdc-layout-grid__cell--span-{{ tsp }}-tablet
@@ -67,9 +65,7 @@
       </table>
     </div>
   </div>
-{% if items %}
 </div>
-{% endif %}
 
 {% if not form_block.fixed %}
 <div class="mdc-layout-grid__inner">
