@@ -29,5 +29,5 @@ EXPOSE 8000
 CMD (cd ../requirements; \
     touch requirements.txt && pip install -r requirements.txt); \
     python3 manage.py collectstatic --noinput && \
-    python3 manage.py migrate && \
+    (if [ "$AUTO_MIGRATE" != "" ] ; then python3 manage.py migrate ; fi) && \
     exec gunicorn --bind :8000 config.wsgi:application

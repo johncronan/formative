@@ -1,6 +1,7 @@
 from django import forms, urls
 from django.contrib import admin, auth
 from django.contrib.admin.views.main import ChangeList
+from django.db import connection
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -463,7 +464,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
         return fields
 
 
-# TODO: ok to do this here if we check if setup has happened first
-#for form in Form.objects.exclude(status=Form.Status.DRAFT):
-#    site.register(form.model)
-#    if form.item_model: site.register(form.item_model)
+if Form._meta.db_table in connection.introspection.table_names():
+    for form in Form.objects.exclude(status=Form.Status.DRAFT):
+        site.register(form.model)
+        if form.item_model: site.register(form.item_model)

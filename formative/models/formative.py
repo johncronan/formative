@@ -137,7 +137,7 @@ class Form(AutoSlugModel):
             else: block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
-        name = self.db_slug + '_item_'
+        name = self.db_slug + '_i'
         class Meta(SubmissionItem.Meta):
             constraints = [
                 UniqueConstraint(fields=['_submission', '_collection',
