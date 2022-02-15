@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageOps
 import os
 
 from ..utils import thumbnail_path
@@ -38,8 +38,7 @@ class ImageFile(FileType):
         try:
             if 'icc_profile' not in meta or not meta['icc_profile']:
                 # some browsers mess up w/ untagged images - should assume sRGB
-                pass
-                # TODO needs more research
+                pass # TODO needs more research
 #                with Image.open(file.path) as img:
 #                    srgb = ImageCms.createProfile('sRGB')
 #                    img = ImageCms.profileToProfile(orig, srgb).tobytes()
@@ -54,8 +53,9 @@ class ImageFile(FileType):
                 img.load()
                 profile = img.info.get('icc_profile', '')
                 img.thumbnail((max_width, max_height), Image.ANTIALIAS)
-                new_width, new_height = img.size
-                img.save(file.path, img.format, icc_profile=profile)
+                new_img = ImageOps.exif_transpose(img)
+                new_width, new_height = new_img.size
+                new_img.save(file.path, img.format, icc_profile=profile)
             meta['width'], meta['height'] = new_width, new_height
             meta['megapixels'] = new_width * new_height / 1000000
             msg = _('Image was resized to %(width)sx%(height)s.')
@@ -74,10 +74,11 @@ class ImageFile(FileType):
                     profile = img.info.get('icc_profile', '')
                     if img.mode != 'RGB': img = img.convert('RGB')
                     img.thumbnail((120, 120), Image.ANTIALIAS)
+                    new_img = ImageOps.exif_transpose(img)
                     # TODO: need an alternative name thing
                     outpath = thumbnail_path(file.path)
                     if not os.path.isfile(outpath):
-                        img.save(outpath, img.format, icc_profile=profile)
+                        new_img.save(outpath, img.format, icc_profile=profile)
             except:
                 self.logger.critical('Error generating thumbnail.',
                                      exc_info=True)
