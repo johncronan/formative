@@ -314,4 +314,4 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         
         super().__init__(*args, **kwargs)
         
-        if not block: del fields['no_review']
+        if not block: del self.fields['no_review']
