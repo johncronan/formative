@@ -697,7 +697,9 @@ class CollectionBlock(FormBlock):
     def desktop_span(self): return self.span(media='desktop')
     
     def total_colspan(self):
-        return len(self.collection_fields())
+         fields = self.collection_fields()
+         if fields: return len(fields)
+         return 1
     
     def horizontal_width(self, field):
         total = self.total_colspan()
