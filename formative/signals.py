@@ -35,6 +35,9 @@ def customblock_pre_save(sender, instance, raw, **kwargs):
         orig = CustomBlock.objects.get(pk=instance.pk)
         instance._old_name = orig.name
 
+def default_text(text):
+    return capfirst(text.replace('_', ' '))
+
 @receiver(post_save, sender=CustomBlock)
 def customblock_post_save(sender, instance, created, raw, **kwargs):
     if raw: return
@@ -52,7 +55,7 @@ def customblock_post_save(sender, instance, created, raw, **kwargs):
     elif block.type == CustomBlock.InputType.NUMERIC:
         style = FormLabel.LabelStyle.HORIZONTAL
 
-    text = capfirst(block.name)
+    text = default_text(block.name)
     if style != FormLabel.LabelStyle.WIDGET: text += ':' # TODO: i18n
     
     l = None
@@ -69,7 +72,7 @@ def customblock_post_save(sender, instance, created, raw, **kwargs):
     if block.type != CustomBlock.InputType.CHOICE: return
     paths = []
     for c in 'choices' in block.options and block.choices() or []:
-        text = capfirst(c)
+        text = default_text(c)
         new_path = '.'.join((block.name, c))
         if not new and block.name != block._old_name:
             path = '.'.join((block._old_name, c))
@@ -159,14 +162,14 @@ def collectionblock_post_save(sender, instance, created, raw, **kwargs):
     
     if not created: return
     
-    text, style = capfirst(block.name) + ':', FormLabel.LabelStyle.VERTICAL
+    text, style = default_text(block.name) + ':', FormLabel.LabelStyle.VERTICAL
     l = FormLabel.objects.get_or_create(form=block.form, path=block.name,
                                         defaults={'style': style, 'text': text})
     
     if block.fixed: return # no implementation yet for fixed + collection
     style = FormLabel.LabelStyle.WIDGET
     for name in block.collection_fields():
-        text, path = capfirst(name), '.'.join((block.name, name))
+        text, path = default_text(name), '.'.join((block.name, name))
         l = FormLabel.objects.get_or_create(form=block.form, path=path,
                                             defaults={'style': style,
                                                       'text': text})

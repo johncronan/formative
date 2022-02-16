@@ -41,7 +41,9 @@ class StockWidget:
         return []
 
     def default_label(self):
-        return capfirst(self.name)
+        from ..signals import default_text
+        
+        return default_text(self.name)
     
     def get_widget(self, field_name):
         return None # methods will be called w/ widget=None since all one field

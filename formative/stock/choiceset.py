@@ -14,6 +14,8 @@ class ChoiceSetWidget(CompositeStockWidget):
     
     def __init__(self, name, choices=[], single=False, text_input=None,
                  text_input_maxlength=64, **kwargs):
+        from ..signals import default_text
+        
         super().__init__(name, **kwargs)
         
         self.template_name = 'choiceset.html'
@@ -21,7 +23,7 @@ class ChoiceSetWidget(CompositeStockWidget):
         
         self.single = single
         self.choices = choices
-        self.labels = { name: capfirst(name) for name in choices }
+        self.labels = { name: default_text(name) for name in choices }
         if text_input: self.labels[text_input] = capfirst(text_input)
         self.text_input = text_input
         self.text_input_maxlength = text_input_maxlength
