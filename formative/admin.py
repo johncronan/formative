@@ -25,7 +25,21 @@ from .signals import register_program_settings, register_form_settings
 
 
 class FormativeAdminSite(admin.AdminSite):
+    def __init__(self, *args, **kwargs):
+        self.submissions_registered = None
+        super().__init__(*args, **kwargs)
+    
+    def register_submission_models(self):
+        if Form._meta.db_table in connection.introspection.table_names():
+            for form in Form.objects.exclude(status=Form.Status.DRAFT):
+                self.register(form.model)
+                if form.item_model: self.register(form.item_model)
+    
     def get_app_list(self, request):
+        if not self.submissions_registered:
+            self.register_submission_models()
+            self.submissions_registered = True
+        
         # unlike normal Django, we might have had changes to the admin urls
         urls.clear_url_caches()
         if 'urls' in sys.modules: importlib.reload(sys.modules['urls'])
@@ -462,9 +476,3 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
             fields += ('name1', 'name2', 'name3')
         
         return fields
-
-
-if Form._meta.db_table in connection.introspection.table_names():
-    for form in Form.objects.exclude(status=Form.Status.DRAFT):
-        site.register(form.model)
-        if form.item_model: site.register(form.item_model)
