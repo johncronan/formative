@@ -96,3 +96,6 @@ class ChoiceSetWidget(CompositeStockWidget):
                                       code='required')
                 return {'text_input_maxlength': err}
         return data
+    
+    def admin_published_readonly(self):
+        return {'choices': 'choices'}

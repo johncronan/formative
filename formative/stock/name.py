@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.contrib.admin.widgets import AdminRadioSelect
+from django.forms import ChoiceField
 from django.utils.translation import gettext_lazy as _
 
 from . import CompositeStockWidget
@@ -48,3 +50,14 @@ class NameWidget(CompositeStockWidget):
                 msg = _('One of the name fields must be provided.')
                 return {None: ValidationError(msg)}
         return data
+    
+    def admin_fields(self):
+        required_part = ChoiceField(required=False, widget=AdminRadioSelect,
+            choices=[(self.Parts.LAST, 'last name'),
+                     (self.Parts.ANY, 'any part'),
+                     (self.Parts.ALL, 'all parts')]
+        )
+        
+        f = super().admin_fields()
+        f['required_part'] = required_part
+        return f

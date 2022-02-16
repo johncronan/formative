@@ -69,6 +69,9 @@ class StockWidget:
     
     def admin_clean(self, data):
         return data
+    
+    def admin_published_readonly(self):
+        return {}
 
 
 class CompositeStockWidget(StockWidget):

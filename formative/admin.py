@@ -344,6 +344,8 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         # read-only version of the StockBlockAdminForm type field
         return obj.options['type']
     
+    def choices(self, obj): return obj.options['choices'] # this is temporary
+    
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
@@ -352,9 +354,13 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         
         options = fieldsets[1][1]['fields']
         admin_fields = obj.stock.admin_fields().keys()
-        options += [ f for f in admin_fields if f != 'choices' ]
-        # special case: not really an option, so it goes on the general tab
-        if 'choices' in admin_fields: fields.append('choices')
+        readonly_fields = obj.stock.admin_published_readonly()
+        if obj.form.status == Form.Status.DRAFT:
+            # special case: not really an option, so it goes on the general tab
+            if 'choices' in admin_fields: fields.append('choices')
+            options += [ f for f in admin_fields if f != 'choices' ]
+        else:
+            options += [ f for f in admin_fields if f not in readonly_fields ]
         
         sets = [(None, {'fields': fields}), ('Options', {'fields': options})] 
         return sets + fieldsets[2:]
@@ -362,8 +368,16 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
         
-        if obj: fields += ('type',)
+        if not obj: return fields
+        fields += ('type',)
         
+        if obj.form.status != Form.Status.DRAFT:
+            for field, label in obj.stock.admin_published_readonly().items():
+                @admin.display(description=label)
+                def field_callable(obj):
+                    return obj.options[field]
+                field_callable.__name__ = field
+                fields += (field,) #field_callable,) TODO why isn't it working?
         
         return fields
     
@@ -421,6 +435,9 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
     form = CustomBlockAdminForm
     radio_fields = {'type': admin.VERTICAL}
     
+    def choices(self, obj):
+        return obj.options['choices']
+    
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
@@ -444,9 +461,9 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         if obj: fields += ('type',)
         if obj and obj.form.status != Form.Status.DRAFT:
             if obj.type == CustomBlock.InputType.TEXT:
-                fields += ('num_lines', 'min_chars', 'max_chars')
-            elif obj.type != CustomBlock.InputType.BOOLEAN:
-                fields += ('required',)
+                fields += ('num_lines', 'max_chars')
+            elif obj.type == CustomBlock.InputType.CHOICE:
+                fields += ('choices',)
         return fields
 
 
