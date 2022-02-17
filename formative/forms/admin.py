@@ -283,10 +283,13 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     choices = DynamicArrayField(
         forms.CharField(max_length=CustomBlock.CHOICE_VAL_MAXLEN),
     )
+    numeric_min = forms.IntegerField(required=False)
+    numeric_max = forms.IntegerField(required=False)
     
     class Meta:
         exclude = ('form',)
-        json_fields = {'options': ['no_review', 'choices']}
+        json_fields = {'options': ['no_review', 'choices',
+                                   'numeric_min', 'numeric_max']}
     
     def __init__(self, *args, **kwargs):
         block = None
@@ -296,8 +299,11 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['choices'], self.fields['no_review']
-        if block and block.type != CustomBlock.InputType.CHOICE:
-            del self.fields['choices']
+        if block:
+            if block.type != CustomBlock.InputType.CHOICE:
+                del self.fields['choices']
+            if block.type != CustomBlock.InputType.NUMERIC:
+                del self.fields['numeric_min'], self.fields['numeric_max']
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):

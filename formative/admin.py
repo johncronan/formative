@@ -444,16 +444,24 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         names = ['type', 'required', 'num_lines', 'min_chars', 'max_chars',
                  'min_words', 'max_words']
         
-        if not obj: add = names[:1]
-        elif obj.type == CustomBlock.InputType.TEXT: add = names[:1] + names[2:]
+        if not obj:
+            main = [ f for f in fields if f not in names ] + names[1:]
+            return [(None, {'fields': main})]
+        
+        options = fieldsets[1][1]['fields']
+        if obj.type == CustomBlock.InputType.TEXT: add = names[:1] + names[2:]
         elif obj.type == CustomBlock.InputType.BOOLEAN: add = names[:1]
         elif obj.type == CustomBlock.InputType.CHOICE:
             add = names[:2] + ['choices']
-        else: add = names[:2]
+        else: # NUMERIC
+            add = names[:2]
+            options += ['numeric_min', 'numeric_max']
         
-        names.append('choices')
-        ret = [ f for f in fields if f not in names ] + add
-        return [(None, {'fields': ret})] + fieldsets[1:]
+        names += ['choices', 'numeric_min', 'numeric_max']
+        main = [ f for f in fields if f not in names ] + add
+        
+        sets = [(None, {'fields': main}), ('Options', {'fields': options})]
+        return sets + fieldsets[2:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
