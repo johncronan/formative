@@ -8,7 +8,8 @@ import datetime
 
 from ..signals import register_program_settings, register_form_settings
 from ..stock import StockWidget
-from ..models import Form, FormBlock, CustomBlock, Submission, SubmissionItem
+from ..models import Program, Form, FormBlock, CustomBlock, \
+    Submission, SubmissionItem
 
 
 class NullWidget(forms.Widget):
@@ -142,15 +143,28 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
 
 
 class ProgramAdminForm(AdminJSONForm):
-    home_url = forms.URLField(required=False)
+    name = forms.CharField(
+        max_length=Program._meta.get_field('name').max_length,
+        widget=widgets.AdminTextInputWidget,
+        help_text='Full name, displayed on the listing of forms.'
+    )
+    slug = forms.SlugField(
+        label='identifier', allow_unicode=True, max_length=30,
+        widget=forms.TextInput(attrs={'size': 32}),
+        help_text='A short name to uniquely identify the program. '
+                  'Cannot be changed.'
+    )
+    home_url = forms.URLField(
+        required=False,
+        help_text='URL for the home icon link, when viewing this program.'
+    )
     
     class Meta:
-        static_fields = ('name', 'description', 'hidden', 'home_url')
+        static_fields = ('name', 'slug', 'description', 'hidden', 'home_url')
         json_fields = {'options': ['home_url']}
         dynamic_fields = True
         widgets = {
-            'name': widgets.AdminTextInputWidget(),
-            'description': widgets.AdminTextInputWidget()
+            'description': widgets.AdminTextareaWidget(attrs={'rows': 3})
         }
     
     def __init__(self, *args, **kwargs):
@@ -164,6 +178,17 @@ class ProgramAdminForm(AdminJSONForm):
 
 
 class FormAdminForm(AdminJSONForm):
+    name = forms.CharField(
+        max_length=Form._meta.get_field('name').max_length,
+        widget=widgets.AdminTextInputWidget,
+        help_text='Full name, displayed on the form.'
+    )
+    slug = forms.SlugField(
+        label='identifier', allow_unicode=True, max_length=30,
+        widget=forms.TextInput(attrs={'size': 32}),
+        help_text='A short name to uniquely identify the form. '
+                  'Cannot be changed after publishing.'
+    )
     status = forms.ChoiceField(
         choices=Form.Status.choices,
         widget=widgets.AdminRadioSelect(attrs={'class': 'radiolist'})
@@ -189,7 +214,7 @@ class FormAdminForm(AdminJSONForm):
     )
     
     class Meta:
-        static_fields = ('program', 'name', 'status', 'hidden')
+        static_fields = ('program', 'name', 'slug', 'status', 'hidden')
         json_fields = {'options': [
             'hidden', 'access_enable', 'review_pre', 'review_post',
             'submitted_review_pre', 'no_review_after_submit', 'thanks'

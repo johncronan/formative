@@ -28,10 +28,10 @@ class Program(AutoSlugModel):
     class Meta:
         ordering = ['created']
     
-    name = models.CharField(max_length=32)
-    slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
-                            editable=False)
-    db_slug = models.SlugField(max_length=32, unique=True, allow_unicode=True,
+    name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=30, unique=True, allow_unicode=True,
+                            verbose_name='identifier')
+    db_slug = models.SlugField(max_length=30, unique=True, allow_unicode=True,
                                editable=False)
     description = models.CharField(max_length=250, blank=True)
     options = models.JSONField(default=dict, blank=True)
@@ -80,8 +80,9 @@ class Form(AutoSlugModel):
     program = models.ForeignKey(Program, models.CASCADE,
                                 related_name='forms', related_query_name='form')
     name = models.CharField(max_length=64)
-    slug = models.SlugField(max_length=64, allow_unicode=True, editable=False)
-    db_slug = models.SlugField(max_length=64, allow_unicode=True,
+    slug = models.SlugField(max_length=30, allow_unicode=True,
+                            verbose_name='identifier')
+    db_slug = models.SlugField(max_length=30, allow_unicode=True,
                                editable=False)
     status = models.CharField(max_length=16, default=Status.DRAFT,
                               choices=Status.choices)

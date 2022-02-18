@@ -9,7 +9,6 @@ class AutoSlugModel(models.Model):
     
     def save(self, *args, **kwargs):
         if self._state.adding:
-            self.slug = slugify(self.name)
             self.db_slug = self.slug.replace('-', '')
         try:
             super().save(*args, **kwargs)

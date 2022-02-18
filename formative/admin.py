@@ -85,6 +85,11 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
             main,
             ('Options', {'fields': list(admin_fields)}),
         ]
+    
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if obj: fields += ('slug',)
+        return fields
 
 
 class FormChangeList(ChangeList):
@@ -107,9 +112,9 @@ class FormAdmin(admin.ModelAdmin):
     
     def get_fieldsets(self, request, obj=None):
         fields = super().get_fields(request, obj)
-        main_fields = ['program', 'name', 'status', 'hidden']
+        main_fields = ['program', 'name', 'slug', 'status', 'hidden']
         
-        main = (None, {'fields': main_fields[:2] + main_fields[3:]})
+        main = (None, {'fields': main_fields[:3] + main_fields[4:]})
         if not obj: return [main]
         
         for n in main_fields: fields.remove(n)
@@ -129,9 +134,21 @@ class FormAdmin(admin.ModelAdmin):
         fields = super().get_readonly_fields(request, obj)
         if obj:
             if obj.status == Form.Status.DRAFT: fields += ('status',)
-            else: fields += ('program', 'name')
+            else: fields += ('program', 'slug')
         return fields
+    
+    def change_view(self, request, object_id, **kwargs):
+        action, kwargs = None, {}
+        if '_publish' in request.POST: action = 'publish'
+        elif '_unpublish_confirmed' in request.POST: action = 'unpublish'
         
+        if not action: return super().change_view(request, object_id, **kwargs)
+        
+        obj = self.get_object(request, object_id)
+        getattr(obj, action)(**kwargs)
+        
+        return HttpResponseRedirect(request.path)
+    
     def response_change(self, request, obj):
         subs = []
         if obj.status != Form.Status.DRAFT:
@@ -155,11 +172,7 @@ class FormAdmin(admin.ModelAdmin):
             template_name = 'admin/formative/unpublish_confirmation.html'
             return TemplateResponse(request, template_name, context)
         
-        action, kwargs = None, {}
-        if '_publish' in request.POST: action = 'publish'
-        elif '_unpublish_confirmed' in request.POST: action = 'unpublish'
-        
-        if not action: ret = super().response_change(request, obj)
+        ret = super().response_change(request, obj)
         
         if obj.status == Form.Status.DRAFT:
             obj.modified = timezone.now()
@@ -168,10 +181,6 @@ class FormAdmin(admin.ModelAdmin):
         else:
             obj.completed = None
         obj.save()
-        
-        if action:
-            getattr(obj, action)(**kwargs)
-            return HttpResponseRedirect(request.path)
         
         return ret
     
