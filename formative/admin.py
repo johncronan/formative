@@ -537,6 +537,10 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 class SubmissionItemAdmin(admin.ModelAdmin):
     list_display = ('_id', '_submission', '_collection', '_rank', '_file')
+    list_filter = (
+        '_submission', '_collection',
+        ('_file', admin.EmptyFieldListFilter)
+    )
     readonly_fields = ('_block', '_rank')
     ordering = ('_submission', '_collection', '_block', '_rank')
     form = SubmissionItemAdminForm
