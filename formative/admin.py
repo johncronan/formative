@@ -4,6 +4,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils import timezone
@@ -412,7 +413,9 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         return [url] + urls
     
     def formlist_view(self, request, form_id, **kwargs):
-        return self.changelist_view(request, extra_context={'form_id': form_id})
+        name = get_object_or_404(Form, id=int(form_id)).name
+        context = {'form_id': form_id, 'form_name': name}
+        return self.changelist_view(request, extra_context=context)
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
