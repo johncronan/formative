@@ -530,7 +530,7 @@ class SubmittedListFilter(admin.SimpleListFilter):
 
 
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ('_email', '_modified', '_submitted')
+    list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     form = SubmissionAdminForm
 
