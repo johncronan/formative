@@ -17,7 +17,8 @@ import sys, importlib
 from urllib.parse import unquote, parse_qsl
 
 from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
-    CustomBlockAdminForm, CollectionBlockAdminForm
+    CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
+    SubmissionItemAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
 from .plugins import get_matching_plugin
@@ -32,19 +33,32 @@ class FormativeAdminSite(admin.AdminSite):
     def register_submission_models(self):
         if Form._meta.db_table in connection.introspection.table_names():
             for form in Form.objects.exclude(status=Form.Status.DRAFT):
-                self.register(form.model)
-                if form.item_model: self.register(form.item_model)
+                self.register(form.model, SubmissionAdmin)
+                if form.item_model:
+                    self.register(form.item_model, SubmissionItemAdmin)
+        self.submissions_registered = True
+    
+    def catch_all_view(self, request, url):
+        if not self.submissions_registered:
+            self.get_app_list(request)
+            return HttpResponseRedirect(request.path) # better than nothing
+            # TODO a middleware is necessary to solve this?
+        
+        return super().catch_all_view(request, url)
     
     def get_app_list(self, request):
-        if not self.submissions_registered:
-            self.register_submission_models()
-            self.submissions_registered = True
+        if not self.submissions_registered: self.register_submission_models()
         
         # unlike normal Django, we might have had changes to the admin urls
         urls.clear_url_caches()
         if 'urls' in sys.modules: importlib.reload(sys.modules['urls'])
         
         return super().get_app_list(request)
+    
+    def app_index(self, request, *args, **kwargs):
+        if not self.submissions_registered: self.get_app_list(request)
+        
+        return super().app_index(request, *args, **kwargs)
 
 
 site = FormativeAdminSite()
@@ -501,3 +515,15 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
             fields += ('name1', 'name2', 'name3')
         
         return fields
+
+
+class SubmissionAdmin(admin.ModelAdmin):
+    list_display = ('_email', '_modified', '_submitted')
+    form = SubmissionAdminForm
+
+
+class SubmissionItemAdmin(admin.ModelAdmin):
+    list_display = ('_id', '_submission', '_collection', '_rank', '_file')
+    readonly_fields = ('_block', '_rank')
+    ordering = ('_submission', '_collection', '_block', '_rank')
+    form = SubmissionItemAdminForm

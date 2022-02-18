@@ -8,7 +8,7 @@ import datetime
 
 from ..signals import register_program_settings, register_form_settings
 from ..stock import StockWidget
-from ..models import Form, FormBlock, CustomBlock
+from ..models import Form, FormBlock, CustomBlock, Submission, SubmissionItem
 
 
 class NullWidget(forms.Widget):
@@ -321,3 +321,22 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['no_review']
+
+
+class SubmissionAdminForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        for name, field in self.fields.items():
+            if name == '_email': field.required = True
+            elif field.required: field.required = False
+
+
+class SubmissionItemAdminForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        for n, field in self.fields.items():
+            if isinstance(field, forms.ModelChoiceField): continue
+            if n in [ f.name for f in  SubmissionItem._meta.fields ]: continue
+            if field.required: field.required = False

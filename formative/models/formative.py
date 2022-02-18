@@ -765,6 +765,10 @@ class Submission(models.Model):
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True)
     
+    def __str__(self):
+        if hasattr(self, '_email'): return self._email
+        return str(self._id)
+    
     def _update_context(self, form, context):
         for block in form.visible_blocks():
             if block.block_type() == 'custom':
