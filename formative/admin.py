@@ -517,8 +517,21 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
         return fields
 
 
+class SubmittedListFilter(admin.SimpleListFilter):
+    title = 'submitted'
+    parameter_name = '_submitted'
+    
+    def lookups(self, request, model_admin):
+        return (('yes', 'yes'), ('no', 'no'))
+    
+    def queryset(self, request, queryset):
+        if self.value() == 'yes': return queryset.exclude(_submitted=None)
+        if self.value() == 'no': return queryset.filter(_submitted=None)
+
+
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('_email', '_modified', '_submitted')
+    list_filter = ('_email', SubmittedListFilter)
     form = SubmissionAdminForm
 
 

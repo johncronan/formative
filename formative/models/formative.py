@@ -106,8 +106,11 @@ class Form(AutoSlugModel):
             fields += block.fields()
         
         name = self.db_slug
+        class Meta:
+            verbose_name = self.slug + ' submission'
+            verbose_name_plural = self.slug + ' submissions'
         return create_model(name, fields, table_prefix=self.program.db_slug,
-                            base_class=Submission, meta=Submission.Meta)
+                            base_class=Submission, meta=Meta)
     
     @cached_property
     def item_model(self):
@@ -138,12 +141,14 @@ class Form(AutoSlugModel):
             fields.append((n, block.field()))
         
         name = self.db_slug + '_i'
-        class Meta(SubmissionItem.Meta):
+        class Meta:
             constraints = [
                 UniqueConstraint(fields=['_submission', '_collection',
                                          '_block', '_rank'],
                                  name=self.db_slug+'_unique_item_rank')
             ]
+            verbose_name = self.slug + ' item'
+            verbose_name_plural = self.slug + ' items'
         return create_model(name, fields, table_prefix=self.program.db_slug,
                             base_class=SubmissionItem, meta=Meta)
     
@@ -753,7 +758,6 @@ class SubmissionRecord(models.Model):
 class Submission(models.Model):
     class Meta:
         abstract = True
-        managed = False
     
     _id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                            editable=False)
@@ -812,7 +816,6 @@ def file_path(instance, filename):
 class SubmissionItem(UnderscoredRankedModel):
     class Meta:
         abstract = True
-        managed = False
     
     _id = models.BigAutoField(primary_key=True, editable=False)
     # see Form.item_model() for _submission = models.ForeignKey(Submission)
