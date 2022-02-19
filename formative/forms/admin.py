@@ -354,8 +354,10 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         required=False,
         help_text='Available types are: '+', '.join(FileType.types.keys())+'. '
                   'Leave empty to allow any file type.'
+    ) # TODO what if the set of available file types (or stocks) changes?
+    max_filesize = forms.IntegerField(
+        required=False, help_text='bytes. Applies to any type of file.'
     )
-    max_filesize = forms.IntegerField(required=False, help_text='bytes')
     autoinit_filename = forms.ChoiceField(
         required=False,
         help_text="If selected, the text field's default will be the file name."
@@ -382,6 +384,17 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         else:
             choices = [ (n, n) for n in block.collection_fields() ]
             self.fields['autoinit_filename'].choices = [(None, '-')] + choices
+    
+    def clean(self):
+        super().clean()
+        cleaned_data = self.cleaned_data
+        
+        if not self.instance: return cleaned_data
+        if cleaned_data['autoinit_filename']:
+            field = cleaned_data['autoinit_filename']
+            if field not in self.instance.collection_fields():
+                del cleaned_data['options']['autoinit_filename']
+        return cleaned_data
 
 
 class SubmissionAdminForm(forms.ModelForm):
