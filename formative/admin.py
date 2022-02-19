@@ -520,9 +520,11 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         if not obj: return [(None, {'fields': main})]
         
         options = fieldsets[1][1]['fields']
-        names += ['name', 'page', 'file_types']
+        names += ['name', 'page', 'file_types', 'max_filesize',
+                  'autoinit_filename']
         options += [ f for f in fields if f not in names ]
-        if obj.has_file: options.append('file_types')
+        if obj.has_file:
+            options += ['file_types', 'max_filesize', 'autoinit_filename']
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]
         return sets + fieldsets[2:]

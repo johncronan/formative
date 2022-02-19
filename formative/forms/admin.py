@@ -148,6 +148,7 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 test = bool
                 if isinstance(self.fields[field], forms.BooleanField): pass
                 elif isinstance(self.fields[field], forms.CharField): pass
+                elif isinstance(self.fields[field], forms.ChoiceField): pass
                 else: test = lambda x: x is not None
                 
                 if test(cleaned_data[field]):
@@ -354,6 +355,11 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         help_text='Available types are: '+', '.join(FileType.types.keys())+'. '
                   'Leave empty to allow any file type.'
     )
+    max_filesize = forms.IntegerField(required=False, help_text='bytes')
+    autoinit_filename = forms.ChoiceField(
+        required=False,
+        help_text="If selected, the text field's default will be the file name."
+    )
     
     class Meta:
         exclude = ('form', 'align_type')
@@ -364,12 +370,18 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         if 'instance' in kwargs and kwargs['instance']:
             block = kwargs['instance']
             if block.has_file:
-                self._meta.json_fields['options'].append('file_types')
+                fields = ['file_types', 'max_filesize', 'autoinit_filename']
+                self._meta.json_fields['options'] += fields
         
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['no_review']
-        if not block or not block.has_file: del self.fields['file_types']
+        if not block or not block.has_file:
+             for n in ('file_types', 'max_filesize', 'autoinit_filename'):
+                del self.fields[n]
+        else:
+            choices = [ (n, n) for n in block.collection_fields() ]
+            self.fields['autoinit_filename'].choices = [(None, '-')] + choices
 
 
 class SubmissionAdminForm(forms.ModelForm):
