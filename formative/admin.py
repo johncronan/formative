@@ -502,7 +502,7 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
 
 
 @admin.register(CollectionBlock, site=site)
-class CollectionBlockAdmin(FormBlockChildAdmin):
+class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
     form = CollectionBlockAdminForm
     
     def get_fieldsets(self, request, obj=None):
@@ -516,8 +516,16 @@ class CollectionBlockAdmin(FormBlockChildAdmin):
         elif not obj.has_file: add = names[:6]
         else: add = names[:]
         
-        ret = [ f for f in fields if f not in names ] + add
-        return [(None, {'fields': ret})] + fieldsets[1:]
+        main = ['name', 'page'] + add
+        if not obj: return [(None, {'fields': main})]
+        
+        options = fieldsets[1][1]['fields']
+        names += ['name', 'page', 'file_types']
+        options += [ f for f in fields if f not in names ]
+        if obj.has_file: options.append('file_types')
+        
+        sets = [(None, {'fields': main}), ('Options', {'fields': options})]
+        return sets + fieldsets[2:]
     
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
@@ -534,7 +542,7 @@ class SubmittedListFilter(admin.SimpleListFilter):
     parameter_name = '_submitted'
     
     def lookups(self, request, model_admin):
-        return (('yes', 'yes'), ('no', 'no'))
+        return (('yes', 'submitted'), ('no', 'unsubmitted'))
     
     def queryset(self, request, queryset):
         if self.value() == 'yes': return queryset.exclude(_submitted=None)

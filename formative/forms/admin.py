@@ -3,10 +3,12 @@ from django.core.exceptions import ValidationError
 from django.contrib.admin import widgets
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
+from django_better_admin_arrayfield.forms.widgets import DynamicArrayWidget
 
 import datetime
 
 from ..signals import register_program_settings, register_form_settings
+from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, \
     Submission, SubmissionItem
@@ -39,7 +41,20 @@ class NegatedBooleanField(forms.BooleanField):
     def prepare_value(self, value): return not value
     
     def to_python(self, value): return not super().to_python(value)
+    
+    def has_changed(self, initial, data):
+        return (not self.to_python(initial)) != self.to_python(data)
 
+
+class SplitDictWidget(forms.MultiWidget):
+    def __init__(self, attrs=None):
+        widgets = (
+            
+        )
+        super().__init__(widgets)
+    
+    def decompress(self, val):
+        return { }
 
 class JSONDateTimeWidget(widgets.AdminSplitDateTime):
     def decompress(self, val):
@@ -333,6 +348,12 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     no_review = NegatedBooleanField(label='show in review', required=False)
+    file_types = DynamicArrayField(
+        forms.ChoiceField(choices=[ (n, n) for n in FileType.types.keys() ]),
+        required=False,
+        help_text='Available types are: '+', '.join(FileType.types.keys())+'. '
+                  'Leave empty to allow any file type.'
+    )
     
     class Meta:
         exclude = ('form', 'align_type')
@@ -342,10 +363,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         block = None
         if 'instance' in kwargs and kwargs['instance']:
             block = kwargs['instance']
+            if block.has_file:
+                self._meta.json_fields['options'].append('file_types')
         
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['no_review']
+        if not block or not block.has_file: del self.fields['file_types']
 
 
 class SubmissionAdminForm(forms.ModelForm):
