@@ -1,5 +1,6 @@
 from django import forms, urls
 from django.contrib import admin, auth
+from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
@@ -284,6 +285,28 @@ class FormBlockBase:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
     
+    def response_change(self, request, obj):
+        if '_popup' in request.POST or '_continue' not in request.POST:
+            return super().response_change(request, obj)
+        
+        url, form_id = request.path, request.GET.get('form_id')
+        if form_id: url += f'?form_id={form_id}'
+        
+        filters = self.get_preserved_filters(request)
+        url = add_preserved_filters({'preserved_filters': filters,
+                                     'opts': self.model._meta}, url)
+        return HttpResponseRedirect(url)
+    
+    def response_add(self, request, obj, **kwargs):
+        if '_popup' in request.POST or '_continue' not in request.POST:
+            return super().response_add(request, obj, **kwargs)
+        
+        opts = obj._meta
+        url = reverse('admin:%s_%s_change' % (opts.app_label, opts.model_name),
+                      args=(obj.pk,), current_app=self.admin_site.name)
+        url += f'?form_id={obj.form.id}'
+        return super().response_add(request, obj, post_url_continue=url)
+    
     def response_post_save_change(self, request, obj):
         app_label = self.model._meta.app_label
         form_id = request.GET.get('form_id')
@@ -437,7 +460,8 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
     
     def change_view(self, *args, **kwargs):
         # we still have the bulk action for delete - it redirects properly
-        kwargs['extra_context'] = {'show_delete': False}
+        kwargs['extra_context'] = {'show_delete': False,
+                                   'show_save_and_add_another': False}
         return super().change_view(*args, **kwargs)
     
     def get_preserved_filters(self, request):
@@ -479,8 +503,7 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
                  'min_words', 'max_words']
         
         if not obj:
-            main = [ f for f in fields if f not in names ] + names[1:]
-            return [(None, {'fields': main})]
+            return [(None, {'fields': ['name', 'page', 'type']})]
         
         options = fieldsets[1][1]['fields']
         if obj.type == CustomBlock.InputType.TEXT: add = names[:1] + names[2:]

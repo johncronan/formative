@@ -412,8 +412,10 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         
         super().__init__(*args, **kwargs)
         
-        if not block: del self.fields['choices'], self.fields['no_review']
-        if block:
+        if not block:
+            del self.fields['numeric_min'], self.fields['numeric_max']
+            del self.fields['choices'], self.fields['no_review']
+        else:
             if block.type != CustomBlock.InputType.CHOICE:
                 del self.fields['choices']
             if block.type != CustomBlock.InputType.NUMERIC:
