@@ -67,6 +67,9 @@ class FileType:
     
     def admin_limit_fields(self):
         return ()
+    
+    def admin_total_fields(self):
+        return ()
 
 
 from .image import ImageFile

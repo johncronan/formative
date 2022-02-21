@@ -24,3 +24,6 @@ class DocumentFile(FileType):
     
     def admin_limit_fields(self):
         return ('pages',)
+    
+    def admin_total_fields(self):
+        return ('pages',)

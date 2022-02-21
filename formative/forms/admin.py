@@ -459,15 +459,17 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 fields += ['file_types', 'max_filesize', 'autoinit_filename']
                 self._meta.json_fields['options'] += fields
                 
-                admin_fields = {}
+                admin_fields, total_fields = {}, {}
                 self._meta.json_fields['options.file_limits'] = []
                 for name in block.allowed_filetypes() or []:
-                    filetype = FileType.by_type(name)
-                    field_names = filetype().admin_limit_fields()
+                    filetype = FileType.by_type(name)()
                     fields = {}
-                    for n in field_names:
+                    for n in filetype.admin_limit_fields():
                         fields['min_' + n] = forms.IntegerField()
                         fields['max_' + n] = forms.IntegerField()
+                    for n in filetype.admin_total_fields():
+                        total_fields['min_' + n] = forms.IntegerField()
+                        total_fields['max_' + n] = forms.IntegerField()
                     
                     admin_fields[name] = SplitDictField(
                         fields, required=False,
@@ -475,6 +477,16 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                         label=name+' limits'
                     )
                     self._meta.json_fields['options.file_limits'].append(name)
+                
+                admin_fields['total'] = SplitDictField(
+                    total_fields, required=False,
+                    widget=SplitDictWidget(total_fields, two_column=True),
+                    label='total limits',
+                    help_text='Limits that apply to the total value, '
+                              'for all files (when field is applicable).'
+                )
+                self._meta.json_fields['options.file_limits'].append('total')
+                
                 kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)

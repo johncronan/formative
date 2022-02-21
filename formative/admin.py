@@ -526,9 +526,12 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         options += [ f for f in fields if f not in names ]
         if obj.has_file:
             options += ['file_types', 'max_filesize', 'autoinit_filename']
+            total = False
             for name in obj.allowed_filetypes() or []:
-                if not FileType.by_type(name)().admin_limit_fields(): continue
-                options.append(name)
+                filetype = FileType.by_type(name)()
+                if filetype.admin_limit_fields(): options.append(name)
+                if filetype.admin_total_fields(): total = True
+            if total: options.append('total')
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]
         return sets + fieldsets[2:]

@@ -187,3 +187,6 @@ class VideoFile(AudioFile):
     def admin_limit_fields(self):
         return ('seconds', 'bitrate', 'video_bitrate', 'video_framerate',
                 'video_width', 'video_height')
+    
+    def admin_total_fields(self):
+        return ('seconds',)
