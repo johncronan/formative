@@ -1,13 +1,5 @@
-{% extends "admin/change_list.html" %}
+{% extends "admin/change_form.html" %}
 {% load i18n admin_urls %}
-
-{% block content_title %}
-{% if form_id %}
-  {{ form_name }}  
-{% else %}
-  {{ cl.opts.verbose_name_plural|capfirst }}
-{% endif %}
-{% endblock %}
 
 {% block breadcrumbs %}
 <ol class="breadcrumb float-sm-right">
@@ -24,8 +16,15 @@
 <li class="breadcrumb-item">
   <a href="{% url 'admin:formative_form_changelist' %}">Forms</a>
 </li>
+{% if add %}
+  <li class="breadcrumb-item">{% trans 'Add form' %}</li>
+{% else %}
 <li class="breadcrumb-item">
-  {{ form_name }}
+  <a href="{% url 'admin:formative_formblock_formlist' original.id %}">
+    {{ original }}
+  </a>
 </li>
+<li class="breadcrumb-item">settings</li>
+{% endif %}
 </ol>
 {% endblock %}

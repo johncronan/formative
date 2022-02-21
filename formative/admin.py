@@ -311,14 +311,20 @@ class FormBlockBase:
         if form_id: obj.form_id = form_id
         return obj
     
-    def changeform_view(self, request, object_id=None, form_url='', *args):
+    def changeform_view(self, request, object_id=None, form_url='',
+                        extra_context=None):
         form_id = request.GET.get('form_id')
         if form_id:
             form_arg = urlencode({'form_id': form_id})
             if form_url: form_url += '&' + form_arg
             else: form_url = '?' + form_arg
+            
+            if not extra_context: extra_context = {}
+            name = get_object_or_404(Form, id=int(form_id)).name
+            extra_context.update({'form_id': int(form_id), 'form_name': name})
         
-        return super().changeform_view(request, object_id, form_url, *args)
+        return super().changeform_view(request, object_id, form_url,
+                                       extra_context)
     
     def try_form_id(self, request, match):
         form = None
