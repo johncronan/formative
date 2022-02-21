@@ -153,7 +153,7 @@ class Form(AutoSlugModel):
         return create_model(name, fields, table_prefix=self.program.db_slug,
                             base_class=SubmissionItem, meta=Meta)
     
-    def publish_model(self, model):
+    def publish_model(self, model, admin=None):
         with connection.schema_editor() as editor:
             editor.create_model(model)
         ctype = ContentType(app_label=model._meta.app_label,
@@ -162,7 +162,7 @@ class Form(AutoSlugModel):
         ContentType.objects.clear_cache()
         
         from ..admin import site
-        site.register(model)
+        site.register(model, admin)
     
     def unpublish_model(self, model):
         from ..admin import site
@@ -184,8 +184,10 @@ class Form(AutoSlugModel):
         if 'model' in self.__dict__: del self.model
         if 'item_model' in self.__dict__: del self.item_model
         
-        self.publish_model(self.model)
-        if self.item_model: self.publish_model(self.item_model)
+        from ..admin import SubmissionAdmin, SubmissionItemAdmin
+        self.publish_model(self.model, admin=SubmissionAdmin)
+        if self.item_model:
+            self.publish_model(self.item_model, admin=SubmissionItemAdmin)
         
         self.modified = timezone.now()
         self.save()
@@ -613,6 +615,8 @@ class CustomBlock(FormBlock):
 class CollectionBlock(FormBlock):
     class Meta:
         db_table = 'formative_formcollectionblock'
+    
+    FIXED_CHOICE_VAL_MAXLEN = 100
     
     class AlignType(models.TextChoices):
         HORIZONTAL = 'horizontal', _('horizontal')

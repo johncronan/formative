@@ -513,7 +513,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
                  'min_items', 'max_items', 'file_optional']
         
         if not obj: add = names[:5]
-        elif obj.fixed: add = names[:4]
+        elif obj.fixed: add = names[:4] + ['choices']
         elif not obj.has_file: add = names[:6]
         else: add = names[:]
         
@@ -522,7 +522,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         
         options = fieldsets[1][1]['fields']
         names += ['name', 'page', 'file_types', 'max_filesize',
-                  'autoinit_filename']
+                  'autoinit_filename', 'choices']
         options += [ f for f in fields if f not in names ]
         if obj.has_file:
             options += ['file_types', 'max_filesize', 'autoinit_filename']

@@ -10,7 +10,7 @@ import datetime
 from ..signals import register_program_settings, register_form_settings
 from ..filetype import FileType
 from ..stock import StockWidget
-from ..models import Program, Form, FormBlock, CustomBlock, \
+from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
     Submission, SubmissionItem
 
 
@@ -421,6 +421,9 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
+    name1 = forms.CharField(required=False, label='text input name 1')
+    name2 = forms.CharField(required=False, label='text input name 2')
+    name3 = forms.CharField(required=False, label='text input name 3')
     no_review = NegatedBooleanField(label='show in review', required=False)
     button_text = forms.CharField(
         required=False,
@@ -440,6 +443,9 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     autoinit_filename = forms.ChoiceField(
         required=False,
         help_text="If selected, the text field's default will be the file name."
+    )
+    choices = DynamicArrayField(
+        forms.CharField(max_length=CollectionBlock.FIXED_CHOICE_VAL_MAXLEN),
     )
     
     class Meta:
@@ -488,10 +494,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 self._meta.json_fields['options.file_limits'].append('total')
                 
                 kwargs['admin_fields'] = admin_fields
+            
+            if block.fixed: self._meta.json_fields['options'].append('choices')
         
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['no_review'], self.fields['button_text']
+        if not block or not block.fixed: del self.fields['choices']
         if not block or not block.has_file:
              for n in ('file_types', 'max_filesize', 'autoinit_filename'):
                 del self.fields[n]
@@ -503,7 +512,12 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         super().clean()
         cleaned_data = self.cleaned_data
         
-        if not self.instance: return cleaned_data
+        if not self.instance.pk:
+            if cleaned_data['fixed'] and not cleaned_data['name1']:
+                msg = 'A fixed collection must have at least one text input'
+                self.add_error('name1', msg)
+            return cleaned_data
+        
         if 'autoinit_filename' in cleaned_data:
             field = cleaned_data['autoinit_filename']
             if field not in self.instance.collection_fields():
