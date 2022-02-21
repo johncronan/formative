@@ -82,3 +82,6 @@ class ImageFile(FileType):
             except:
                 self.logger.critical('Error generating thumbnail.',
                                      exc_info=True)
+    
+    def admin_limit_fields(self):
+        return ('width', 'height', 'megapixels')

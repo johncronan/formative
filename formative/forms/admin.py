@@ -46,15 +46,68 @@ class NegatedBooleanField(forms.BooleanField):
         return (not self.to_python(initial)) != self.to_python(data)
 
 
+DISPLAY_MAX = 9999999999
+
 class SplitDictWidget(forms.MultiWidget):
-    def __init__(self, attrs=None):
-        widgets = (
-            
-        )
-        super().__init__(widgets)
+    template_name = 'admin/formative/widgets/split_dict.html'
+    
+    def __init__(self, fields, two_column=False, attrs=None):
+        self.fields, self.two_column = fields, two_column
+        
+        subwidgets = {}
+        for name, field in fields.items():
+            widget = forms.TextInput(attrs=attrs)
+            if isinstance(field, forms.IntegerField):
+                if not attrs: int_attrs = {}
+                else: int_attrs = attrs.copy()
+                
+                int_attrs['min'], int_attrs['max'] = 0, DISPLAY_MAX
+                if name.startswith('min_'):
+                    int_attrs['placeholder'] = 'minimum'
+                elif name.startswith('max_'):
+                    int_attrs['placeholder'] = 'maximum'
+                
+                widget = widgets.AdminIntegerFieldWidget(attrs=int_attrs)
+            subwidgets[name] = widget
+        
+        super().__init__(subwidgets)
     
     def decompress(self, val):
-        return { }
+        if val:
+            ret = []
+            for name, field in self.fields.items():
+                if name in val: ret.append(val[name])
+                else: ret.append(None)
+            return ret
+        return [None] * len(self.fields)
+    
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['two_column'] = self.two_column
+        for widget in context['widget']['subwidgets']:
+            name = widget['name'][widget['name'].index('_')+1:]
+            if name.startswith('min_') or name.startswith('max_'):
+                name = name[4:]
+            widget['short_name'] = name
+        
+        return context
+
+
+class SplitDictField(forms.MultiValueField):
+    widget = SplitDictWidget
+    
+    def __init__(self, fields, **kwargs):
+        self.fields_dict = fields
+        super().__init__(fields.values(), **kwargs)
+    
+    def compress(self, data):
+        if not data: return None
+        ret = {}
+        for i, (name, field) in enumerate(self.fields_dict.items()):
+            if data[i] is not None: ret[name] = data[i]
+        if ret: return ret
+        return None
+
 
 class JSONDateTimeWidget(widgets.AdminSplitDateTime):
     def decompress(self, val):
@@ -103,11 +156,15 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
                         # non-model fields have to be statically declared
                         exclude_fields.append(f) # remove; added back, in init
             
-            if fields != forms.ALL_FIELDS:
+            if fields and fields != forms.ALL_FIELDS:
                 fields = [ f for f in fields
                            if f not in json_fields and f not in exclude_fields ]
-                if fields:
-                    attrs['Meta'].fields = list(json_fields.keys()) + fields
+                json_keys = {}
+                for field in json_fields:
+                    if '.' in field: val = field[:field.index('.')]
+                    else: val = field
+                    json_keys[val] = True
+                attrs['Meta'].fields = list(json_keys) + fields
         
         new_class = super().__new__(cls, class_name, bases, attrs)
         
@@ -125,7 +182,13 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
             if 'initial' in kwargs: initial = kwargs['initial']
             
             for name, fields in self._meta.json_fields.items():
-                value = getattr(instance, name)
+                if '.' in name:
+                    p1, p2 = name[:name.index('.')], name[name.index('.')+1:]
+                    json = getattr(instance, p1)
+                    if p2 not in json: value = {}
+                    else: value = json[p2]
+                else: value = getattr(instance, name)
+                
                 for field in fields:
                     if field in value: initial[field] = value[field]
             
@@ -140,7 +203,15 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
     def clean(self):
         cleaned_data = self.cleaned_data
         for name, fields in self._meta.json_fields.items():
-            if not cleaned_data[name]: cleaned_data[name] = {}
+            base, part = name, None
+            if '.' in name: base = name[:name.index('.')]
+            
+            if not cleaned_data[base]: cleaned_data[base] = {}
+            dest = cleaned_data[base]
+            if '.' in name:
+                part = name[name.index('.')+1:]
+                if part not in dest: dest[part] = {}
+                dest = dest[part]
             
             for field in fields:
                 if field not in cleaned_data: continue
@@ -149,11 +220,13 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 if isinstance(self.fields[field], forms.BooleanField): pass
                 elif isinstance(self.fields[field], forms.CharField): pass
                 elif isinstance(self.fields[field], forms.ChoiceField): pass
+                elif isinstance(self.fields[field], SplitDictField): pass
                 else: test = lambda x: x is not None
                 
-                if test(cleaned_data[field]):
-                    cleaned_data[name][field] = cleaned_data[field]
-                else: cleaned_data[name].pop(field, None)
+                if test(cleaned_data[field]): dest[field] = cleaned_data[field]
+                else: dest.pop(field, None)
+            
+            if '.' in name and not dest: cleaned_data[base].pop(part, None)
         
         return cleaned_data
 
@@ -349,6 +422,11 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     no_review = NegatedBooleanField(label='show in review', required=False)
+    button_text = forms.CharField(
+        required=False,
+        help_text="Label for the collection's 'add' button. "
+                  "Defaults to 'add item' or 'add file' or 'add files.'"
+    )
     file_types = DynamicArrayField(
         forms.ChoiceField(choices=[ (n, n) for n in FileType.types.keys() ]),
         required=False,
@@ -356,7 +434,8 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                   'Leave empty to allow any file type.'
     ) # TODO what if the set of available file types (or stocks) changes?
     max_filesize = forms.IntegerField(
-        required=False, help_text='bytes. Applies to any type of file.'
+        required=False, help_text='bytes. Applies to any type of file.',
+        widget=widgets.AdminIntegerFieldWidget
     )
     autoinit_filename = forms.ChoiceField(
         required=False,
@@ -365,19 +444,42 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     
     class Meta:
         exclude = ('form', 'align_type')
-        json_fields = {'options': ['no_review']}
+        static_fields = ('name', 'page', 'fixed', 'name1', 'name2', 'name3',
+                         'has_file', 'min_items', 'max_items', 'file_optional',
+                         'dependence', 'negate_dependencies')
+        json_fields = {'options': ['no_review', 'fieldtest']}
+        dynamic_fields = True
     
     def __init__(self, *args, **kwargs):
-        block = None
+        block, file_limits = None, {}
         if 'instance' in kwargs and kwargs['instance']:
             block = kwargs['instance']
+            fields = ['button_text']
             if block.has_file:
-                fields = ['file_types', 'max_filesize', 'autoinit_filename']
+                fields += ['file_types', 'max_filesize', 'autoinit_filename']
                 self._meta.json_fields['options'] += fields
+                
+                admin_fields = {}
+                self._meta.json_fields['options.file_limits'] = []
+                for name in block.allowed_filetypes() or []:
+                    filetype = FileType.by_type(name)
+                    field_names = filetype().admin_limit_fields()
+                    fields = {}
+                    for n in field_names:
+                        fields['min_' + n] = forms.IntegerField()
+                        fields['max_' + n] = forms.IntegerField()
+                    
+                    admin_fields[name] = SplitDictField(
+                        fields, required=False,
+                        widget=SplitDictWidget(fields, two_column=True),
+                        label=name+' limits'
+                    )
+                    self._meta.json_fields['options.file_limits'].append(name)
+                kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
         
-        if not block: del self.fields['no_review']
+        if not block: del self.fields['no_review'], self.fields['button_text']
         if not block or not block.has_file:
              for n in ('file_types', 'max_filesize', 'autoinit_filename'):
                 del self.fields[n]

@@ -21,3 +21,6 @@ class DocumentFile(FileType):
             msg = _('Error occurred reading the PDF file.')
             self.logger.critical(msg, exc_info=True)
             return {'error': msg}
+    
+    def admin_limit_fields(self):
+        return ('pages',)

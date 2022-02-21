@@ -92,6 +92,10 @@ class AudioFile(AVFileType):
     
     def subtitle_meta(self, stream, extension):
         return {}
+    
+    def admin_limit_fields(self):
+        return ('seconds', 'bitrate', 'audio_bitrate', 'audio_samplerate',
+                'audio_channels')
 
 
 class VideoFile(AudioFile):
@@ -179,3 +183,7 @@ class VideoFile(AudioFile):
             except:
                 self.logger.critical('Error generating video thumbnail.',
                                      exc_info=True)
+    
+    def admin_limit_fields(self):
+        return ('seconds', 'bitrate', 'video_bitrate', 'video_framerate',
+                'video_width', 'video_height')

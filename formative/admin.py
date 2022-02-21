@@ -22,6 +22,7 @@ from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     SubmissionItemAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
+from .filetype import FileType
 from .plugins import get_matching_plugin
 from .signals import register_program_settings, register_form_settings
 
@@ -525,6 +526,9 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         options += [ f for f in fields if f not in names ]
         if obj.has_file:
             options += ['file_types', 'max_filesize', 'autoinit_filename']
+            for name in obj.allowed_filetypes() or []:
+                if not FileType.by_type(name)().admin_limit_fields(): continue
+                options.append(name)
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]
         return sets + fieldsets[2:]

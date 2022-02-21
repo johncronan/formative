@@ -1,0 +1,16 @@
+<p class="splitdict">
+  {% for widget in widget.subwidgets %}
+    {% if two_column and forloop.counter|divisibleby:2 %}&nbsp;{% endif %}
+    {% if not two_column or not forloop.counter|divisibleby:2 %}
+      {{ widget.short_name }}:
+    {% endif %}
+    {% if two_column and not forloop.counter|divisibleby:2 %}<nobr>{% endif %}
+    {% include widget.template_name %}
+  {% if two_column %}
+    {% if forloop.counter|divisibleby:2 %}</nobr>{% endif %}
+    {% if forloop.counter|divisibleby:2 and not forloop.last %}<br>{% endif %}
+  {% else %}
+    {% if not forloop.last %}<br>{% endif %}
+  {% endif %}
+  {% endfor %}
+</p>

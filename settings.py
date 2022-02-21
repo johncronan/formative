@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.forms',
     'django_better_admin_arrayfield',
     'polymorphic',
     'webpack_loader',
@@ -71,6 +72,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'urls'
+
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 TEMPLATES = [
     {

@@ -64,6 +64,9 @@ class FileType:
     
     def submitted(self, items):
         pass
+    
+    def admin_limit_fields(self):
+        return ()
 
 
 from .image import ImageFile
