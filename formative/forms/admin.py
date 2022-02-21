@@ -504,7 +504,7 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         cleaned_data = self.cleaned_data
         
         if not self.instance: return cleaned_data
-        if cleaned_data['autoinit_filename']:
+        if 'autoinit_filename' in cleaned_data:
             field = cleaned_data['autoinit_filename']
             if field not in self.instance.collection_fields():
                 del cleaned_data['options']['autoinit_filename']
