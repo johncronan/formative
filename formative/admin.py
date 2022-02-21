@@ -6,10 +6,11 @@ from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
-from django.urls import path, reverse
+from django.urls import path, reverse, NoReverseMatch
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
@@ -561,7 +562,19 @@ class SubmittedListFilter(admin.SimpleListFilter):
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
+    readonly_fields = ('items_index',)
     form = SubmissionAdminForm
+    
+    @admin.display(description='items')
+    def items_index(self, obj):
+        app, name = self.model._meta.app_label, self.model._meta.model_name
+        args = f'?_submission___id__exact={obj._id}'
+        try:
+            url = reverse('admin:%s_%s_changelist' % (app, name + '_i'),
+                          current_app=self.admin_site.name) + args
+        except NoReverseMatch: return ''
+        
+        return mark_safe(f'<a href="{url}">items listing</a>')
 
 
 class SubmissionItemAdmin(admin.ModelAdmin):
@@ -570,6 +583,9 @@ class SubmissionItemAdmin(admin.ModelAdmin):
         '_submission', '_collection',
         ('_file', admin.EmptyFieldListFilter)
     )
-    readonly_fields = ('_block', '_rank')
+    readonly_fields = ('_submission', '_block', '_rank')
     ordering = ('_submission', '_collection', '_block', '_rank')
     form = SubmissionItemAdminForm
+    
+    def has_add_permission(self, request):
+        return False
