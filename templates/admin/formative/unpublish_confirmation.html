@@ -1,77 +1,47 @@
-{% extends "admin/base_site.html" %}
-{% load i18n admin_urls static jazzmin %}
-{% get_jazzmin_ui_tweaks as jazzmin_ui %}
-
-{% block extrahead %}
-{{ block.super }}
-{{ media }}
-<script src="{% static 'admin/js/cancel.js' %}"></script>
-{% endblock %}
-
-{% block bodyclass %}
-{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }}
-{% endblock %}
-
-{% block breadcrumbs %}
-{# TODO #}
-{% endblock %}
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
 
 {% block content_title %} {% trans 'Unpublish' %} {% endblock %}
 
-{% block content %}
-
-<div class="col-12">
-  <div class="card card-danger card-outline">
-    <div class="card-header with-border">
-      <h4 class="card-title">
+{% block cardtitle %}
         {% trans 'Unpublish' %} {{ object }}
-      </h4>
-    </div>
-    
-    <div class="card-body">
-      <div id="content-main">
-        <p>
-          Are you sure you want to unpublish the form "{{ object }}"?<br>
-        </p>
-        {% if submissions %}
-          <p>
-            It is NOT recommended to unpublish a form that has submissions.<br>
-            Consider making the form hidden, instead. TODO: link to export
-          </p>
-          <p>All of the following related items will be deleted:</p>
-        {% endif %}
-        <div class="row">
-          <div class="col-12 col-sm-9">
-            {% if submissions %}<h4>{% trans "Objects" %}</h4>{% endif %}
-            <ol>
-            {% for rec in submissions %}
-              <li>
-                Submission: {{ rec.0 }}
-                {% if rec.1 %}
-                  <ul>{{ rec.1 }} items</ul>
-                {% endif %}
-              </li>
-            {% endfor %}
-            </ol>
-          </div>
-          <div class="col-12 col-sm-3">
-          <form method="post">{% csrf_token %}
-            <input type="hidden" name="status" value="{{ object.status }}">
-            <div class="form-group">
-              <input type="submit" name="_unpublish_confirmed"
-                     class="btn {{ jazzmin_ui.button_classes.danger }}
-                            form-control" value="{% trans "Yes, I'm sure" %}">
-            </div>
-            <div class="form-group">
-              <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
-                                 cancel-link form-control">
-                {% trans "No, take me back" %}
-              </a>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+{% endblock %}
 
+{% block cardcontent %}
+    <p>
+      Are you sure you want to unpublish the form "{{ object }}"?<br>
+    </p>
+    {% if submissions %}
+      <p>
+        It is NOT recommended to unpublish a form that has submissions.<br>
+        Consider making the form hidden, instead. TODO: link to export
+      </p>
+      <p>All of the following related items will be deleted:</p>
+    {% endif %}
+    <div class="row">
+      <div class="col-12 col-sm-9">
+        {% if submissions %}<h4>{% trans "Objects" %}</h4>{% endif %}
+        <ol>
+        {% for rec in submissions %}
+          <li>
+            Submission: {{ rec.0 }}
+            {% if rec.1 %}<ul>{{ rec.1 }} items</ul>{% endif %}
+          </li>
+        {% endfor %}
+        </ol>
+      </div>
+{% endblock %}
+
+{% block confirmform %}
+        <div class="form-group">
+          <input type="submit" name="_unpublish_confirmed"
+                 class="btn {{ jazzmin_ui.button_classes.danger }}
+                        form-control" value="{% trans "Yes, I'm sure" %}">
+        </div>
+        <div class="form-group">
+          <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                             cancel-link form-control">
+            {% trans "No, take me back" %}
+          </a>
+        </div>
 {% endblock %}

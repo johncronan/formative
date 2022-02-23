@@ -1,6 +1,5 @@
 from django import forms, urls
 from django.contrib import admin, auth
-from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
@@ -285,18 +284,6 @@ class FormBlockBase:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
     
-    def response_change(self, request, obj):
-        if '_popup' in request.POST or '_continue' not in request.POST:
-            return super().response_change(request, obj)
-        
-        url, form_id = request.path, request.GET.get('form_id')
-        if form_id: url += f'?form_id={form_id}'
-        
-        filters = self.get_preserved_filters(request)
-        url = add_preserved_filters({'preserved_filters': filters,
-                                     'opts': self.model._meta}, url)
-        return HttpResponseRedirect(url)
-    
     def response_add(self, request, obj, **kwargs):
         if '_popup' in request.POST or '_continue' not in request.POST:
             return super().response_add(request, obj, **kwargs)
@@ -311,16 +298,17 @@ class FormBlockBase:
         app_label = self.model._meta.app_label
         form_id = request.GET.get('form_id')
         
-        if form_id:
-            url = reverse('admin:%s_formblock_formlist' % (app_label,),
-                          args=(form_id,), current_app=self.admin_site.name)
-            changelist_filters = request.GET.get('_changelist_filters')
-            if changelist_filters:
-                filters = dict(parse_qsl(unquote(changelist_filters)))
-                url = url + '?' + urlencode(filters)
-            return HttpResponseRedirect(url)
+        if not obj and not form_id:
+            return super().response_post_save_change(request, obj)
         
-        return super().response_post_save_change(request, obj)
+        if not form_id: form_id = obj.form.id
+        url = reverse('admin:%s_formblock_formlist' % (app_label,),
+                      args=(form_id,), current_app=self.admin_site.name)
+        changelist_filters = request.GET.get('_changelist_filters')
+        if changelist_filters:
+            filters = dict(parse_qsl(unquote(changelist_filters)))
+            url = url + '?' + urlencode(filters)
+        return HttpResponseRedirect(url)
     
     def response_post_save_add(self, request, obj):
         if request.GET.get('form_id'):
@@ -577,7 +565,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
 
 
 class SubmittedListFilter(admin.SimpleListFilter):
-    title = 'submitted'
+    title = 'status'
     parameter_name = '_submitted'
     
     def lookups(self, request, model_admin):
@@ -604,6 +592,38 @@ class SubmissionAdmin(admin.ModelAdmin):
         except NoReverseMatch: return ''
         
         return mark_safe(f'<a href="{url}">items listing</a>')
+    
+    def change_view(self, request, object_id, **kwargs):
+        action, kwargs = None, {}
+        if '_submit_confirmed' in request.POST: action = 'submit'
+        elif '_unsubmit_confirmed' in request.POST: action = 'unsubmit'
+        
+        if not action:
+            kwargs['extra_context'] = {'model_is_submission': True}
+            return super().change_view(request, object_id, **kwargs)
+        
+        obj = self.get_object(request, object_id)
+        if action == 'submit': obj._submit()
+        else:
+            obj._submitted = None
+            obj.save()
+        return HttpResponseRedirect(request.path)
+    
+    def response_change(self, request, obj):
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'media': self.media,
+            'object': obj,
+        }
+        template_name = 'admin/formative/submit_confirmation.html'
+        if '_submit' in request.POST or '_unsubmit' in request.POST:
+            if '_submit' in request.POST: context['submit'] = True
+            else: context['unsubmit'] = True
+            
+            return TemplateResponse(request, template_name, context)
+        
+        return super().response_change(request, obj)
 
 
 class SubmissionItemAdmin(admin.ModelAdmin):

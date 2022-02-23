@@ -1,0 +1,46 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block cardtitle %}
+    {% if unsubmit %}
+      {% trans 'Unsubmit' %}
+    {% else %}
+      {% trans 'Submit' %}
+    {% endif %}
+    {{ object }}
+{% endblock %}
+
+{% block cardcontent %}
+    <p>
+      Are you sure you want to {% if unsubmit %}un{% endif %}submit the
+      submission "{{ object }}"?<br>
+    </p>
+    {% if unsubmit %}
+      <p>
+        Remember to submit it again; otherwise, it will remain in the
+        unsubmitted status.
+      </p>
+    {% else %}
+      <p>
+        Note that the confirmation email will not be sent automatically.
+      </p>
+    {% endif %}
+    <div class="row">
+      <div class="col-12 col-sm-9">
+      </div>
+{% endblock %}
+
+{% block confirmform %}
+        <div class="form-group">
+          <input type="submit"
+                 name="_{% if unsubmit %}un{% endif %}submit_confirmed"
+                 class="btn {{ jazzmin_ui.button_classes.danger }}
+                        form-control" value="{% trans "Yes, I'm sure" %}">
+        </div>
+        <div class="form-group">
+          <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                             cancel-link form-control">
+            {% trans "No, take me back" %}
+          </a>
+        </div>
+{% endblock %}

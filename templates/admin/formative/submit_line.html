@@ -1,19 +1,22 @@
 {% extends "admin/submit_line.html" %}
+{% load utils %}
 
 {% block extra-actions %}
+{% if model_is_submission %}
 
 {% if show_save and not add and not is_popup %}
-  {% if original.status == 'draft' %}
+  {% if not original|underscore:'submitted' %}
   <div class="form-group">
     <input type="submit" class="btn btn-outline-info form-control"
-           value="Publish" name="_publish"/>
+           value="Submit" name="_submit"/>
   </div>
   {% else %}
   <div class="form-group">
     <input type="submit" class="btn btn-outline-danger form-control"
-           value="Unpublish" name="_unpublish"/>
+           value="Unsubmit" name="_unsubmit"/>
   </div>
   {% endif %}
 {% endif %}
 
+{% endif %}
 {% endblock %}

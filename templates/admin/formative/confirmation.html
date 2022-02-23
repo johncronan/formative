@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media }}
+<script src="{% static 'admin/js/cancel.js' %}"></script>
+{% endblock %}
+
+{% block bodyclass %}
+{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }}
+{% endblock %}
+
+{% block breadcrumbs %}
+{# TODO #}
+{% endblock %}
+
+{% block content_title %} {% trans 'Confirmation' %} {% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+  <div class="card card-danger card-outline">
+    <div class="card-header with-border">
+      <h4 class="card-title">
+        {% block cardtitle %}{% endblock %}
+      </h4>
+    </div>
+    
+    <div class="card-body">
+      <div id="content-main">
+        {% block cardcontent %}{% endblock %}
+          <div class="col-12 col-sm-3">
+          <form method="post">{% csrf_token %}
+            {% block confirmform %}{% endblock %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
