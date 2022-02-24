@@ -378,7 +378,8 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             else: context['submitted'] = True
         
         if (self.page and context['page'] <= self.object._valid + 1
-         or self.object._valid == self.program_form.num_pages()):
+         or self.object._valid == self.program_form.num_pages()
+         or self.object._submitted):
             return super().render_to_response(context)
         
         # tried to skip ahead - go back to the last page that can be displayed

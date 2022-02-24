@@ -1,0 +1,75 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block extrajs %}
+  {{ block.super }}
+  
+  {{ email_templates|json_script:'emailTemplates' }}
+  <script>
+    $(document).ready(function () {
+      $('#sendemailform select').change(function() {
+        const name = $(this).val();
+        const email = JSON.parse(
+          document.getElementById('emailTemplates').textContent
+        )[name];
+        $('#sendemailform input[name="subject"]').val(email['subject']);
+        $('#sendemailform textarea[name="content"]').val(email['content']);
+      }).change();
+    });
+  </script>
+{% endblock %}
+
+{% block content_title %} {% trans 'Send Email' %} {% endblock %}
+
+{% block cardtitle %} {% trans 'Email Applicants' %} {% endblock %}
+
+{% block formid %}sendemailform{% endblock %}
+
+{% block cardcontent %}
+    <p>Choose an email to send to the selected applicants.</p>
+    <table cellpadding="5">
+      {{ form.as_table }}
+    </table>
+    <br>
+    <p>The email will be sent to:</p>
+{% endblock %}
+
+{% block rowcontent %}
+    <div class="col-12 col-sm-9">
+      <h4>{% trans 'Applicants' %}</h4>
+      <ol>
+        {{ submissions|slice:':20'|unordered_list }}
+        {% if submissions|length > 20 %}<li>...</li>{% endif %}
+      </ol>
+      {% for submission in submissions %}
+      <input type="hidden" name="_selected_action" value="{{ submission.pk }}">
+      {% endfor %}
+    </div>
+{% endblock %}
+
+{% block rowsidecontent %}
+    <h4>{% trans 'Summary' %}</h4>
+    <table class="table" table-striped">
+      <tbody>
+        <tr>
+          <td>{% trans 'Emails' %}</td>
+          <td>{{ submissions|length }}</td>
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}
+
+{% block formcontrols %}
+    <input type="hidden" name="action" value="send_email_action">
+    <div class="form-group">
+      <input type="submit" name="_send"
+             class="btn {{ jazzmin_ui.button_classes.danger }}
+                    form-control" value="{% trans "Yes, I'm sure" %}">
+    </div>
+    <div class="form-group">
+      <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                         cancel-link form-control">
+        {% trans "No, take me back" %}
+      </a>
+    </div>
+{% endblock %}

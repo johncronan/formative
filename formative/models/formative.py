@@ -359,6 +359,27 @@ class Form(AutoSlugModel):
     def emails(self):
         if 'emails' in self.options: return self.options['emails']
         return {}
+    
+    def email_names(self):
+        names = list(self.emails())
+        for name in ('confirmation', 'continue'):
+            if name not in names: names.insert(0, name)
+        return names
+    
+    def load_email_templates(self, n):
+        subject = loader.get_template('formative/emails/' + n + '_subject.html')
+        content = loader.get_template('formative/emails/' + n + '.html')
+        return subject, content
+    
+    def email_templates(self):
+        emails = self.emails()
+        for name in ('continue', 'confirmation'):
+            if name in emails: continue
+            subject, content = self.load_email_templates(name)
+            
+            emails[name] = {'content': content.template.source,
+                            'subject': subject.template.source.rstrip('\n')}
+        return emails
 
 
 class FormLabel(models.Model):
@@ -774,11 +795,19 @@ class Submission(models.Model):
     _modified = models.DateTimeField(auto_now=True)
     _submitted = models.DateTimeField(null=True, blank=True)
     
+    @classmethod
+    def _get_form(cls):
+        program_name = cls._meta.db_table[:-len(cls._meta.model_name)-1]
+        return Form.objects.get(program__db_slug=program_name,
+                                db_slug=cls._meta.model_name)
+    
     def __str__(self):
         if hasattr(self, '_email'): return self._email
         return str(self._id)
     
     def _update_context(self, form, context):
+        context['review_link'] = submission_link(self, form, rest='review')
+        
         for block in form.visible_blocks():
             if block.block_type() == 'custom':
                 context[block.name] = getattr(self, block.name)
@@ -791,21 +820,17 @@ class Submission(models.Model):
                 else: context[block.name] = next(iter(obj.__dict__.values()))
     
     def _send_email(self, form, name, **kwargs):
-        if name in form.emails():
-            template=Template(form.emails()[name]['content'])
-            subject=Template(form.emails()[name]['subject'])
-        else:
-            template = loader.get_template('formative/emails/' + name + '.html')
-            subject = loader.get_template('formative/emails/' + name +
-                                          '_subject.html')
+        form_emails = form.emails()
+        if name in form_emails:
+            subject = Template(form_emails[name]['subject'])
+            template = Template(form_emails[name]['content'])
+        else: subject, template = form.load_email_templates(name)
         
         context = {
             'submission': self, 'form': form,
             'submission_link': submission_link(self, form)
         }
-        if self._submitted:
-            context['review_link'] = submission_link(self, form, rest='review')
-            self._update_context(form, context)
+        if self._submitted: self._update_context(form, context)
         
         return send_email(template=template, to=self._email,
                           subject=subject, context=context, **kwargs)

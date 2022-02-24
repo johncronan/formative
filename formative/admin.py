@@ -1,10 +1,12 @@
 from django import forms, urls
 from django.contrib import admin, auth
 from django.contrib.admin.views.main import ChangeList
+from django.core import mail
 from django.db import connection
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.template import Template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse, NoReverseMatch
 from django.utils import timezone
@@ -15,17 +17,18 @@ from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
-import sys, importlib
+import sys, importlib, time
 from urllib.parse import unquote, parse_qsl
 
 from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
-    SubmissionItemAdminForm
+    SubmissionItemAdminForm, EmailAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
-    CustomBlock, CollectionBlock
+    CustomBlock, CollectionBlock, SubmissionRecord
 from .filetype import FileType
 from .plugins import get_matching_plugin
 from .signals import register_program_settings, register_form_settings
+from .utils import send_email, submission_link
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -44,7 +47,7 @@ class FormativeAdminSite(admin.AdminSite):
     def catch_all_view(self, request, url):
         if not self.submissions_registered:
             self.get_app_list(request)
-            return HttpResponseRedirect(request.path) # better than nothing
+            return HttpResponseRedirect(request.get_full_path()) # better than 0
             # TODO a middleware is necessary to solve this?
         
         return super().catch_all_view(request, url)
@@ -150,7 +153,7 @@ class FormAdmin(admin.ModelAdmin):
         obj = self.get_object(request, object_id)
         getattr(obj, action)(**kwargs)
         
-        return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(request.get_full_path())
     
     def response_change(self, request, obj):
         subs = []
@@ -167,11 +170,13 @@ class FormAdmin(admin.ModelAdmin):
             'media': self.media,
             'object': obj,
             'submissions': subs,
+            'title': 'Confirmation'
         }
 #        if '_publish' in request.POST:
 #            return TemplateResponse(request, 'admin/publish_confirmation.html',
 #                                    context)
         if '_unpublish' in request.POST:
+            request.current_app = self.admin_site.name
             template_name = 'admin/formative/unpublish_confirmation.html'
             return TemplateResponse(request, template_name, context)
         
@@ -223,11 +228,6 @@ class FormDependencyInline(admin.TabularInline):
     
     def has_delete_permission(self, request, obj):
         return self.has_add_permission(request, obj)
-
-
-@admin.action(description='Move to different page')
-def move_blocks(modeladmin, request, queryset):
-    pass # TODO
 
 
 class FormBlockBase:
@@ -333,6 +333,10 @@ class FormBlockBase:
             if not extra_context: extra_context = {}
             name = get_object_or_404(Form, id=int(form_id)).name
             extra_context.update({'form_id': int(form_id), 'form_name': name})
+            
+            initial = self.get_changeform_initial_data(request)
+            if 'page' in initial: extra_context['page'] = initial['page']
+            else: extra_context['page'] = None
         
         return super().changeform_view(request, object_id, form_url,
                                        extra_context)
@@ -363,6 +367,10 @@ class FormBlockBase:
     def has_delete_permission(self, request, obj=None):
         return self.has_add_permission(request)
 
+
+@admin.action(description='Move to different page')
+def move_blocks(modeladmin, request, queryset):
+    pass # TODO
 
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
@@ -576,11 +584,65 @@ class SubmittedListFilter(admin.SimpleListFilter):
         if self.value() == 'no': return queryset.filter(_submitted=None)
 
 
+EMAILS_PER_SECOND = 10
+
+@admin.action(description='Send an email to applicants')
+def send_email_action(modeladmin, request, queryset):
+    if '_send' in request.POST:
+        # TODO: celery task
+        subject = Template(request.POST['subject'])
+        content = Template(request.POST['content'])
+        
+        iterator = queryset.iterator()
+        batch, form, last_time, done = [], None, None, False
+        while not done:
+            submission = next(iterator, None)
+            if not submission: done = True
+            else: batch.append(submission)
+            
+            if len(batch) == EMAILS_PER_SECOND or done:
+                if last_time:
+                    this_time = time.time()
+                    remaining = last_time + 1 - this_time
+                    if remaining > 0: time.sleep(remaining)
+                last_time = time.time()
+                
+                with mail.get_connection() as conn:
+                    for sub in batch:
+                        if not form: form = sub._get_form()
+                        context = {
+                            'submission': sub, 'form': form,
+                            'submission_link': submission_link(sub, form)
+                        }
+                        if sub._submitted: sub._update_context(form, context)
+                        
+                        send_email(content, sub._email, subject,
+                                   context=context, connection=conn)
+                batch = []
+        
+        return HttpResponseRedirect(request.get_full_path())
+    
+    form = queryset[0]._get_form()
+    template_name = 'admin/formative/email_applicants.html'
+    request.current_app = site.name
+    context = {
+        **site.each_context(request),
+        'opts': modeladmin.model._meta,
+        'media': modeladmin.media,
+        'submissions': queryset,
+        'form': EmailAdminForm(form=form),
+        'email_templates': form.email_templates(),
+        'title': 'Email Applicants'
+    }
+    return TemplateResponse(request, template_name, context)
+    
+
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('items_index',)
     form = SubmissionAdminForm
+    actions = [send_email_action]
     
     @admin.display(description='items')
     def items_index(self, obj):
@@ -603,11 +665,21 @@ class SubmissionAdmin(admin.ModelAdmin):
             return super().change_view(request, object_id, **kwargs)
         
         obj = self.get_object(request, object_id)
-        if action == 'submit': obj._submit()
+        rec, rtype = None, SubmissionRecord.RecordType.SUBMISSION
+        try: rec = SubmissionRecord.objects.get(submission=obj._id, type=rtype)
+        except SubmissionRecord.DoesNotExist: pass
+        
+        if action == 'submit':
+            if not rec: obj._get_form().submit_submission(obj)
+            else:
+                obj._submit()
+                rec.deleted = False
         else:
             obj._submitted = None
             obj.save()
-        return HttpResponseRedirect(request.path)
+            if rec: rec.deleted = True
+        if rec: rec.save()
+        return HttpResponseRedirect(request.get_full_path())
     
     def response_change(self, request, obj):
         context = {
@@ -615,9 +687,11 @@ class SubmissionAdmin(admin.ModelAdmin):
             'opts': self.model._meta,
             'media': self.media,
             'object': obj,
+            'title': 'Confirmation'
         }
         template_name = 'admin/formative/submit_confirmation.html'
         if '_submit' in request.POST or '_unsubmit' in request.POST:
+            request.current_app = self.admin_site.name
             if '_submit' in request.POST: context['submit'] = True
             else: context['unsubmit'] = True
             

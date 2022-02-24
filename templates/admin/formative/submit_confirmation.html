@@ -25,12 +25,9 @@
         Note that the confirmation email will not be sent automatically.
       </p>
     {% endif %}
-    <div class="row">
-      <div class="col-12 col-sm-9">
-      </div>
 {% endblock %}
 
-{% block confirmform %}
+{% block formcontrols %}
         <div class="form-group">
           <input type="submit"
                  name="_{% if unsubmit %}un{% endif %}submit_confirmed"

@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.db.models import Model, Q
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core import mail
 from django.template import Context, Template, loader
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
@@ -37,18 +37,19 @@ def remove_p(text):
     
     return text
 
-def send_email(template, to, subject, context={}):
+def send_email(template, to, subject, context={}, connection=None):
     new_context = { 'settings': settings }
     new_context.update(context)
     context = Context(new_context)
     
     if type(template) != Template: context = new_context # wtf, Django
     
-    sub = ''.join(subject.render(context).splitlines())
+    sub = ' '.join(subject.render(context).splitlines()).rstrip()
     message = template.render(context)
     
-    mail = EmailMessage(sub, message, settings.CONTACT_EMAIL, [to])
-    mail.send()
+    email = mail.EmailMessage(sub, message, settings.CONTACT_EMAIL, [to],
+                              connection=connection)
+    return email.send()
 
 def submission_link(s, form, rest=''):
     server = settings.DJANGO_SERVER

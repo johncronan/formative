@@ -544,3 +544,18 @@ class SubmissionItemAdminForm(forms.ModelForm):
             if isinstance(field, forms.ModelChoiceField): continue
             if n in [ f.name for f in  SubmissionItem._meta.fields ]: continue
             if field.required: field.required = False
+
+
+class EmailAdminForm(forms.Form):
+    name = forms.ChoiceField(choices=(), initial='confirmation')
+    subject = forms.CharField(widget=widgets.AdminTextInputWidget)
+    content = forms.CharField(
+        widget=widgets.AdminTextareaWidget(attrs={'rows': 8, 'cols': 50}),
+        help_text="The email's template can optionally be customized, here."
+    )
+    
+    def __init__(self, form=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not form: return
+        self.fields['name'].choices = [ (n, n) for n in form.email_names() ]
