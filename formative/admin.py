@@ -17,7 +17,7 @@ from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
-import sys, importlib, time
+import sys, importlib, time, types
 from urllib.parse import unquote, parse_qsl
 
 from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
@@ -289,11 +289,17 @@ class FormBlockBase:
             return super().response_add(request, obj, **kwargs)
         
         opts = obj._meta
-        url = reverse('admin:%s_%s_change' % (opts.app_label, opts.model_name),
+        model = opts.model_name
+        if model in ('customblock', 'collectionblock'): model = 'formblock'
+        url = reverse('admin:%s_%s_change' % (opts.app_label, model),
                       args=(obj.pk,), current_app=self.admin_site.name)
-        url += f'?form_id={obj.form.id}'
-        if 'get_url' in kwargs: return url
         
+        preserved, args = request.GET.get('_changelist_filters'), {}
+        if preserved: args['_changelist_filters'] = preserved
+        args['form_id'] = obj.form.id
+        url += '?' + urlencode(args)
+        
+        if 'get_url' in kwargs: return url
         return super().response_add(request, obj, post_url_continue=url)
     
     def response_change(self, request, obj):
@@ -404,8 +410,6 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         # read-only version of the StockBlockAdminForm type field
         return obj.options['type']
     
-    def choices(self, obj): return obj.options['choices'] # this is temporary
-    
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
@@ -434,10 +438,11 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         if obj.form.status != Form.Status.DRAFT:
             for field, label in obj.stock.admin_published_readonly().items():
                 @admin.display(description=label)
-                def field_callable(obj):
+                def field_callable(self, obj):
+                    if field not in obj.options: return '-'
                     return obj.options[field]
-                field_callable.__name__ = field
-                fields += (field,) #field_callable,) TODO why isn't it working?
+                setattr(self, field, types.MethodType(field_callable, self))
+                fields += (field,)
         
         return fields
     
@@ -557,7 +562,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         
         options = fieldsets[1][1]['fields']
         names += ['name', 'page', 'file_types', 'max_filesize',
-                  'autoinit_filename', 'choices']
+                  'autoinit_filename', 'choices', 'wide']
         options += [ f for f in fields if f not in names ]
         if obj.has_file:
             options += ['file_types', 'max_filesize', 'autoinit_filename']
@@ -567,6 +572,7 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
                 if filetype.admin_limit_fields(): options.append(name)
                 if filetype.admin_total_fields(): total = True
             if total: options.append('total')
+        if obj.name1 and obj.name2: options.append('wide')
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]
         return sets + fieldsets[2:]

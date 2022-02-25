@@ -45,6 +45,7 @@ class NegatedBooleanField(forms.BooleanField):
     def to_python(self, value): return not super().to_python(value)
     
     def has_changed(self, initial, data):
+        # something unusual about the forms API is making this backwards
         return (not self.to_python(initial)) != self.to_python(data)
 
 
@@ -375,6 +376,8 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         if 'instance' in kwargs and kwargs['instance']:
             stock = kwargs['instance'].stock
             admin_fields = stock.admin_fields()
+            if kwargs['instance'].form.status != Form.Status.DRAFT:
+                for n in stock.admin_published_readonly(): admin_fields.pop(n)
             # safe to modify the values of json_fields, just not the keys:
             self._meta.json_fields['options'] += list(admin_fields.keys())
             kwargs['admin_fields'] = admin_fields
@@ -390,7 +393,7 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         
         data = {}
         for field in self.admin_fields:
-            data[field] = cleaned_data[field]
+            if field in cleaned_data: data[field] = cleaned_data[field]
         fields = self.instance.stock.admin_clean(data)
         
         err = False
@@ -431,6 +434,24 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 del self.fields['choices']
             if block.type != CustomBlock.InputType.NUMERIC:
                 del self.fields['numeric_min'], self.fields['numeric_max']
+            if block.form.status != Form.Status.DRAFT:
+                del self.fields['name']
+                if block.type == CustomBlock.InputType.CHOICE:
+                    del self.fields['choices']
+
+
+class SingletonChoiceField(forms.ChoiceField):
+    def prepare_value(self, value):
+        if not value: return None
+        return value[0]
+    
+    def to_python(self, value):
+        if not value: return None
+        return [super().to_python(value)]
+    
+    def validate(self, value):
+        if value: value = value[0]
+        super().validate(value)
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
@@ -457,6 +478,11 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         required=False,
         help_text="If selected, the text field's default will be the file name."
     )
+    wide = SingletonChoiceField(
+        required=False, label='wide column',
+        help_text="If selected, the text field's column will be twice as wide "
+                  "as the others."
+    )
     choices = DynamicArrayField(
         forms.CharField(max_length=CollectionBlock.FIXED_CHOICE_VAL_MAXLEN),
     )
@@ -466,7 +492,7 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         static_fields = ('name', 'page', 'fixed', 'name1', 'name2', 'name3',
                          'has_file', 'min_items', 'max_items', 'file_optional',
                          'dependence', 'negate_dependencies')
-        json_fields = {'options': ['no_review', 'fieldtest']}
+        json_fields = {'options': ['no_review']}
         dynamic_fields = True
     
     def __init__(self, *args, **kwargs):
@@ -509,17 +535,24 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 kwargs['admin_fields'] = admin_fields
             
             if block.fixed: self._meta.json_fields['options'].append('choices')
+            if block.name1 and block.name2:
+                self._meta.json_fields['options'].append('wide')
         
         super().__init__(*args, **kwargs)
         
         if not block: del self.fields['no_review'], self.fields['button_text']
+        elif block.form.status != Form.Status.DRAFT: del self.fields['name']
         if not block or not block.fixed: del self.fields['choices']
+
+        if block: choices = [ (n, n) for n in block.collection_fields() ]
+        if not block or not block.name1 or not block.name2:
+            del self.fields['wide']
+        else: self.fields['wide'].choices = [(None, '-')] + choices
+        
         if not block or not block.has_file:
              for n in ('file_types', 'max_filesize', 'autoinit_filename'):
                 del self.fields[n]
-        else:
-            choices = [ (n, n) for n in block.collection_fields() ]
-            self.fields['autoinit_filename'].choices = [(None, '-')] + choices
+        else: self.fields['autoinit_filename'].choices = [(None, '-')] + choices
     
     def clean(self):
         super().clean()
@@ -534,7 +567,7 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         if 'autoinit_filename' in cleaned_data:
             field = cleaned_data['autoinit_filename']
             if field not in self.instance.collection_fields():
-                del cleaned_data['options']['autoinit_filename']
+                cleaned_data['options'].pop('autoinit_filename', None)
         return cleaned_data
 
 

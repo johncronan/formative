@@ -143,9 +143,10 @@ class Form(AutoSlugModel):
         name = self.program.db_slug + '_' + self.db_slug + '_i'
         class Meta:
             constraints = [
-                UniqueConstraint(fields=['_submission', '_collection',
-                                         '_block', '_rank'],
-                                 name=self.db_slug+'_unique_item_rank')
+                UniqueConstraint(
+                    fields=['_submission', '_collection', '_block', '_rank'],
+                    name=self.program.db_slug+'_'+self.db_slug+'_u'
+                )
             ]
             verbose_name = self.slug + ' item'
             verbose_name_plural = self.slug + ' items'

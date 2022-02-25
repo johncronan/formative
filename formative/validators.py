@@ -65,8 +65,9 @@ class FileSizeValidator(validators.MaxValueValidator):
 
 def validate_identifier(name):
     validators.RegexValidator(
-        r'^(_|[0-9])|_i$',
-        'Identifiers cannot start with a number or "_", or end with "_i".',
+        r'^(_|[0-9])|_(i|u)$',
+        'Identifiers cannot start with a number or "_", or end with "_i" '
+        'or "_u".',
         inverse_match=True
     )(name.lower().replace('-', ''))
 
