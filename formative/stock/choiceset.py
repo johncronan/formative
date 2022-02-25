@@ -100,4 +100,4 @@ class ChoiceSetWidget(CompositeStockWidget):
         return data
     
     def admin_published_readonly(self):
-        return {'choices': 'choices'}
+        return {'choices': 'choices', 'text_input': 'text input ID'}
