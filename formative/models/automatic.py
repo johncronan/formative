@@ -8,10 +8,10 @@ class AutoSlugModel(models.Model):
         abstract = True
     
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            self.db_slug = self.slug.replace('-', '')
+        self.db_slug = self.slug.lower().replace('-', '')
+        
         try:
             super().save(*args, **kwargs)
         except ValidationError as e:
-            raise ValidationError(_('Name must be unique (with non-' +
-                                  'alphanumeric characters removed)')) from e
+            msg = _('Name (with hyphens removed) must be unique.')
+            raise ValidationError(msg) from e

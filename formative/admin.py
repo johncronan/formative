@@ -234,7 +234,7 @@ class FormBlockBase:
     # only methods that can be safely overridden in either parent or child admin
     
     def get_fieldsets(self, request, obj=None):
-        fields = self.get_fields(request, obj)
+        fields = list(dict.fromkeys(self.get_fields(request, obj)))
         fields.remove('dependence')
         fields.remove('negate_dependencies')
         fields.remove('no_review')
@@ -698,6 +698,11 @@ class SubmissionAdmin(admin.ModelAdmin):
             return TemplateResponse(request, template_name, context)
         
         return super().response_change(request, obj)
+    
+    def view_on_site(self, obj):
+        url = obj._get_absolute_url()
+        if obj._submitted: url += 'review'
+        return url
 
 
 class SubmissionItemAdmin(admin.ModelAdmin):

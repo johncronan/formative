@@ -12,6 +12,8 @@ from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
     Submission, SubmissionItem
+from ..validators import validate_program_identifier, validate_form_identifier,\
+    validate_formblock_identifier
 
 
 class NullWidget(forms.Widget):
@@ -240,6 +242,7 @@ class ProgramAdminForm(AdminJSONForm):
     slug = forms.SlugField(
         label='identifier', allow_unicode=True, max_length=30,
         widget=forms.TextInput(attrs={'size': 32}),
+        validators=[validate_program_identifier],
         help_text='A short name to uniquely identify the program. '
                   'Cannot be changed.'
     )
@@ -275,6 +278,7 @@ class FormAdminForm(AdminJSONForm):
     slug = forms.SlugField(
         label='identifier', allow_unicode=True, max_length=30,
         widget=forms.TextInput(attrs={'size': 32}),
+        validators=[validate_form_identifier],
         help_text='A short name to uniquely identify the form. '
                   'Cannot be changed after publishing.'
     )
@@ -336,6 +340,13 @@ class FormAdminForm(AdminJSONForm):
 
 
 class FormBlockAdminForm(forms.ModelForm):
+    name = forms.SlugField(
+        label='identifier', allow_unicode=True, max_length=32,
+        widget=forms.TextInput(attrs={'size': 34}),
+        validators=[validate_formblock_identifier],
+        help_text='A short name to identify the block, not displayed publicly.'
+    )
+    
     class Meta:
         model = FormBlock
         fields = ('name', 'page', 'dependence', 'negate_dependencies')

@@ -10,6 +10,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.urls import reverse
 from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
@@ -41,8 +42,6 @@ class Program(AutoSlugModel):
 
     def __str__(self):
         return self.name
-    
-    # TODO: disallow certain slug values, like "auth"
     
     @cached_property
     def markdown(self):
@@ -106,11 +105,11 @@ class Form(AutoSlugModel):
         for block in self.blocks.exclude(page=0, _rank__gt=1):
             fields += block.fields()
         
-        name = self.db_slug
+        name = self.program.db_slug + '_' + self.db_slug
         class Meta:
             verbose_name = self.slug + ' submission'
             verbose_name_plural = self.slug + ' submissions'
-        return create_model(name, fields, table_prefix=self.program.db_slug,
+        return create_model(name, fields, program=self.program.db_slug,
                             base_class=Submission, meta=Meta)
     
     @cached_property
@@ -141,7 +140,7 @@ class Form(AutoSlugModel):
             else: block = CustomBlock.text_create()
             fields.append((n, block.field()))
         
-        name = self.db_slug + '_i'
+        name = self.program.db_slug + '_' + self.db_slug + '_i'
         class Meta:
             constraints = [
                 UniqueConstraint(fields=['_submission', '_collection',
@@ -150,7 +149,7 @@ class Form(AutoSlugModel):
             ]
             verbose_name = self.slug + ' item'
             verbose_name_plural = self.slug + ' items'
-        return create_model(name, fields, table_prefix=self.program.db_slug,
+        return create_model(name, fields, program=self.program.db_slug,
                             base_class=SubmissionItem, meta=Meta)
     
     def publish_model(self, model, admin=None):
@@ -797,13 +796,19 @@ class Submission(models.Model):
     
     @classmethod
     def _get_form(cls):
-        program_name = cls._meta.db_table[:-len(cls._meta.model_name)-1]
-        return Form.objects.get(program__db_slug=program_name,
-                                db_slug=cls._meta.model_name)
+        program_slug = cls._meta.program_slug
+        slug = cls._meta.model_name[len(program_slug)+1:]
+        return Form.objects.get(program__db_slug=program_slug, db_slug=slug)
     
     def __str__(self):
         if hasattr(self, '_email'): return self._email
         return str(self._id)
+    
+    def _get_absolute_url(self):
+        form = self._get_form()
+        args = {'program_slug': form.program.slug, 'form_slug': form.slug,
+                'sid': self._id}
+        return reverse('submission', kwargs=args)
     
     def _update_context(self, form, context):
         context['review_link'] = submission_link(self, form, rest='review')

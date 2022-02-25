@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def create_model(name, fields, app_label='formative', module='',
-                 table_prefix=None, meta=None, base_class=Model):
+                 program=None, meta=None, base_class=Model):
     class Meta:
         pass
 
@@ -19,7 +19,7 @@ def create_model(name, fields, app_label='formative', module='',
         for key, value in meta.__dict__.items():
             if key[:2] == '__' or key == 'abstract': continue
             setattr(Meta, key, value)
-    if table_prefix: setattr(Meta, 'db_table', f'{table_prefix}_{name}')
+    setattr(Meta, 'db_table', name)
     
     if not module: module = app_label
     attrs = {'__module__': module, 'Meta': Meta}
@@ -27,6 +27,8 @@ def create_model(name, fields, app_label='formative', module='',
 
     # Create the class, which automatically triggers ModelBase processing
     model = type(name, (base_class,), attrs)
+    
+    if program: model._meta.program_slug = program
     return model
 
 def remove_p(text):

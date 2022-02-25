@@ -61,3 +61,34 @@ class FileSizeValidator(validators.MaxValueValidator):
         params = {'val_with_unit': human_readable_filesize(self.limit_value)}
         if self.compare(value, self.limit_value):
             raise ValidationError(self.message, code=self.code, params=params)
+
+
+def validate_identifier(name):
+    validators.RegexValidator(
+        r'^(_|[0-9])|_i$',
+        'Identifiers cannot start with a number or "_", or end with "_i".',
+        inverse_match=True
+    )(name.lower().replace('-', ''))
+
+def validate_program_identifier(name):
+    validators.RegexValidator(
+        r'^(formative|auth|django|silk)$',
+        'The identifier cannot be "formative," "auth," "django," or "silk."',
+        inverse_match=True
+    )(name.lower().replace('-', ''))
+    
+    validate_identifier(name)
+
+def validate_form_identifier(name):
+    validators.RegexValidator(
+        r'^(submissionrecord|program|form|formlabel|formdependency'
+        r'|formblock|customblock|collectionblock)$',
+        'The identifier cannot be "form," "program," or any of the other '
+        'Formative internal names.',
+        inverse_match=True
+    )(name.lower().replace('-', ''))
+    
+    validate_identifier(name)
+
+def validate_formblock_identifier(name):
+    validate_identifier(name)
