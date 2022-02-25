@@ -259,6 +259,9 @@ class FormBlockBase:
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         
+        form_id = request.GET.get('form_id')
+        if form_id: form.form_id = form_id
+        
         if obj and obj.form.status == Form.Status.DRAFT:
             # TODO: where would we modify form.fields instead?
             if 'dependence' in form.base_fields:
@@ -329,13 +332,6 @@ class FormBlockBase:
         if request.GET.get('form_id'):
             return self.response_post_save_change(request, obj)
         return super().response_post_save_add(request, obj)
-    
-    def save_form(self, request, form, change):
-        form_id = request.GET.get('form_id')
-        obj = form.save(commit=False)
-        
-        if form_id: obj.form_id = form_id
-        return obj
     
     def changeform_view(self, request, object_id=None, form_url='',
                         extra_context=None):

@@ -208,7 +208,9 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 self.fields[name] = field
     
     def clean(self):
+        super().clean()
         cleaned_data = self.cleaned_data
+        
         for name, fields in self._meta.json_fields.items():
             base, part = name, None
             if '.' in name: base = name[:name.index('.')]
@@ -358,6 +360,12 @@ class FormBlockAdminForm(forms.ModelForm):
     class Meta:
         model = FormBlock
         fields = ('name', 'page', 'dependence', 'negate_dependencies')
+    
+    def validate_unique(self):
+        # FormBlockAdmin.get_form sets this; it's needed for validation and save
+        self.instance.form_id = self.form_id
+        
+        super().validate_unique()
 
 
 def stock_type_display_name(name): # we need a default display name

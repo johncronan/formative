@@ -38,10 +38,17 @@ class Program(AutoSlugModel):
     options = models.JSONField(default=dict, blank=True)
     hidden = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
-    
 
     def __str__(self):
         return self.name
+    
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if not self._state.adding: return
+        
+        if Program.objects.filter(db_slug=self.slug.replace('-', '')).exists():
+            msg = 'Identifier (with hyphens removed) must be unique.'
+            raise ValidationError(msg)
     
     @cached_property
     def markdown(self):
@@ -96,6 +103,16 @@ class Form(AutoSlugModel):
     
     def __str__(self):
         return self.name
+    
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if not self._state.adding: return
+        
+        if Form.objects.filter(program=self.program,
+                               db_slug=self.slug.replace('-', '')).exists():
+            msg = 'Identifier (with hyphens removed) must be unique ' \
+                  'within this program.'
+            raise ValidationError(msg)
     
     @cached_property
     def model(self):
@@ -437,8 +454,6 @@ class FormBlock(PolymorphicModel, RankedModel):
         constraints = [
             UniqueConstraint(fields=['form', 'page', '_rank'],
                              name='unique_rank'),
-#            UniqueConstraint(fields=['form', 'name'], name='unique_name')
-#                             condition=~Q(instance_of=CollectionBlock))
         ]
         ordering = ['form', 'page', '_rank']
     
@@ -460,6 +475,24 @@ class FormBlock(PolymorphicModel, RankedModel):
     
     def rank_group(self):
         return FormBlock.objects.filter(form=self.form, page=self.page)
+    
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if not self._state.adding: return
+        
+        if self.name == 'email' and self.page:
+            raise ValidationError('There is already a block called "email."')
+        
+        # name of a collection block identifies its "bucket", not its field(s)
+        # in this case, it's not required to be unique
+        if self.block_type() == 'collection': return
+        
+        qs = FormBlock.objects.filter(form_id=self.form_id)
+        if self.page: qs = qs.filter(page__gt=0)
+        else: qs = qs.filter(page=0)
+        if qs.filter(name=self.name).exists():
+            msg = 'Identifiers for stock and custom blocks must be unique.'
+            raise ValidationError(msg)
     
     def block_type(self):
         if type(self) == CustomBlock: return 'custom'
