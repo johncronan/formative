@@ -28,13 +28,11 @@ class FileType:
             return cls.extensions[extension]
         return None
     
-    # at some point, will probably want to load file type options here
+    # TODO: option to enable or disable extensions supported by the type
     
-    def allowed_extensions(self):
-        return self.EXTENSIONS
+    def allowed_extensions(self): return self.EXTENSIONS
     
-    def meta(self, path):
-        return {'type': self.TYPE}
+    def meta(self, path): return {'type': self.TYPE}
     
     def limit_error(self, meta, limits):
         for key, val in limits.items():
@@ -59,17 +57,15 @@ class FileType:
         
         return None
     
-    def process(self, file, meta, **kwargs):
-        return meta
+    def process(self, file, meta, **kwargs): return meta
     
-    def submitted(self, items):
-        pass
+    def submitted(self, items): pass
     
-    def admin_limit_fields(self):
-        return ()
+    def admin_limit_fields(self): return ()
     
-    def admin_total_fields(self):
-        return ()
+    def admin_total_fields(self): return ()
+    
+    def admin_processing_fields(self): return ()
 
 
 from .image import ImageFile

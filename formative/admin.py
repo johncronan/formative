@@ -566,12 +566,15 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         options += [ f for f in fields if f not in names ]
         if obj.has_file:
             options += ['file_types', 'max_filesize', 'autoinit_filename']
-            total = False
+            total, processing = False, {}
             for name in obj.allowed_filetypes() or []:
                 filetype = FileType.by_type(name)()
                 if filetype.admin_limit_fields(): options.append(name)
+                if filetype.admin_processing_fields(): processing[name] = True
                 if filetype.admin_total_fields(): total = True
             if total: options.append('total')
+            for name in processing: options.append(name + '_proc')
+        
         if obj.name1 and obj.name2: options.append('wide')
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]

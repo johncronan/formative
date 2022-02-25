@@ -91,6 +91,7 @@ class SplitDictWidget(forms.MultiWidget):
             name = widget['name'][widget['name'].index('_')+1:]
             if name.startswith('min_') or name.startswith('max_'):
                 name = name[4:]
+            if name.startswith('proc_'): name = name[5:]
             widget['short_name'] = name
         
         return context
@@ -193,7 +194,10 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 else: value = getattr(instance, name)
                 
                 for field in fields:
-                    if field in value: initial[field] = value[field]
+                    json_field = field
+                    # TODO: might need to generalize:
+                    if field.endswith('_proc'): json_field = field[:-5]
+                    if json_field in value: initial[field] = value[json_field]
             
             kwargs['initial'] = initial
         
@@ -218,6 +222,8 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
             
             for field in fields:
                 if field not in cleaned_data: continue
+                json_field = field
+                if field.endswith('_proc'): json_field = field[:-5]
                 
                 test = bool
                 if isinstance(self.fields[field], forms.BooleanField): pass
@@ -226,8 +232,9 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 elif isinstance(self.fields[field], SplitDictField): pass
                 else: test = lambda x: x is not None
                 
-                if test(cleaned_data[field]): dest[field] = cleaned_data[field]
-                else: dest.pop(field, None)
+                if test(cleaned_data[field]):
+                    dest[json_field] = cleaned_data[field]
+                else: dest.pop(json_field, None)
             
             if '.' in name and not dest: cleaned_data[base].pop(part, None)
         
@@ -495,6 +502,52 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         json_fields = {'options': ['no_review']}
         dynamic_fields = True
     
+    def init_file_fields(self, block):
+        admin_fields, total_fields = {}, {}
+        self._meta.json_fields['options.file_limits'] = []
+        self._meta.json_fields['options.file_processing'] = []
+        for name in block.allowed_filetypes() or []:
+            filetype = FileType.by_type(name)()
+            fields, processing_fields = {}, {}
+            for n in filetype.admin_limit_fields():
+                fields['min_' + n] = forms.IntegerField()
+                fields['max_' + n] = forms.IntegerField()
+            for n in filetype.admin_total_fields():
+                total_fields['min_' + n] = forms.IntegerField()
+                total_fields['max_' + n] = forms.IntegerField()
+            for n in filetype.admin_processing_fields():
+                processing_fields[n] = forms.IntegerField()
+            
+            if fields:
+                admin_fields[name] = SplitDictField(
+                    fields, required=False,
+                    widget=SplitDictWidget(fields, two_column=True),
+                    label=name+' limits'
+                )
+                self._meta.json_fields['options.file_limits'].append(name)
+            
+            if processing_fields:
+                proc = name + '_proc'
+                admin_fields[proc] = SplitDictField(
+                    processing_fields, required=False,
+                    widget=SplitDictWidget(processing_fields),
+                    label=name+' processing',
+                    help_text='File will be processed to conform to the '
+                              'limits, if any are given.'
+                )
+                self._meta.json_fields['options.file_processing'].append(proc)
+        
+        admin_fields['total'] = SplitDictField(
+            total_fields, required=False,
+            widget=SplitDictWidget(total_fields, two_column=True),
+            label='total limits',
+            help_text='Limits that apply to the total value, for all '
+                      'files in the collection (when field is applicable).'
+        )
+        self._meta.json_fields['options.file_limits'].append('total')
+        
+        return admin_fields
+
     def __init__(self, *args, **kwargs):
         block, file_limits = None, {}
         if 'instance' in kwargs and kwargs['instance']:
@@ -504,34 +557,7 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 fields += ['file_types', 'max_filesize', 'autoinit_filename']
                 self._meta.json_fields['options'] += fields
                 
-                admin_fields, total_fields = {}, {}
-                self._meta.json_fields['options.file_limits'] = []
-                for name in block.allowed_filetypes() or []:
-                    filetype = FileType.by_type(name)()
-                    fields = {}
-                    for n in filetype.admin_limit_fields():
-                        fields['min_' + n] = forms.IntegerField()
-                        fields['max_' + n] = forms.IntegerField()
-                    for n in filetype.admin_total_fields():
-                        total_fields['min_' + n] = forms.IntegerField()
-                        total_fields['max_' + n] = forms.IntegerField()
-                    
-                    admin_fields[name] = SplitDictField(
-                        fields, required=False,
-                        widget=SplitDictWidget(fields, two_column=True),
-                        label=name+' limits'
-                    )
-                    self._meta.json_fields['options.file_limits'].append(name)
-                
-                admin_fields['total'] = SplitDictField(
-                    total_fields, required=False,
-                    widget=SplitDictWidget(total_fields, two_column=True),
-                    label='total limits',
-                    help_text='Limits that apply to the total value, '
-                              'for all files (when field is applicable).'
-                )
-                self._meta.json_fields['options.file_limits'].append('total')
-                
+                admin_fields = self.init_file_fields(block)
                 kwargs['admin_fields'] = admin_fields
             
             if block.fixed: self._meta.json_fields['options'].append('choices')

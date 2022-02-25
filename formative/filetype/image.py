@@ -88,3 +88,6 @@ class ImageFile(FileType):
     
     def admin_total_fields(self):
         return ('megapixels',)
+    
+    def admin_processing_fields(self):
+        return ('max_width', 'max_height')
