@@ -292,7 +292,16 @@ class FormBlockBase:
         url = reverse('admin:%s_%s_change' % (opts.app_label, opts.model_name),
                       args=(obj.pk,), current_app=self.admin_site.name)
         url += f'?form_id={obj.form.id}'
+        if 'get_url' in kwargs: return url
+        
         return super().response_add(request, obj, post_url_continue=url)
+    
+    def response_change(self, request, obj):
+        if '_popup' in request.POST or '_continue' not in request.POST:
+            return super().response_change(request, obj)
+        
+        url = self.response_add(request, obj, get_url=True)
+        return HttpResponseRedirect(url)
     
     def response_post_save_change(self, request, obj):
         app_label = self.model._meta.app_label
@@ -307,7 +316,7 @@ class FormBlockBase:
         changelist_filters = request.GET.get('_changelist_filters')
         if changelist_filters:
             filters = dict(parse_qsl(unquote(changelist_filters)))
-            url = url + '?' + urlencode(filters)
+            url += '?' + urlencode(filters)
         return HttpResponseRedirect(url)
     
     def response_post_save_add(self, request, obj):

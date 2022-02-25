@@ -17,14 +17,21 @@
   <a href="{% url 'admin:formative_form_changelist' %}">Forms</a>
 </li>
 <li class="breadcrumb-item">
+  {# TODO clean this up in the view funcs #}
   {% with original_page=original.page %}
   {% with p=page|default_if_none:original_page %}
   {% if p %}
   <a href="{% url 'admin:formative_formblock_formlist' form_id %}?page={{ p }}">
   {% else %}
-  <a href="{% url 'admin:formative_formblock_formlist' form_id %}">
+    {% if form_id %}
+    <a href="{% url 'admin:formative_formblock_formlist' form_id %}">
+    {% else %}
+    <a href="{% url 'admin:formative_formblock_formlist' original.form.id %}">
+    {% endif %}
   {% endif %}
-    {{ form_name }}
+    {% with original_form_name=original.form.name %}
+    {{ form_name|default:original_form_name }}
+    {% endwith %}
   </a>
   {% endwith %}
   {% endwith %}
