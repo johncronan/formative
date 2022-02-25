@@ -8,13 +8,24 @@
   <script>
     $(document).ready(function () {
       $('#sendemailform select').change(function() {
-        const name = $(this).val();
+        const name = $(this).val(), prefix = '#sendemailform ';
+        if (!name) {
+          $(prefix + 'input[name="subject"]').val('');
+          $(prefix + 'textarea[name="content"]').val('');
+          return;
+        }
         const email = JSON.parse(
           document.getElementById('emailTemplates').textContent
         )[name];
-        $('#sendemailform input[name="subject"]').val(email['subject']);
-        $('#sendemailform textarea[name="content"]').val(email['content']);
+        $(prefix + 'input[name="subject"]').val(email['subject']);
+        $(prefix + 'textarea[name="content"]').val(email['content']);
       }).change();
+      
+      const i = '#sendemailform input[name="subject"],#sendemailform textarea';
+      $(i).on('keyup change', function() {
+        const name = $('#sendemailform select').val();
+        if (name) $('#sendemailform select').val('');
+      });
     });
   </script>
 {% endblock %}

@@ -570,3 +570,4 @@ class EmailAdminForm(forms.Form):
         
         if not form: return
         self.fields['name'].choices = [ (n, n) for n in form.email_names() ]
+        self.fields['name'].choices.append(('', '[untitled]'))
