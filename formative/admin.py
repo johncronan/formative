@@ -513,14 +513,15 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         
         options = fieldsets[1][1]['fields']
         if obj.type == CustomBlock.InputType.TEXT: add = names[:1] + names[2:]
-        elif obj.type == CustomBlock.InputType.BOOLEAN: add = names[:1]
+        elif obj.dependence: options.append('default_value')
+        if obj.type == CustomBlock.InputType.BOOLEAN: add = names[:1]
         elif obj.type == CustomBlock.InputType.CHOICE:
             add = names[:2] + ['choices']
-        else: # NUMERIC
+        elif obj.type == CustomBlock.InputType.NUMERIC:
             add = names[:2]
             options += ['numeric_min', 'numeric_max']
         
-        names += ['choices', 'numeric_min', 'numeric_max']
+        names += ['choices', 'numeric_min', 'numeric_max', 'default_value']
         main = [ f for f in fields if f not in names ] + add
         
         sets = [(None, {'fields': main}), ('Options', {'fields': options})]

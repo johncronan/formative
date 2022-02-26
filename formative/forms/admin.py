@@ -113,6 +113,47 @@ class SplitDictField(forms.MultiValueField):
         return None
 
 
+class SingletonChoiceField(forms.ChoiceField):
+    def prepare_value(self, value):
+        if not value: return None
+        return value[0]
+    
+    def to_python(self, value):
+        if not value: return None
+        return [super().to_python(value)]
+    
+    def validate(self, value):
+        if value: value = value[0]
+        super().validate(value)
+
+
+class TypedCharField(forms.CharField):
+    def __init__(self, coerce=lambda val: val, **kwargs):
+        self.coerce = coerce
+        self.msg = 'There was an error.'
+        super().__init__(**kwargs)
+    
+    def coerce_value(self, value):
+        if value is None or value == '': return None
+        if type(value) != str: return value
+        
+        try: value = self.coerce(value)
+        except (ValueError, TypeError, KeyError):
+            raise ValidationError(self.msg)
+        
+        return value
+    
+    def clean(self, value):
+        value = super().clean(value)
+        return self.coerce_value(value)
+    
+    def has_changed(self, initial, data):
+        if not super().has_changed(initial, data): return False
+        try: ret = self.coerce_value(data) != self.coerce_value(initial)
+        except ValidationError: return True
+        return ret
+
+
 class JSONDateTimeWidget(widgets.AdminSplitDateTime):
     def decompress(self, val):
         if not val: return super().decompress(val)
@@ -229,6 +270,8 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
                 
                 test = bool
                 if isinstance(self.fields[field], forms.BooleanField): pass
+                elif isinstance(self.fields[field], TypedCharField):
+                    test = lambda x: x is not None
                 elif isinstance(self.fields[field], forms.CharField): pass
                 elif isinstance(self.fields[field], forms.ChoiceField): pass
                 elif isinstance(self.fields[field], SplitDictField): pass
@@ -428,10 +471,15 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     )
     numeric_min = forms.IntegerField(required=False)
     numeric_max = forms.IntegerField(required=False)
+    default_value = TypedCharField(
+        required=False, widget=widgets.AdminTextInputWidget,
+        help_text="Value that will be used if the block isn't shown " \
+                  "because the dependence is not met."
+    )
     
     class Meta:
         exclude = ('form',)
-        json_fields = {'options': ['no_review', 'choices',
+        json_fields = {'options': ['no_review', 'choices', 'default_value',
                                    'numeric_min', 'numeric_max']}
     
     def __init__(self, *args, **kwargs):
@@ -444,29 +492,52 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
         if not block:
             del self.fields['numeric_min'], self.fields['numeric_max']
             del self.fields['choices'], self.fields['no_review']
+            del self.fields['default_value']
         else:
             if block.type != CustomBlock.InputType.CHOICE:
                 del self.fields['choices']
             if block.type != CustomBlock.InputType.NUMERIC:
                 del self.fields['numeric_min'], self.fields['numeric_max']
+            if block.type == CustomBlock.InputType.TEXT or not block.dependence:
+                del self.fields['default_value']
+            elif block.type == CustomBlock.InputType.NUMERIC:
+                self.fields['default_value'].coerce = lambda val: int(val)
+                self.fields['default_value'].msg = 'Enter a whole number.'
+            elif block.type == CustomBlock.InputType.BOOLEAN:
+                self.fields['default_value'].coerce = \
+                    lambda val: {'true': True, 'false': False}[val.lower()]
+                self.fields['default_value'].msg = "Enter 'true' or 'false.'"
+            elif block.type == CustomBlock.InputType.CHOICE:
+                self.fields['default_value'].coerce = \
+                    lambda val: { k: k for k in block.choices() }[val]
+                self.fields['default_value'].msg = 'Must be one of the choices.'
+            
             if block.form.status != Form.Status.DRAFT:
                 del self.fields['name']
                 if block.type == CustomBlock.InputType.CHOICE:
                     del self.fields['choices']
-
-
-class SingletonChoiceField(forms.ChoiceField):
-    def prepare_value(self, value):
-        if not value: return None
-        return value[0]
     
-    def to_python(self, value):
-        if not value: return None
-        return [super().to_python(value)]
-    
-    def validate(self, value):
-        if value: value = value[0]
-        super().validate(value)
+    def clean(self):
+        super().clean()
+        cleaned_data = self.cleaned_data
+        
+        if 'default_value' in cleaned_data:
+            field = cleaned_data['default_value']
+            if not cleaned_data['dependence']:
+                cleaned_data['options'].pop('default_value', None)
+            elif self.instance.type == CustomBlock.InputType.CHOICE:
+                if field and field not in self.instance.choices():
+                    cleaned_data['options'].pop('default_value', None)
+            elif self.instance.type == CustomBlock.InputType.NUMERIC:
+                if field and self.instance.numeric_min() is not None:
+                    if field < self.instance.numeric_min():
+                        self.add_error('default_value',
+                                       "Can't be less than the minimum value")
+                elif field and self.instance.numeric_max() is not None:
+                    if field > self.instance.numeric_max():
+                        self.add_error('default_value',
+                                       "Can't be more than the maximum value")
+        return cleaned_data
 
 
 class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
