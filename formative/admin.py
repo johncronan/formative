@@ -433,11 +433,17 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         
         if obj.form.status != Form.Status.DRAFT:
             for field, label in obj.stock.admin_published_readonly().items():
-                @admin.display(description=label)
-                def field_callable(self, obj):
-                    if field not in obj.options: return '-'
-                    return obj.options[field]
-                setattr(self, field, types.MethodType(field_callable, self))
+                def field_callable(f, l):
+                    @admin.display(description=l)
+                    def callable(self, obj):
+                        import sys
+                        print('foo', f, file=sys.stderr)
+                        if f not in obj.options: return '-'
+                        return obj.options[f]
+                    return callable
+                
+                setattr(self, field,
+                        types.MethodType(field_callable(field, label), self))
                 fields += (field,)
         
         return fields
