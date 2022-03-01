@@ -1,9 +1,9 @@
 from django import forms, urls
-from django.contrib import admin, auth
+from django.contrib import admin, auth, messages
 from django.contrib.admin.views.main import ChangeList
 from django.core import mail
 from django.db import connection
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Max
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template import Template
@@ -22,7 +22,7 @@ from urllib.parse import unquote, parse_qsl
 
 from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
-    SubmissionItemAdminForm, EmailAdminForm
+    SubmissionItemAdminForm, EmailAdminForm, MoveBlocksAdminForm
 from .models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock, SubmissionRecord
 from .filetype import FileType
@@ -394,18 +394,50 @@ class PageListFilter(admin.SimpleListFilter):
 
 
 @admin.action(description='Move to different page')
-def move_blocks(modeladmin, request, queryset):
-    pass # TODO
+def move_blocks_action(modeladmin, request, queryset):
+    if '_move' in request.POST:
+        page, n = request.POST['page'], 0
+        blocks, cur_page = queryset[0].form.blocks, queryset[0].page
+        last_rank = blocks.filter(page=cur_page).aggregate(r=Max('_rank'))['r']
+        for block in queryset.order_by('_rank'):
+            block = FormBlock.objects.get(pk=block.pk) # clear side effects;
+            block._rank = last_rank
+            block.save() # it's now at the end of its page;
+            block.page, block._rank = page, None # and then move to the new one,
+            block.save() # so that the others on the old page are left sorted
+            n, last_rank = n + 1, last_rank - 1
+        
+        msg = f'Moved {n} blocks to page {page}'
+        modeladmin.message_user(request, msg, messages.SUCCESS)
+        
+        return HttpResponseRedirect(request.get_full_path())
+    
+    template_name = 'admin/formative/move_page.html'
+    request.current_app = site.name
+    min_page = max(block.min_allowed_page() for block in queryset)
+    last_page = queryset[0].form.blocks.aggregate(p=Max('page'))['p']
+    max_page = min(block.max_allowed_page(last_page) for block in queryset)
+    new = max_page == last_page
+    context = {
+        **site.each_context(request),
+        'opts': modeladmin.model._meta,
+        'media': modeladmin.media,
+        'blocks': queryset,
+        'form': MoveBlocksAdminForm(max_page, min_page=min_page, new_page=new),
+        'title': 'Move Blocks'
+    }
+    return TemplateResponse(request, template_name, context)
 
 @admin.register(FormBlock, site=site)
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
                      DynamicArrayMixin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
-    list_display = ('name', 'block_type', 'labels_link')
+    list_display = ('name', 'block_type', 'dependence', 'labels_link')
     list_filter = (PageListFilter,)
     form = StockBlockAdminForm
     inlines = [FormDependencyInline]
-    actions = [move_blocks]
+    actions = [move_blocks_action]
+    sortable_by = ()
     polymorphic_list = True
     
     @admin.display(description='labels')
@@ -631,7 +663,7 @@ def send_email_action(modeladmin, request, queryset):
         content = Template(request.POST['content'])
         
         iterator = queryset.iterator()
-        batch, form, last_time, done = [], None, None, False
+        batch, form, last_time, done, n = [], None, None, False, 0
         while not done:
             submission = next(iterator, None)
             if not submission: done = True
@@ -653,9 +685,13 @@ def send_email_action(modeladmin, request, queryset):
                         }
                         if sub._submitted: sub._update_context(form, context)
                         
+                        n += 1
                         send_email(content, sub._email, subject,
                                    context=context, connection=conn)
                 batch = []
+        
+        msg = f'Emails sent to {n} recipients.'
+        modeladmin.message_user(request, msg, messages.SUCCESS)
         
         return HttpResponseRedirect(request.get_full_path())
     

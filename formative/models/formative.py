@@ -529,6 +529,21 @@ class FormBlock(PolymorphicModel, RankedModel):
         query = query.annotate(en=cond).filter(en=True)
         return query.values_list('id', flat=True)
     
+    def min_allowed_page(self):
+        min_page = 1
+        
+        if self.dependence: min_page = self.dependence.page + 1
+        return min_page
+    
+    def max_allowed_page(self, last_page=None):
+        if last_page is None:
+            last_page = self.form.blocks.aggregate(p=Max('page'))['p'] or 1
+        max_page = last_page
+        
+        for block in self.dependents.all():
+            if block.page - 1 < max_page: max_page = block.page - 1
+        return max_page
+    
     def show_in_review(self):
         return 'no_review' not in self.options
 

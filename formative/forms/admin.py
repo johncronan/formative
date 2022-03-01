@@ -709,3 +709,16 @@ class EmailAdminForm(forms.Form):
         if not form: return
         self.fields['name'].choices = [ (n, n) for n in form.email_names() ]
         self.fields['name'].choices.append(('', '[untitled]'))
+
+
+class MoveBlocksAdminForm(forms.Form):
+    page = forms.ChoiceField(
+        choices=(), widget=forms.Select(attrs={'style': 'padding: 4px'})
+    )
+    
+    def __init__(self, max_page, min_page=1, new_page=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        choices = [ (n, f'{n}') for n in range(min_page, max_page + 1) ]
+        if new_page: choices.append((max_page + 1, f'{max_page+1} (new)'))
+        self.fields['page'].choices = choices

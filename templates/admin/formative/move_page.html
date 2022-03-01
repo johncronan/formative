@@ -1,0 +1,55 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block content_title %} {% trans 'Move Blocks' %} {% endblock %}
+
+{% block cardtitle %} {% trans 'Move Blocks to New Page' %} {% endblock %}
+
+{% block formid %}sendemailform{% endblock %}
+
+{% block cardcontent %}
+    <p>Current page: {{ blocks.0.page }}</p>
+    <p>Choose a new page for the selected blocks.</p>
+    <table cellpadding="5">
+      {{ form.as_table }}
+    </table>
+    <br>
+    <p>The change will apply to:</p>
+{% endblock %}
+
+{% block rowcontent %}
+    <div class="col-12 col-sm-9">
+      <h4>{% trans 'Blocks' %}</h4>
+      <ol>{{ blocks|unordered_list }}</ol>
+      {% for block in blocks %}
+      <input type="hidden" name="_selected_action" value="{{ block.pk }}">
+      {% endfor %}
+    </div>
+{% endblock %}
+
+{% block rowsidecontent %}
+    <h4>{% trans 'Summary' %}</h4>
+    <table class="table" table-striped">
+      <tbody>
+        <tr>
+          <td>{% trans 'Blocks' %}</td>
+          <td>{{ blocks|length }}</td>
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}
+
+{% block formcontrols %}
+    <input type="hidden" name="action" value="move_blocks_action">
+    <div class="form-group">
+      <input type="submit" name="_move"
+             class="btn {{ jazzmin_ui.button_classes.danger }}
+                    form-control" value="{% trans "Yes, I'm sure" %}">
+    </div>
+    <div class="form-group">
+      <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                         cancel-link form-control">
+        {% trans "No, take me back" %}
+      </a>
+    </div>
+{% endblock %}

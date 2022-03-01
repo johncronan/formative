@@ -8,7 +8,7 @@ class UnderscoredRankedModel(models.Model):
     class Meta:
         abstract = True
     
-    _rank = models.IntegerField(default=0, editable=False)
+    _rank = models.IntegerField(default=0, null=True, editable=False)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,7 +24,7 @@ class UnderscoredRankedModel(models.Model):
                 if self._rank:
                     raise ValidationError('New RankedModel instance already'
                                           'ranked - this is not supported')
-                had_pk = self.pk # remember that we're just passing thru
+                had_pk = self.pk == 0 # remember that we're just passing thru
                 # insert with zero - in combination with atomic, acquires a lock
                 obj = super().save(*args, **kwargs)
                 if had_pk: return
@@ -34,7 +34,7 @@ class UnderscoredRankedModel(models.Model):
                 if query['max_rank'] is not None:
                     self._rank = query['max_rank'] + 1
                 else: self._rank = 1
-            
+                
                 super().save(*args, **kwargs)
                 self._initial_rank = self._rank
                 return
@@ -56,7 +56,7 @@ class UnderscoredRankedModel(models.Model):
         else:
             section = group.annotate(pos=pos).filter(_rank__lte=F('pos'),
                                                      _rank__gte=F('pos')-n)
-
+        
         with transaction.atomic():
             order = positive and '_rank' or '-_rank'
             query = section.order_by(order).select_for_update()
