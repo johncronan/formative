@@ -1,0 +1,9 @@
+{% load jazzmin %}
+
+<form id="changelist-search" class="form-inline mt-2" method="GET">
+  {% if cl.has_filters %}
+    {% for spec in cl.filter_specs %}
+      {% jazzmin_list_filter cl spec %}
+    {% endfor %}
+  {% endif %}
+</form>

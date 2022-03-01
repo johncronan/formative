@@ -1,6 +1,18 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls %}
 
+{% block extrajs %}
+  {{ block.super }}
+  
+  <script>
+    $(document).ready(function () {
+      $('select.search-filter').change(function () {
+        document.forms['changelist-search'].submit();
+      });
+    });
+  </script>
+{% endblock %}
+
 {% block content_title %}
 {% if form_id %}
   {{ form_name }}  

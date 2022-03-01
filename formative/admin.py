@@ -104,7 +104,7 @@ class FormChangeList(ChangeList):
         url = reverse('admin:%s_formblock_formlist' % (self.opts.app_label,),
                        args=(int(pk),),
                        current_app=self.model_admin.admin_site.name)
-        return url
+        return url + '?page=1'
 
 
 @admin.register(Form, site=site)
@@ -379,6 +379,20 @@ class FormBlockBase:
         return self.has_add_permission(request)
 
 
+class PageListFilter(admin.SimpleListFilter):
+    title = 'page'
+    parameter_name = 'page'
+    template = 'admin/formative/formblock/filter.html'
+    
+    def lookups(self, request, model_admin):
+        qs = model_admin.get_queryset(request).distinct().order_by('page')
+        return [ (p, f'Page {p}' if p else 'Auto-created blocks')
+                 for p in qs.values_list('page', flat=True) ]
+    
+    def queryset(self, request, queryset):
+        return queryset.filter(page=self.value())
+
+
 @admin.action(description='Move to different page')
 def move_blocks(modeladmin, request, queryset):
     pass # TODO
@@ -387,11 +401,12 @@ def move_blocks(modeladmin, request, queryset):
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
                      DynamicArrayMixin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
-    list_display = ('name', 'page', 'labels_link')
-    list_filter = ('page',)
+    list_display = ('name', 'block_type', 'labels_link')
+    list_filter = (PageListFilter,)
     form = StockBlockAdminForm
     inlines = [FormDependencyInline]
     actions = [move_blocks]
+    polymorphic_list = True
     
     @admin.display(description='labels')
     def labels_link(self, obj):
@@ -436,8 +451,6 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
                 def field_callable(f, l):
                     @admin.display(description=l)
                     def callable(self, obj):
-                        import sys
-                        print('foo', f, file=sys.stderr)
                         if f not in obj.options: return '-'
                         return obj.options[f]
                     return callable
@@ -456,6 +469,9 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         return [url] + urls
     
     def formlist_view(self, request, form_id, **kwargs):
+        page = request.GET.get('page')
+        if not page: return HttpResponseRedirect(request.path + '?page=1')
+        
         name = get_object_or_404(Form, id=int(form_id)).name
         context = {'form_id': form_id, 'form_name': name}
         return self.changelist_view(request, extra_context=context)
