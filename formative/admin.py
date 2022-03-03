@@ -423,6 +423,7 @@ def move_blocks_action(modeladmin, request, queryset):
         'opts': modeladmin.model._meta,
         'media': modeladmin.media,
         'blocks': queryset,
+        'movable': queryset[0].form.status == Form.Status.DRAFT,
         'form': MoveBlocksAdminForm(max_page, min_page=min_page, new_page=new),
         'title': 'Move Blocks'
     }
@@ -432,7 +433,9 @@ def move_blocks_action(modeladmin, request, queryset):
 class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
                      DynamicArrayMixin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
-    list_display = ('name', 'block_type', 'dependence', 'labels_link')
+    list_display = ('_rank', 'name', 'block_type', 'dependence', 'labels_link')
+    list_display_links = ('name',)
+    list_editable = ('_rank',)
     list_filter = (PageListFilter,)
     form = StockBlockAdminForm
     inlines = [FormDependencyInline]
@@ -517,6 +520,13 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         path_filter = Q(form__label__path__startswith=F('name'))
         qs = qs.annotate(num_labels=Count('form__label', filter=path_filter))
         return qs
+    
+    def get_changelist_form(self, request, **kwargs):
+        class HiddenWithHandleInput(forms.HiddenInput):
+            template_name = 'admin/formative/widgets/hidden_with_handle.html'
+        
+        kwargs['widgets'] = {'_rank': HiddenWithHandleInput}
+        return super().get_changelist_form(request, **kwargs)
     
     def change_view(self, *args, **kwargs):
         # we still have the bulk action for delete - it redirects properly

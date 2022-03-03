@@ -8,7 +8,7 @@ class UnderscoredRankedModel(models.Model):
     class Meta:
         abstract = True
     
-    _rank = models.IntegerField(default=0, null=True, editable=False)
+    _rank = models.IntegerField(default=0, null=True, verbose_name='')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

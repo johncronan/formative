@@ -423,7 +423,7 @@ class StockBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     no_review = NegatedBooleanField(label='show in review', required=False)
     
     class Meta:
-        exclude = ('form',)
+        exclude = ('form', '_rank')
         static_fields = ('name', 'page', 'type', 'no_review',
                          'dependence', 'negate_dependencies')
         json_fields = {'options': ['type', 'no_review']}
@@ -478,7 +478,7 @@ class CustomBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     )
     
     class Meta:
-        exclude = ('form',)
+        exclude = ('form', '_rank')
         json_fields = {'options': ['no_review', 'choices', 'default_value',
                                    'numeric_min', 'numeric_max']}
     
@@ -574,7 +574,7 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     )
     
     class Meta:
-        exclude = ('form', 'align_type')
+        exclude = ('form', '_rank', 'align_type')
         static_fields = ('name', 'page', 'fixed', 'name1', 'name2', 'name3',
                          'has_file', 'min_items', 'max_items', 'file_optional',
                          'dependence', 'negate_dependencies')

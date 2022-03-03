@@ -189,6 +189,7 @@ MEDIA_URL = 'media/'
 STATICFILES_DIRS = (
     ("bundles", os.path.join(BASE_DIR, 'assets/bundles')),
 #    ("img", os.path.join(BASE_DIR, 'assets/img')),
+    os.path.join(BASE_DIR, 'assets/static')
 )
 
 

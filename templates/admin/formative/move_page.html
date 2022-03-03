@@ -9,12 +9,18 @@
 
 {% block cardcontent %}
     <p>Current page: {{ blocks.0.page }}</p>
+  {% if movable %}
     <p>Choose a new page for the selected blocks.</p>
     <table cellpadding="5">
       {{ form.as_table }}
     </table>
     <br>
     <p>The change will apply to:</p>
+  {% else %}
+    <p>
+      <strong>It isn't possible yet to move blocks on a published form.</strong>
+    </p>
+  {% endif %}
 {% endblock %}
 
 {% block rowcontent %}
@@ -41,11 +47,13 @@
 
 {% block formcontrols %}
     <input type="hidden" name="action" value="move_blocks_action">
+  {% if movable %}
     <div class="form-group">
       <input type="submit" name="_move"
              class="btn {{ jazzmin_ui.button_classes.danger }}
                     form-control" value="{% trans "Yes, I'm sure" %}">
     </div>
+  {% endif %}
     <div class="form-group">
       <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
                          cancel-link form-control">
