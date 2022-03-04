@@ -3,8 +3,5 @@
 .git
 .gitignore
 .dockerignore
-Dockerfile*
-docker-compose*
 assets/node_modules
 logs
-README.md
