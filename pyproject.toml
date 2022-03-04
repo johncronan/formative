@@ -4,6 +4,34 @@ version = "0.8.5"
 description = ""
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
+readme = "README.md"
+homepage = "https://github.com/johncronan/formative"
+repository = "https://github.com/johncronan/formative"
+keywords = ["forms", "form", "builder", "django"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.1",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4",
+    "Framework :: Django :: 4.0",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+    "Intended Audience :: System Administrators",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Multimedia",
+    "Topic :: Office/Business :: Groupware",
+    "Topic :: Software Development :: Libraries :: Application Frameworks"
+]
+include = ["manage.py", "settings.py", "urls.py", "templates", "Dockerfile",
+           "assets", "captain-definition", "config", "docker-compose.yml"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
