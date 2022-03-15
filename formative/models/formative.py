@@ -264,6 +264,10 @@ class Form(AutoSlugModel):
     def custom_blocks(self):
         return CustomBlock.objects.filter(form=self).non_polymorphic()
     
+    def submission_blocks(self):
+        blocks = self.blocks.not_instance_of(CollectionBlock)
+        return blocks.exclude(page=0, _rank__gt=0)
+    
     def collections(self, name=None):
         blocks = CollectionBlock.objects.filter(form=self)
         if name: return blocks.filter(name=name).non_polymorphic()
