@@ -173,6 +173,17 @@ class JSONDateTimeField(forms.SplitDateTimeField):
 
 class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
     def __new__(cls, class_name, bases, attrs):
+        base_formfield_callback, base_static_fields = None, None
+        for b in bases:
+            if hasattr(b, 'Meta') and hasattr(b.Meta, 'formfield_callback'):
+                base_formfield_callback = b.Meta.formfield_callback
+                break
+        for b in bases:
+            if hasattr(b, 'Meta') and hasattr(b.Meta, 'static_fields'):
+                base_static_fields = b.Meta.static_fields
+                break
+        callback = attrs.pop('formfield_callback', base_formfield_callback)
+        
         json_fields, fields, dynamic_fields, static_fields = {}, [], [], []
         if 'Meta' in attrs:
             json_fields = deepcopy(getattr(attrs['Meta'], 'json_fields', {}))
@@ -181,9 +192,10 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
             dynamic_fields = getattr(attrs['Meta'], 'dynamic_fields', False)
             static_fields = list(getattr(attrs['Meta'], 'static_fields', []))
         
-        def json_field_callback(field, **kwargs):
-            if field.name not in json_fields.keys():
-                return field.formfield(**kwargs)
+        def json_field_callback(db_field, **kwargs):
+            if db_field.name not in json_fields.keys():
+                if not callback: return db_field.formfield(**kwargs)
+                return callback(db_field, **kwargs)
             return JSONPseudoField(required=False)
         
         if json_fields:
@@ -192,9 +204,8 @@ class AdminJSONFormMetaclass(forms.models.ModelFormMetaclass):
             if dynamic_fields:
                 # Meta.static_fields must be used for dynamic_fields forms
                 init_fields = static_fields
-                if not init_fields:
-                    if hasattr(bases[0].Meta, 'static_fields'):
-                        init_fields = bases[0].Meta.static_fields
+                if not init_fields: init_fields = base_static_fields
+                
                 for f in init_fields and fields or []:
                     # requested fields not in base's list are dynamic ones
                     if f not in init_fields:
