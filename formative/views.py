@@ -247,8 +247,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         rec = None
         if self.program_form.item_model:
             items = self.object._items.filter(_block__in=list(self.skipped))
-            any_files = items.exclude(_file='').exists()
-            if any_files:
+            if items.exclude(_file='').exists():
                 rec = SubmissionRecord.objects.get(
                     submission=self.object.pk,
                     type=SubmissionRecord.RecordType.FILES
@@ -261,7 +260,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                         delete_file(item._file)
                         rec.number = F('number') - item._filesize
                         rec.save()
-                        rec.refresh_from_db()
+                        rec.refresh_from_db() # clear the decrementer
                 items.delete()
             else:
                 val = None
@@ -597,6 +596,8 @@ class SubmissionItemUploadView(SubmissionItemBase):
                         if 'message' in newmeta:
                             warn_msg = newmeta.pop('message')
                             item._message = warn_msg[:msg_maxlen]
+                        if 'update_filesize' in newmeta:
+                            item._filesize = newmeta.pop('update_filesize')
                         item._filemeta = newmeta
             item.save()
             

@@ -56,11 +56,15 @@ class ImageFile(FileType):
                 new_img = ImageOps.exif_transpose(img)
                 new_width, new_height = new_img.size
                 new_img.save(file.path, img.format, icc_profile=profile)
+                new_size = os.path.getsize(file.path)
+            
             meta['width'], meta['height'] = new_width, new_height
             meta['megapixels'] = new_width * new_height / 1000000
             msg = _('Image was resized to %(width)sx%(height)s.')
             meta['message'] = msg % {'width': new_width, 'height': new_height}
+            meta['update_filesize'] = new_size
             return meta
+        
         except:
             msg = _('Error occurred processing the image file.')
             self.logger.critical(msg, exc_info=True)
