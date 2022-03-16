@@ -107,6 +107,13 @@ class CompositeStockWidget(StockWidget):
             if name is None: labels[self.name] = (LabelStyle.VERTICAL, label)
             else: labels[f'{self.name}.{name}'] = (LabelStyle.WIDGET, label)
         return labels
+    
+    def render_choices(self):
+        return [('', '-')]
+    
+    # method to render a composite widget's values into a single string
+    def render(self, choice, **kwargs):
+        return ''
 
 
 from .email import EmailWidget

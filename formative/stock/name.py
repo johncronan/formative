@@ -61,3 +61,9 @@ class NameWidget(CompositeStockWidget):
         f = super().admin_fields()
         f['required_part'] = required_part
         return f
+    
+    def render_choices(self):
+        return [('full', 'Full name')]
+    
+    def render(self, choice, **kwargs):
+        return f"{kwargs['first_name']} {kwargs['last_name']}"
