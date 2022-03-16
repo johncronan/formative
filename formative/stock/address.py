@@ -57,6 +57,16 @@ class AddressWidget(CompositeStockWidget):
                     else:
                         data[name] = val
         return data
+    
+    def render_choices(self):
+        return [('city', 'city, state and country'),
+                ('state', 'state and country'), ('country', 'country')]
+    
+    def render(self, choice, **kwargs):
+        vals = [kwargs['country']]
+        if choice in ('city', 'state'): vals.insert(0, kwargs['state'])
+        if choice == 'city': vals.insert(0, kwargs['city'])
+        return ', '.join([ v for v in vals if v ])
 
 
 COUNTRIES = (

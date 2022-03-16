@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "formative"
-version = "0.8.5"
-description = ""
+version = "0.8.6"
+description = "Self-hosted web app for collecting form responses and files"
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
 readme = "README.md"
 homepage = "https://github.com/johncronan/formative"
 repository = "https://github.com/johncronan/formative"
-keywords = ["forms", "form", "builder", "django"]
+keywords = ["forms", "form", "builder", "django", "formative"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",

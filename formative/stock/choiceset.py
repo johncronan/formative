@@ -101,3 +101,20 @@ class ChoiceSetWidget(CompositeStockWidget):
     
     def admin_published_readonly(self):
         return {'choices': 'choices', 'text_input': 'text input ID'}
+    
+    def render_choices(self):
+        return [('with', 'with unlisted'), ('without', 'with [unlisted]'),
+                ('exclude', 'without unlisted')]
+    
+    def render(self, choice, **kwargs):
+        vals = []
+        if self.single and kwargs[self.name]: vals.append(kwargs[self.name])
+        else:
+            for field in self.choices:
+                if kwargs[field]: vals.append(field) # TODO: relabel?
+        if choice != 'exclude' and self.text_input:
+            if kwargs[self.text_input]:
+                if choice == 'with': vals.append(kwargs[self.text_input])
+                else: vals.append('[unlisted]')
+            
+        return ', '.join(vals)
