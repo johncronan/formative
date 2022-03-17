@@ -30,4 +30,4 @@ CMD (cd ../requirements; \
     touch requirements.txt && pip install -r requirements.txt); \
     python3 manage.py collectstatic --noinput && ( \
     if [ "$AUTO_MIGRATE" != "" ]; then python3 manage.py migrate --noinput; fi \
-    ) && exec gunicorn --bind :8000 config.wsgi:application
+    ) && exec gunicorn -c config/gunicorn.conf.py config.wsgi:application
