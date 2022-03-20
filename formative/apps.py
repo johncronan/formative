@@ -8,7 +8,9 @@ class FormativeConfig(AppConfig):
     name = 'formative'
     
     def get_model(self, model_name, require_ready=True):
-        model = super().get_model(model_name, require_ready)
+        model = None
+        try: model = super().get_model(model_name, require_ready)
+        except LookupError: pass
         if model or not require_ready or '_' not in model_name: return model
         
         from .models import Form
