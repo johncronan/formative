@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, \
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django import forms
+from django.db import transaction
 from django.db.models import F, Min
 from django.forms.models import modelform_factory, modelformset_factory
 from django.views import generic
@@ -336,9 +337,11 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             else: formset.save()
             
             items = self.object._items.filter(_block=formset.block.pk)
-            # these are the failed uploads:
-            items.filter(_file='', _filesize__gt=0).delete()
-        
+            failed_uploads = items.filter(_file='', _filesize__gt=0)
+            # must do one at a time, because of the ranked model:
+            with transaction.atomic():
+                for item in failed_uploads.select_for_update(): item.delete()
+            
             types = {}
             for item in items:
                 if 'type' not in item._filemeta: continue
@@ -509,6 +512,7 @@ class SubmissionItemCreateView(SubmissionBase,
                     rec.number = F('number') - item._filesize
                     rec.save()
                     
+                    item._file, item._filesize = '', 0
                     delete_file(item._file)
                 
                 if name:
@@ -529,11 +533,19 @@ class SubmissionItemCreateView(SubmissionBase,
 
 
 class SubmissionItemBase(SubmissionBase):
-    def get_item(self):
+    def get_item(self, for_update=False):
         if 'item_id' not in self.request.POST: return HttpResponseBadRequest()
-        return get_object_or_404(self.program_form.item_model,
-                                 _submission=self.submission.pk,
-                                 _id=self.request.POST['item_id'])
+        
+        if for_update:
+            queryset = self.program_form.item_model.objects.select_for_update()
+        else: queryset = self.program_form.item_model.objects.all()
+        
+        try:
+            return queryset.get(_submission=self.submission.pk,
+                                _id=self.request.POST['item_id'])
+        except queryset.model.DoesNotExist:
+            name = queryset.model._meta.object_name
+            raise Http404(f'No {name} matches the given query.')
 
 
 class SubmissionItemUploadView(SubmissionItemBase):
@@ -567,31 +579,29 @@ class SubmissionItemUploadView(SubmissionItemBase):
         if not filetype_class and types: return HttpResponseBadRequest()
         
         msg_maxlen = SubmissionItem._message_maxlen()
-        def item_error(item, meta):
-            msg = meta['error']
-            item._error = True
-            item._message = msg[:msg_maxlen]
+        def item_error(item, msg):
+            item._error, item._message = True, msg[:msg_maxlen]
             delete_file(item._file)
+            item._file, item._filesize = '', 0
             return msg
         
         msg = ''
         if filetype_class:
             filetype = filetype_class()
             meta = filetype.meta(path)
-            if 'error' in meta: msg = item_error(item, meta)
+            if 'error' in meta: msg = item_error(item, meta['error'])
             else:
                 file_limits = block.file_limits()
                 if filetype.TYPE in file_limits:
                     msg = filetype.limit_error(meta, file_limits[filetype.TYPE])
-                    if msg:
-                        item._error = True
-                        item._message = msg[:msg_maxlen]
+                    if msg: item_error(item, msg)
                     else: msg = ''
                 
                 if not item._error:
                     opts = block.process_options(filetype.TYPE)
                     newmeta = filetype.process(item._file, meta, **opts)
-                    if 'error' in newmeta: msg = item_error(item, newmeta)
+                    if 'error' in newmeta:
+                        msg = item_error(item, newmeta['error'])
                     else:
                         if 'message' in newmeta:
                             warn_msg = newmeta.pop('message')
@@ -601,14 +611,14 @@ class SubmissionItemUploadView(SubmissionItemBase):
                         item._filemeta = newmeta
             item.save()
             
-            rec, created = SubmissionRecord.objects.get_or_create(
-                program=self.program_form.program, form=self.program_form.slug,
-                submission=self.submission.pk,
-                type=SubmissionRecord.RecordType.FILES
-            )
-            if created: rec.number = item._filesize
-            else: rec.number = F('number') + item._filesize
-            rec.save()
+        rec, created = SubmissionRecord.objects.get_or_create(
+            program=self.program_form.program, form=self.program_form.slug,
+            submission=self.submission.pk,
+            type=SubmissionRecord.RecordType.FILES
+        )
+        if created: rec.number = item._filesize
+        else: rec.number = F('number') + item._filesize
+        rec.save()
         
         return HttpResponse(msg)
 
@@ -617,18 +627,22 @@ class SubmissionItemRemoveView(SubmissionItemBase):
     http_method_names = ['post']
     
     def post(self, request, *args, **kwargs):
-        item = self.get_item()
-        if item._file:
+        file = None
+        with transaction.atomic():
+            item = self.get_item(for_update=True)
+            file, filesize = item._file, item._filesize
+            item.delete()
+        
+        if file:
             rec = SubmissionRecord.objects.get(
                 submission=self.submission.pk,
                 type=SubmissionRecord.RecordType.FILES
             )
-            rec.number = F('number') - item._filesize
+            rec.number = F('number') - filesize
             rec.save()
             
-            delete_file(item._file)
+            delete_file(file)
         
-        item.delete()
         return HttpResponse('')
 
 
