@@ -725,7 +725,7 @@ def send_email_action(modeladmin, request, queryset):
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
-    readonly_fields = ('items_index',)
+    readonly_fields = ('_submitted', 'items_index',)
     form = SubmissionAdminForm
     actions = [send_email_action]
     

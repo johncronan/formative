@@ -367,7 +367,8 @@ class FormAdminForm(AdminJSONForm):
     timed_completion = JSONDateTimeField(required=False)
     complete_submit_time = forms.IntegerField(
         required=False, widget=widgets.AdminIntegerFieldWidget,
-        help_text='Extra time to complete uploads/submission, in minutes.'
+        help_text='Extra time to complete uploads/submission, in minutes. ' \
+                  'Default is 5.'
     )
     no_review_after_submit = forms.BooleanField(required=False)
     thanks = forms.CharField(
