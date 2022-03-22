@@ -155,6 +155,18 @@ class FormAdmin(admin.ModelAdmin):
         
         return HttpResponseRedirect(request.get_full_path())
     
+    def save_form(self, request, form, change):
+        obj = super().save_form(request, form, change)
+        if not change: return obj
+        
+        if obj.status == Form.Status.DRAFT:
+            obj.modified = timezone.now()
+        elif obj.status in (Form.Status.DISABLED, Form.Status.COMPLETED):
+            if 'status' in form.changed_data: obj.completed = timezone.now()
+        else: obj.completed = None
+        
+        return obj
+        
     def response_change(self, request, obj):
         subs = []
         if obj.status != Form.Status.DRAFT:
@@ -180,17 +192,7 @@ class FormAdmin(admin.ModelAdmin):
             template_name = 'admin/formative/unpublish_confirmation.html'
             return TemplateResponse(request, template_name, context)
         
-        ret = super().response_change(request, obj)
-        
-        if obj.status == Form.Status.DRAFT:
-            obj.modified = timezone.now()
-        elif obj.status in (Form.Status.DISABLED, Form.Status.COMPLETED):
-            obj.completed = timezone.now()
-        else:
-            obj.completed = None
-        obj.save()
-        
-        return ret
+        return super().response_change(request, obj)
     
     def response_post_save_change(self, request, obj):
         app_label = self.model._meta.app_label

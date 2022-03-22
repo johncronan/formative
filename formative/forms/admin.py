@@ -364,6 +364,11 @@ class FormAdminForm(AdminJSONForm):
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='submitted pre review text'
     )
+    timed_completion = JSONDateTimeField(required=False)
+    complete_submit_time = forms.IntegerField(
+        required=False, widget=widgets.AdminIntegerFieldWidget,
+        help_text='Extra time to complete uploads/submission, in minutes.'
+    )
     no_review_after_submit = forms.BooleanField(required=False)
     thanks = forms.CharField(
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
@@ -374,12 +379,10 @@ class FormAdminForm(AdminJSONForm):
         static_fields = ('program', 'name', 'slug', 'status', 'hidden')
         json_fields = {'options': [
             'hidden', 'access_enable', 'review_pre', 'review_post',
-            'submitted_review_pre', 'no_review_after_submit', 'thanks'
+            'submitted_review_pre', 'timed_completion', 'complete_submit_time',
+            'no_review_after_submit', 'thanks'
         ]}
         dynamic_fields = True
-        widgets = {
-            'name': widgets.AdminTextInputWidget(),
-        }
     
     def __init__(self, *args, **kwargs):
         program_form = None
@@ -399,7 +402,8 @@ class FormAdminForm(AdminJSONForm):
         if not program_form:
             del self.fields['status']
             for n in ('access_enable', 'review_pre', 'review_post', 'thanks',
-                      'submitted_review_pre', 'no_review_after_submit'):
+                      'submitted_review_pre', 'timed_completion',
+                      'complete_submit_time', 'no_review_after_submit'):
                 del self.fields[n]
 
 

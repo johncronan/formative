@@ -1,8 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.formats import date_format, time_format
 from django.utils.translation import gettext_lazy as _
+from datetime import timedelta
 
 from ..models import Form, CustomBlock, SubmissionItem
 from ..filetype import FileType
@@ -54,7 +56,9 @@ class SubmissionForm(forms.ModelForm):
         if not self.page and self.program_form.status != Form.Status.ENABLED:
             msg, params = _('Application cannot be submitted. '), {}
             if self.program_form.status == Form.Status.COMPLETED:
-                msg += _('This form closed on %(date)s at %(time)s.')
+                if self.program_form.extra_time(): msg = None
+                else: msg += _('This form closed on %(date)s at %(time)s.')
+                
                 comp = self.program_form.completed
                 params = {
                     'time': time_format(comp.time(), format='TIME_FORMAT'),
@@ -62,8 +66,9 @@ class SubmissionForm(forms.ModelForm):
                 }
             else: msg += _('Submissions are temporarily disabled.')
             
-            self.add_error(None, ValidationError(msg, params=params))
-            return
+            if msg:
+                self.add_error(None, ValidationError(msg, params=params))
+                return
         
         stocks = {}
         for name, field in self.fields.items():

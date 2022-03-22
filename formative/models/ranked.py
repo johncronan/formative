@@ -8,7 +8,7 @@ class UnderscoredRankedModel(models.Model):
     class Meta:
         abstract = True
     
-    _rank = models.IntegerField(default=0, null=True, verbose_name='')
+    _rank = models.IntegerField(verbose_name='')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,15 +19,18 @@ class UnderscoredRankedModel(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk or not self._rank: # self._rank == 0 for pass-thru
+            if self._rank:
+                raise ValidationError('New RankedModel instance already'
+                                      'ranked - this is not supported')
+            elif self._rank == 0: # we're just passing thru to get a lock
+                super().save(*args, **kwargs)
+                return
+            
+            # newly created instance: it goes at the end
             with transaction.atomic():
-                # newly created instance: it goes at the end
-                if self._rank:
-                    raise ValidationError('New RankedModel instance already'
-                                          'ranked - this is not supported')
-                had_pk = self.pk == 0 # remember that we're just passing thru
-                # insert with zero - in combination with atomic, acquires a lock
-                obj = super().save(*args, **kwargs)
-                if had_pk: return
+                # insert with zero - we're using this as the table lock
+                self._rank = 0
+                super().save(*args, **kwargs)
                 
                 group = self._rank_group()
                 query = group.aggregate(max_rank=Max('_rank'))
@@ -41,8 +44,10 @@ class UnderscoredRankedModel(models.Model):
         
         n, positive = self._rank - self._initial_rank, True
         if n < 0: n, positive = -n, False
-        elif not n:
+        elif not n: # fast-path for when there's no apparent change:
+            self._rank = F('_rank') # if rank has in fact changed, leave it be
             super().save(*args, **kwargs)
+            self._rank = self._initial_rank # no refresh; caller is responsible
             return
         
         group = self._rank_group()
@@ -100,10 +105,11 @@ class UnderscoredRankedModel(models.Model):
     
     @transaction.atomic
     def delete(self, *args, **kwargs):
+        self.refresh_from_db() # less concerned about performance for this one
         rank = self._rank
         self._rank = 0
         if rank:
-            self.save(update_fields=['_rank']) # get the same lock
+            self.save(update_fields=['_rank']) # get the table lock
             group = self._rank_group()
             group.filter(_rank__gt=rank).update(_rank=-F('_rank'))
             group.filter(_rank__lt=-rank).update(_rank=-F('_rank')-1)

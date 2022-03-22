@@ -262,7 +262,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                         rec.number = F('number') - item._filesize
                         rec.save()
                         rec.refresh_from_db() # clear the decrementer
-                items.delete()
+                items.delete() # bulk is ok for ranked, because it's all of them
             else:
                 val = None
                 if block.block_type() == 'custom': val = block.default_value()
@@ -282,8 +282,6 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
     
     def form_valid(self, form):
         if not self.page:
-            # TODO if program_form.status is not enabled
-            
             res = submission_handle_submit.send(self.program_form,
                                                 submission=self.object)
             if res and res[0][1]: return res[0][1]
@@ -339,8 +337,7 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
             items = self.object._items.filter(_block=formset.block.pk)
             failed_uploads = items.filter(_file='', _filesize__gt=0)
             # must do one at a time, because of the ranked model:
-            with transaction.atomic():
-                for item in failed_uploads.select_for_update(): item.delete()
+            for item in failed_uploads: item.delete()
             
             types = {}
             for item in items:
@@ -379,14 +376,21 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 return HttpResponseRedirect(url)
             else: context['submitted'] = True
         
-        if (self.page and context['page'] <= self.object._valid + 1
-         or self.object._valid == self.program_form.num_pages()
-         or self.object._submitted):
+        if self.page and self.program_form.status != Form.Status.ENABLED:
+            if not self.program_form.extra_time():
+                url = reverse('submission_review', kwargs=self.url_args())
+                return HttpResponseRedirect(url)
+        
+        if (
+            self.page and context['page'] <= self.object._valid + 1
+            or self.object._valid == self.program_form.num_pages()
+            or self.object._submitted
+        ):
             return super().render_to_response(context)
         
         # tried to skip ahead - go back to the last page that can be displayed
-        p, name, args = self.object._valid, 'submission_page', self.url_args()
-        if p: args['page'] = p + 1
+        name, args = 'submission_page', self.url_args()
+        if self.object._valid: args['page'] = self.object._valid + 1
         else: name = 'submission'
         
         return HttpResponseRedirect(reverse(name, kwargs=args))
@@ -420,7 +424,6 @@ class SubmissionBase(generic.View):
         self.program_form = form
         if not self.program_form.item_model: raise Http404()
         
-        # TODO: automated form close, timing here relative to rest?
         if form.status == Form.Status.DRAFT: return HttpResponseBadRequest()
         
         self.submission = get_object_or_404(self.program_form.model,
@@ -493,7 +496,13 @@ class SubmissionItemCreateView(SubmissionBase,
                                          _id=self.request.POST['item_id'])
             else:
                 nitems += 1
+            
             if self.block.max_items and nitems > self.block.max_items: break
+            if uploading and self.program_form.status == Form.Status.COMPLETED:
+                if 'item_id' in self.request.POST:
+                    ids.append(item._id)
+                    items.append(item)
+                break
             
             if not form.is_valid():
                 item._error = True
