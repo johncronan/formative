@@ -16,6 +16,7 @@ import uuid
 import markdown
 from markdown_link_attr_modifier import LinkAttrModifierExtension
 from pathlib import Path
+from datetime import timedelta
 import os
 
 from ..stock import StockWidget
@@ -219,7 +220,7 @@ class Form(AutoSlugModel):
         if 'model' in self.__dict__: del self.model
         if 'item_model' in self.__dict__: del self.item_model
         
-        self.modified = timezone.now()
+        self.modified, self.completed = timezone.now(), None
         self.save()
     
     def get_available_plugins(self):
@@ -328,6 +329,22 @@ class Form(AutoSlugModel):
     def access_enable(self):
         if 'access_enable' in self.options: return self.options['access_enable']
         return None
+    
+    def timed_completion(self):
+        if 'timed_completion' in self.options:
+            return self.options['timed_completion']
+        return None
+    
+    def complete_submit_time(self):
+        if 'complete_submit_time' in self.options:
+            return self.options['complete_submit_time']
+        return 5 # minutes
+    
+    def extra_time(self):
+        extra = self.complete_submit_time()
+        if timezone.now() - self.completed <= timedelta(minutes=extra):
+            return True
+        return False
     
     def markdown(self, text):
         md = self.program.markdown
