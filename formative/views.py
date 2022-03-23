@@ -40,7 +40,7 @@ class ProgramFormMixin(generic.edit.FormMixin):
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
         
-        if self.program_form.hidden() and 'sid' not in kwargs:
+        if self.program_form.hidden(): # and 'sid' not in kwargs:
             key, params = self.program_form.access_enable(), self.request.GET
             template = self.template_name
             if 'thanks' not in template and 'continue' not in template:
