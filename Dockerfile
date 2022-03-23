@@ -12,7 +12,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip install wheel poetry && poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-root \
+    && poetry install --no-dev --no-root -E reviewpanel \
     && apt-get purge -y --auto-remove build-essential
 # virtualenvs.create option because we don't need an extra virtualenv here
 

@@ -40,7 +40,7 @@ class ProgramFormMixin(generic.edit.FormMixin):
                                  slug=self.kwargs['form_slug'])
         self.program_form = form
         
-        if self.program_form.hidden() and 'sid' not in kwargs:
+        if self.program_form.hidden(): # and 'sid' not in kwargs:
             key, params = self.program_form.access_enable(), self.request.GET
             template = self.template_name
             if 'thanks' not in template and 'continue' not in template:
@@ -370,21 +370,25 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
         return args
         
     def render_to_response(self, context):
+        form = self.program_form
+        
         if self.object._submitted:
-            if self.page or not self.program_form.review_after_submit():
+            if self.page or not form.review_after_submit():
                 url = reverse('form_thanks', kwargs=self.url_args(id=False))
                 return HttpResponseRedirect(url)
             else: context['submitted'] = True
         
-        if self.page and self.program_form.status != Form.Status.ENABLED:
-            if not self.program_form.extra_time():
-                url = reverse('submission_review', kwargs=self.url_args())
+        if self.page and form.status != Form.Status.ENABLED:
+            if not form.extra_time():
+                if self.object._valid == form.num_pages():
+                    url = reverse('submission_review', kwargs=self.url_args())
+                else: url = reverse('program',
+                                    kwargs={'slug': form.program.slug})
                 return HttpResponseRedirect(url)
         
         if (
             self.page and context['page'] <= self.object._valid + 1
-            or self.object._valid == self.program_form.num_pages()
-            or self.object._submitted
+            or self.object._valid == form.num_pages() or self.object._submitted
         ):
             return super().render_to_response(context)
         

@@ -15,6 +15,7 @@ from polymorphic.models import PolymorphicModel
 import uuid
 import markdown
 from markdown_link_attr_modifier import LinkAttrModifierExtension
+from itertools import groupby
 from pathlib import Path
 from datetime import timedelta
 import os
@@ -913,6 +914,18 @@ class Submission(models.Model):
     def _submit(self):
         self._submitted = timezone.now()
         self.save()
+    
+    def _collections(self, queryset=None, form=None):
+        if not form: form = self._get_form()
+        if not queryset: queryset = self._items.all()
+        
+        # form's order also orders blocks' items with the same collection name
+        block = FormBlock.objects.filter(form=form, pk=OuterRef('_block'))
+        queryset = queryset.annotate(page=Subquery(block.values('page')))
+        queryset = queryset.annotate(block_rank=Subquery(block.values('_rank')))
+        items = queryset.order_by('_collection', 'page', 'block_rank', '_rank')
+        collections = groupby(items, key=lambda item: item._collection)
+        return { k: list(items) for k, items in collections }
 
 
 def file_path(instance, filename):
