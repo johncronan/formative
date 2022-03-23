@@ -2,14 +2,14 @@ from django import template
 from django.conf import settings
 import os
 
-from .. import version
+from .. import __version__
 from ..utils import thumbnail_path, human_readable_filesize
 
 register = template.Library()
 
 @register.simple_tag
 def get_formative_version():
-    return version
+    return __version__
 
 @register.simple_tag
 def file_thumbnail(file):
