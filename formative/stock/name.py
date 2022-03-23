@@ -66,4 +66,4 @@ class NameWidget(CompositeStockWidget):
         return [('full', 'Full name')]
     
     def render(self, choice, **kwargs):
-        return f"{kwargs['first_name']} {kwargs['last_name']}"
+        return f"{kwargs['firstname']} {kwargs['lastname']}"
