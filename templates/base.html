@@ -1,6 +1,6 @@
 {% load get_files from webpack_loader %}
 <!doctype html>
-<html lang="en">
+<html lang="en" {% block html_attributes %}{% endblock %}>
   <head>
     <meta charset="utf-8">
     <title>{% block page_title %}{% endblock %}</title>
