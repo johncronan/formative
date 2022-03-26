@@ -2,6 +2,7 @@ from django.apps import apps
 from django.urls import include, path
 from django.views.defaults import page_not_found, server_error
 from django.http import Http404
+from django.contrib.auth.views import LoginView
 
 from formative import admin
 
@@ -18,6 +19,9 @@ for app in apps.get_app_configs():
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/login/', LoginView.as_view(template_name='admin/login.html',
+                                              next_page='/')),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('', include('formative.urls')),
     path('', include((plugin_patterns, 'plugins'))),
 #    path('404/', page_not_found, {'exception': Http404()}),

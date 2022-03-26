@@ -22,7 +22,8 @@ import os
 
 from ..stock import StockWidget
 from ..filetype import FileType
-from ..utils import create_model, remove_p, send_email, submission_link
+from ..utils import create_model, remove_p, send_email, submission_link, \
+    thumbnail_path
 from .ranked import RankedModel, UnderscoredRankedModel
 from .automatic import AutoSlugModel
 
@@ -971,3 +972,11 @@ class SubmissionItem(UnderscoredRankedModel):
     def _file_type(self):
         if 'type' in self._filemeta: return self._filemeta['type']
         return ''
+    
+    def _thumbnail_url(self):
+        if not self._file: return None
+        type = self._file_type()
+        
+        if type == 'image': return thumbnail_path(self._file.url)
+        elif type == 'video': return thumbnail_path(self._file.url, ext='jpg')
+        return None
