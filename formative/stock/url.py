@@ -24,5 +24,6 @@ class URLWidget(StockWidget):
     
     def render(self, choice, **kwargs):
         url = kwargs[self.name]
-        return mark_safe(f'<a href="{url}">{url}</a>')
+        if not url: return ''
+        return mark_safe(f'<a target="_blank" href="{url}">{url}</a>')
         
