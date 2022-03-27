@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from pikepdf import Pdf
+# from pikepdf import Pdf
 
 from . import FileType
 
@@ -12,8 +12,9 @@ class DocumentFile(FileType):
         ret = super().meta(path)
         
         try:
-            with Pdf.open(path) as pdf:
-                pages = len(pdf.pages)
+#            with Pdf.open(path) as pdf:
+#                pages = len(pdf.pages)
+            pages = 1
             ret.update(pages=pages)
             return ret
         

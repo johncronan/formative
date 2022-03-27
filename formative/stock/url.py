@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.html import mark_safe
 
 from . import StockWidget
 
@@ -20,4 +21,8 @@ class URLWidget(StockWidget):
         if '://' not in data[:8]:
             return 'http://' + data
         return data
+    
+    def render(self, choice, **kwargs):
+        url = kwargs[self.name]
+        return mark_safe(f'<a href="{url}">{url}</a>')
         
