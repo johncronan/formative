@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "formative"
-version = "0.8.11"
+version = "0.8.12"
 description = "Self-hosted web app for collecting form responses and files"
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
@@ -46,7 +46,7 @@ django-jazzmin = "*"
 django-widget-tweaks = "*"
 markdown = "*"
 pillow = "*"
-# pikepdf = "*"
+pikepdf = { git = "https://github.com/pikepdf/pikepdf.git" }
 ffmpeg-python = "*"
 django-localflavor = "^3.1"
 markdown-link-attr-modifier = "^0.2.0"
