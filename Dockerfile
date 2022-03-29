@@ -8,7 +8,7 @@ COPY pyproject.toml poetry.lock /opt/services/djangoapp/src/
 # dependencies
 RUN apt-get update \
     && apt-get install -y build-essential libpq-dev libqpdf-dev pip \
-                          python3-dev python3-importlib-metadata \
+                          python3-dev python3-importlib-metadata git \
     && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && pip install wheel poetry && poetry config virtualenvs.create false \
