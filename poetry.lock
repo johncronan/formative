@@ -383,7 +383,7 @@ soap-fallback = ["pysimplesoap"]
 
 [[package]]
 name = "reviewpanel"
-version = "0.4.5"
+version = "0.4.9"
 description = "Formative plugin for reviewing and scoring applicant submissions"
 category = "main"
 optional = true
@@ -447,7 +447,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b80c87449f92b57665fce84219fb27cf1a2bdfaaced7c6a4710275c858ddcdbe"
+content-hash = "4c31f2ee015a94234bd6632733ecde9f82e19d1d6a3b6e18474e2af0bfbe6e9d"
 
 [metadata.files]
 asgiref = [
@@ -689,8 +689,8 @@ python-stdnum = [
     {file = "python_stdnum-1.17-py2.py3-none-any.whl", hash = "sha256:a46e6cf9652807314d369b654b255c86a59f93d18be2834f3d567ed1a346c547"},
 ]
 reviewpanel = [
-    {file = "reviewpanel-0.4.5-py3-none-any.whl", hash = "sha256:0cb82ee7469e876f85756995e04840632d04be9ae62aef3c133c89dd11aed5be"},
-    {file = "reviewpanel-0.4.5.tar.gz", hash = "sha256:2c66566339bb5520c284aef72af8706b77aec3e7dda658decbae010d18ef2dba"},
+    {file = "reviewpanel-0.4.9-py3-none-any.whl", hash = "sha256:7a5b574262c3171757fa33e971aff3595e87630e8afcd7707d5384ed34e23f0f"},
+    {file = "reviewpanel-0.4.9.tar.gz", hash = "sha256:8f42bdc8e746ec0674aa0d9a3df8ffbe3b22af173ec8ff672837c7c6677ba73f"},
 ]
 sqlparse = [
     {file = "sqlparse-0.4.2-py3-none-any.whl", hash = "sha256:48719e356bb8b42991bdbb1e8b83223757b93789c00910a616a071910ca4a64d"},
