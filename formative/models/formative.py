@@ -973,9 +973,13 @@ class SubmissionItem(UnderscoredRankedModel):
         if 'type' in self._filemeta: return self._filemeta['type']
         return ''
     
-    def _thumbnail_url(self):
+    def _artifact_url(self, name='thumbnail'):
         if not self._file: return None
         type = self._file_type()
+        if not type: return None
+        if name != 'thumbnail' or type not in ('image', 'video'):
+            filetype = FileType.by_type(type)()
+            return filetype.artifact_url(name, self._file.url)
         
         if type == 'image': return thumbnail_path(self._file.url)
         elif type == 'video': return thumbnail_path(self._file.url, ext='jpg')
