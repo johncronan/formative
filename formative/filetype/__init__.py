@@ -66,6 +66,8 @@ class FileType:
     def admin_total_fields(self): return ()
     
     def admin_processing_fields(self): return ()
+    
+    def artifact_url(self, name, file_url): return None
 
 
 from .image import ImageFile

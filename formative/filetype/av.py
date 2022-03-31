@@ -190,3 +190,7 @@ class VideoFile(AudioFile):
     
     def admin_total_fields(self):
         return ('seconds',)
+    
+    def artifact_url(self, name, url):
+        if not name.startswith('subtitles_'): return None
+        return subtitle_path(url, name[len('subtitles_'):])
