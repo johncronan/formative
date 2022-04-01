@@ -22,8 +22,8 @@ urlpatterns = [
     path('accounts/login/', LoginView.as_view(template_name='admin/login.html',
                                               next_page='/')),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('', include('formative.urls')),
     path('', include((plugin_patterns, 'plugins'))),
+    path('', include('formative.urls')),
 #    path('404/', page_not_found, {'exception': Http404()}),
 #    path('500/', server_error),
 ]
