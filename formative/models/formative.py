@@ -13,8 +13,6 @@ from django.utils import timezone
 from django.urls import reverse
 from polymorphic.models import PolymorphicModel
 import uuid
-import markdown
-from markdown_link_attr_modifier import LinkAttrModifierExtension
 from itertools import groupby
 from pathlib import Path
 from datetime import timedelta
@@ -23,9 +21,12 @@ import os
 from ..stock import StockWidget
 from ..filetype import FileType
 from ..utils import create_model, remove_p, send_email, submission_link, \
-    thumbnail_path
+    thumbnail_path, MarkdownFormatter
 from .ranked import RankedModel, UnderscoredRankedModel
 from .automatic import AutoSlugModel
+
+
+markdown = MarkdownFormatter()
 
 
 class Program(AutoSlugModel):
@@ -52,12 +53,6 @@ class Program(AutoSlugModel):
         if Program.objects.filter(db_slug=self.slug.replace('-', '')).exists():
             msg = 'Identifier (with hyphens removed) must be unique.'
             raise ValidationError(msg)
-    
-    @cached_property
-    def markdown(self):
-        return markdown.Markdown(extensions=[
-            LinkAttrModifierExtension(new_tab='external_only')
-        ])
     
     def visible_forms(self):
         pub = self.forms.exclude(status=Form.Status.DRAFT)
@@ -348,21 +343,15 @@ class Form(AutoSlugModel):
             return True
         return False
     
-    def markdown(self, text):
-        md = self.program.markdown
-        return md.reset().convert(text)
-    
     def review_pre(self, prefix=''):
         name = prefix + 'review_pre'
         if name in self.options:
-            md = self.program.markdown
-            return mark_safe(self.markdown(self.options[name]))
+            return mark_safe(markdown.convert(self.options[name]))
         return ''
     
     def review_post(self):
         if 'review_post' in self.options:
-            md = self.program.markdown
-            return mark_safe(self.markdown(self.options['review_post']))
+            return mark_safe(markdown.convert(self.options['review_post']))
         return ''
     
     def submit_submission(self, submission):
@@ -393,8 +382,7 @@ class Form(AutoSlugModel):
     
     def thanks(self):
         if 'thanks' in self.options:
-            md = self.program.markdown
-            return mark_safe(self.markdown(self.options['thanks']))
+            return mark_safe(markdown.convert(self.options['thanks']))
     
     def emails(self):
         if 'emails' in self.options: return self.options['emails']
@@ -445,7 +433,7 @@ class FormLabel(models.Model):
         return self.path
     
     def display(self, inline=False):
-        s = self.form.program.markdown.reset().convert(self.text)
+        s = markdown.convert(self.text)
         if inline: return mark_safe(remove_p(s))
         return mark_safe(s)
     
