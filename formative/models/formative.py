@@ -3,6 +3,7 @@ from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
     UniqueConstraint, Subquery
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.exceptions import FieldError, ValidationError
 from django.template import Template, loader
 from django.utils.functional import cached_property
@@ -168,6 +169,11 @@ class Form(AutoSlugModel):
         return create_model(name, fields, program=self.program.db_slug,
                             base_class=SubmissionItem, meta=Meta)
     
+    def cache_dirty(self):
+        version = cache.get('models_version')
+        if version is None: cache.set('models_version', 1)
+        else: cache.incr('models_version')
+    
     def publish_model(self, model, admin=None):
         with connection.schema_editor() as editor:
             editor.create_model(model)
@@ -176,22 +182,17 @@ class Form(AutoSlugModel):
         ctype.save()
         ContentType.objects.clear_cache()
         
-        from ..admin import site
-        site.register(model, admin)
+        self.cache_dirty()
     
     def unpublish_model(self, model):
-        from ..admin import site
-        match = None
-        for m in site._registry.keys():
-            if m._meta.db_table == model._meta.db_table: match = m
-        if match: site.unregister(match)
+        self.cache_dirty()
         
         ctype = ContentType.objects.get_for_model(model)
         ctype.delete()
         ContentType.objects.clear_cache()
         with connection.schema_editor() as editor:
             editor.delete_model(model)
-            
+    
     def publish(self):
         if self.status != self.Status.DRAFT: return
         

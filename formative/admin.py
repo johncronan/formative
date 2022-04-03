@@ -1,5 +1,6 @@
-from django import forms, urls
+from django import forms
 from django.contrib import admin, auth, messages
+from django.contrib.admin.sites import NotRegistered
 from django.contrib.admin.views.main import ChangeList
 from django.core import mail
 from django.db import connection
@@ -17,7 +18,7 @@ from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
-import sys, importlib, time, types
+import time, types
 from urllib.parse import unquote, parse_qsl
 
 from .forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
@@ -36,35 +37,26 @@ class FormativeAdminSite(admin.AdminSite):
         self.submissions_registered = None
         super().__init__(*args, **kwargs)
     
+    def unregister_by_table(self, model):
+        match = None
+        for m in self._registry.keys():
+            if m._meta.db_table == model._meta.db_table: match = m
+        
+        if match: self.unregister(match)
+    
     def register_submission_models(self):
+        for model in self.submissions_registered or {}:
+            self.unregister_by_table(model)
+        self.submissions_registered = {}
+        
         if Form._meta.db_table in connection.introspection.table_names():
             for form in Form.objects.exclude(status=Form.Status.DRAFT):
                 self.register(form.model, SubmissionAdmin)
+                self.submissions_registered[form.model] = True
+                
                 if form.item_model:
                     self.register(form.item_model, SubmissionItemAdmin)
-        self.submissions_registered = True
-    
-    def catch_all_view(self, request, url):
-        if not self.submissions_registered:
-            self.get_app_list(request)
-            return HttpResponseRedirect(request.get_full_path()) # better than 0
-            # TODO a middleware is necessary to solve this?
-        
-        return super().catch_all_view(request, url)
-    
-    def get_app_list(self, request):
-        if not self.submissions_registered: self.register_submission_models()
-        
-        # unlike normal Django, we might have had changes to the admin urls
-        urls.clear_url_caches()
-        if 'urls' in sys.modules: importlib.reload(sys.modules['urls'])
-        
-        return super().get_app_list(request)
-    
-    def app_index(self, request, *args, **kwargs):
-        if not self.submissions_registered: self.get_app_list(request)
-        
-        return super().app_index(request, *args, **kwargs)
+                    self.submissions_registered[form.item_model] = True
 
 
 site = FormativeAdminSite()

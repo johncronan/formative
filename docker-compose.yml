@@ -22,7 +22,7 @@ services:
       - postfix
 
   nginx:
-    image: nginx:1.20
+    image: nginx:1.21
     ports:
       - 8000:80
     volumes:
@@ -43,6 +43,9 @@ services:
       - 5432:5432
     volumes:
       - database_volume:/var/lib/postgresql/data
+  
+  redis:
+    image: redis:6
 
   postfix:
     image: juanluisbaptiste/postfix:1.3
