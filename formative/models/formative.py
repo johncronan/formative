@@ -171,7 +171,7 @@ class Form(AutoSlugModel):
     
     def cache_dirty(self):
         version = cache.get('models_version')
-        if version is None: cache.set('models_version', 1)
+        if version is None: cache.set('models_version', 1, timeout=None)
         else: cache.incr('models_version')
     
     def publish_model(self, model, admin=None):
