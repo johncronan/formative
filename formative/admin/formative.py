@@ -25,7 +25,8 @@ from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
-from ..signals import register_program_settings, register_form_settings
+from ..signals import register_program_settings, register_form_settings, \
+    register_user_actions
 from ..utils import submission_link
 from .actions import move_blocks_action, send_email_action, UserActionsMixin, \
     FormActionsMixin, SubmissionActionsMixin
@@ -67,6 +68,16 @@ site.register(auth.models.Group, auth.admin.GroupAdmin)
 class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     change_list_template = 'admin/formative/user/change_list.html'
     actions = ['send_password_reset']
+    
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        
+        responses = register_user_actions.send(self)
+        plugin_actions = { k: v for _, r in responses for k, v in r.items() }
+        for name, func in plugin_actions.items():
+            func.__name__ = name
+            actions[name] = self.get_action(func)
+        return actions
 
 
 @admin.register(Program, site=site)
