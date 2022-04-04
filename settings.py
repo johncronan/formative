@@ -69,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'formative.middleware.DynamicModelMiddleware',
 ]
 
 ROOT_URLCONF = 'urls'
@@ -105,6 +106,12 @@ DATABASES = {
         'HOST': host,
         'PORT': '5432',
     }
+}
+
+CACHES = {
+    'default': env.cache_url('REDIS_URL', default='redis://redis/',
+         backend='django.core.cache.backends.redis.RedisCache'
+    )
 }
 
 

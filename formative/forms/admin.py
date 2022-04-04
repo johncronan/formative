@@ -738,3 +738,7 @@ class MoveBlocksAdminForm(forms.Form):
         choices = [ (n, f'{n}') for n in range(min_page, max_page + 1) ]
         if new_page: choices.append((max_page + 1, f'{max_page+1} (new)'))
         self.fields['page'].choices = choices
+
+
+class UserImportForm(forms.Form):
+    csv_file = forms.FileField()

@@ -7,6 +7,8 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 import os, glob
 from pathlib import Path
+import markdown
+from markdown_link_attr_modifier import LinkAttrModifierExtension
 
 
 def create_model(name, fields, app_label='formative', module='',
@@ -97,3 +99,14 @@ def get_tooltips():
 #        'sortabletip': _('Drag to reorder'),
 #        'uploadtip': _('Replace File'),
     }
+
+
+class MarkdownFormatter(markdown.Markdown):
+    def __init__(self):
+        super().__init__(extensions=[
+            LinkAttrModifierExtension(new_tab='external_only')
+        ])
+    
+    def convert(self, text):
+        self.reset() # in our context this seems to be always needed
+        return super().convert(text)
