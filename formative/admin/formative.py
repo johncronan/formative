@@ -6,7 +6,6 @@ from django.db import connection
 from django.db.models import Count, F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
 from django.urls import path, reverse, NoReverseMatch
 from django.utils import timezone
 from django.utils.html import format_html
@@ -23,12 +22,13 @@ from ..forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
     SubmissionItemAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
-    CustomBlock, CollectionBlock, SubmissionRecord
+    CustomBlock, CollectionBlock
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings
 from ..utils import submission_link
-from .actions import move_blocks_action, send_email_action
+from .actions import move_blocks_action, send_email_action, UserActionsMixin, \
+    FormActionsMixin, SubmissionActionsMixin
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -61,7 +61,12 @@ class FormativeAdminSite(admin.AdminSite):
 site = FormativeAdminSite()
 
 site.register(auth.models.Group, auth.admin.GroupAdmin)
-site.register(auth.models.User, auth.admin.UserAdmin)
+
+
+@admin.register(auth.models.User, site=site)
+class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
+    change_list_template = 'admin/formative/user/change_list.html'
+    actions = ['send_password_reset']
 
 
 @admin.register(Program, site=site)
@@ -99,7 +104,7 @@ class FormChangeList(ChangeList):
 
 
 @admin.register(Form, site=site)
-class FormAdmin(admin.ModelAdmin):
+class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
     form = FormAdminForm
@@ -134,18 +139,6 @@ class FormAdmin(admin.ModelAdmin):
             else: fields += ('program', 'slug')
         return fields
     
-    def change_view(self, request, object_id, **kwargs):
-        action, kwargs = None, {}
-        if '_publish' in request.POST: action = 'publish'
-        elif '_unpublish_confirmed' in request.POST: action = 'unpublish'
-        
-        if not action: return super().change_view(request, object_id, **kwargs)
-        
-        obj = self.get_object(request, object_id)
-        getattr(obj, action)(**kwargs)
-        
-        return HttpResponseRedirect(request.get_full_path())
-    
     def save_form(self, request, form, change):
         obj = super().save_form(request, form, change)
         if not change: return obj
@@ -158,33 +151,6 @@ class FormAdmin(admin.ModelAdmin):
         
         return obj
         
-    def response_change(self, request, obj):
-        subs = []
-        if obj.status != Form.Status.DRAFT:
-            qs = obj.model.objects.all()
-            if obj.item_model:
-                qs = qs.annotate(num_items=Count('_item'))
-                subs = qs.values_list('_email', 'num_items')
-            else: subs = qs.values_list('_email')
-        
-        context = {
-            **self.admin_site.each_context(request),
-            'opts': self.model._meta,
-            'media': self.media,
-            'object': obj,
-            'submissions': subs,
-            'title': 'Confirmation'
-        }
-#        if '_publish' in request.POST:
-#            return TemplateResponse(request, 'admin/publish_confirmation.html',
-#                                    context)
-        if '_unpublish' in request.POST:
-            request.current_app = self.admin_site.name
-            template_name = 'admin/formative/unpublish_confirmation.html'
-            return TemplateResponse(request, template_name, context)
-        
-        return super().response_change(request, obj)
-    
     def response_post_save_change(self, request, obj):
         app_label = self.model._meta.app_label
         url = reverse('admin:%s_formblock_formlist' % (app_label,),
@@ -620,7 +586,7 @@ class SubmittedListFilter(admin.SimpleListFilter):
         if self.value() == 'no': return queryset.filter(_submitted=None)
 
 
-class SubmissionAdmin(admin.ModelAdmin):
+class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('_submitted', 'items_index',)
@@ -637,50 +603,6 @@ class SubmissionAdmin(admin.ModelAdmin):
         except NoReverseMatch: return ''
         
         return mark_safe(f'<a href="{url}">items listing</a>')
-    
-    def change_view(self, request, object_id, **kwargs):
-        action, kwargs = None, {}
-        if '_submit_confirmed' in request.POST: action = 'submit'
-        elif '_unsubmit_confirmed' in request.POST: action = 'unsubmit'
-        
-        if not action:
-            kwargs['extra_context'] = {'model_is_submission': True}
-            return super().change_view(request, object_id, **kwargs)
-        
-        obj = self.get_object(request, object_id)
-        rec, rtype = None, SubmissionRecord.RecordType.SUBMISSION
-        try: rec = SubmissionRecord.objects.get(submission=obj._id, type=rtype)
-        except SubmissionRecord.DoesNotExist: pass
-        
-        if action == 'submit':
-            if not rec: obj._get_form().submit_submission(obj)
-            else:
-                obj._submit()
-                rec.deleted = False
-        else:
-            obj._submitted = None
-            obj.save()
-            if rec: rec.deleted = True
-        if rec: rec.save()
-        return HttpResponseRedirect(request.get_full_path())
-    
-    def response_change(self, request, obj):
-        context = {
-            **self.admin_site.each_context(request),
-            'opts': self.model._meta,
-            'media': self.media,
-            'object': obj,
-            'title': 'Confirmation'
-        }
-        template_name = 'admin/formative/submit_confirmation.html'
-        if '_submit' in request.POST or '_unsubmit' in request.POST:
-            request.current_app = self.admin_site.name
-            if '_submit' in request.POST: context['submit'] = True
-            else: context['unsubmit'] = True
-            
-            return TemplateResponse(request, template_name, context)
-        
-        return super().response_change(request, obj)
     
     def view_on_site(self, obj):
         url = obj._get_absolute_url()

@@ -40,7 +40,8 @@
     
     <div class="card-body">
       <div id="content-main">
-        <form id="{% block formid %}confform{% endblock %}" method="post">
+        <form id="{% block formid %}confform{% endblock %}" method="post"
+              {% block form_attributes %}{% endblock %}>
         {% csrf_token %}
         
         {% block cardcontent %}{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block cardtitle %} {% trans 'CSV File Import' %} {% endblock %}
+
+{% block cardcontent %}
+    <p>
+      Users in the uploaded CSV file will be created as non-staff Django users.
+      If a usernames already exists, that user will not be modified.
+    </p>
+    <p>
+      The column order must be as follows: email*, username*, password,
+      first_name, last_name.
+    </p>
+    {{ form.as_p }}
+{% endblock %}
+
+{% block form_attributes %}enctype="multipart/form-data"{% endblock %}
+
+{% block formcontrols %}
+        <div class="form-group">
+          <input type="submit" name="import"
+                 class="btn {{ jazzmin_ui.button_classes.danger }}
+                        form-control" value="{% trans "Import Users" %}">
+        </div>
+        <div class="form-group">
+          <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                             cancel-link form-control">
+            {% trans "Cancel" %}
+          </a>
+        </div>
+{% endblock %}
