@@ -1,6 +1,5 @@
 from django import forms
 from django.contrib import admin, auth
-from django.contrib.admin.sites import NotRegistered
 from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
