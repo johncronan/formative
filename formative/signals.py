@@ -5,10 +5,21 @@ from django.apps import apps
 from django.dispatch import Signal, dispatcher, receiver
 from django.utils.text import capfirst
 
-from .models import Form, FormBlock, CustomBlock, CollectionBlock, FormLabel
+from .models import Form, FormBlock, CustomBlock, CollectionBlock, FormLabel, \
+    SubmissionRecord
 from .stock import EmailWidget
 from .utils import any_name_field
 
+
+@receiver(pre_delete)
+def submission_pre_delete(sender, instance, **kwargs):
+    if not hasattr(sender._meta, 'program_slug'): return
+    
+    form = instance._get_form()
+    SubmissionRecord.objects.filter(
+        program=form.program, form=form.slug,
+        submission=instance._id, type=SubmissionRecord.RecordType.SUBMISSION
+    ).update(deleted=True)
 
 @receiver(post_save, sender=Form)
 def form_post_save(sender, instance, created, raw, **kwargs):
@@ -244,6 +255,8 @@ class FormPluginSignal(Signal):
                 responses.append((receiver, response))
         return responses
 
+
+form_published_changed = Signal()
 
 register_program_settings = Signal()
 

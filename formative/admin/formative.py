@@ -26,7 +26,7 @@ from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
-    register_user_actions
+    register_user_actions, form_published_changed
 from ..utils import submission_link
 from .actions import move_blocks_action, send_email_action, UserActionsMixin, \
     FormActionsMixin, SubmissionActionsMixin
@@ -37,16 +37,9 @@ class FormativeAdminSite(admin.AdminSite):
         self.submissions_registered = None
         super().__init__(*args, **kwargs)
     
-    def unregister_by_table(self, model):
-        match = None
-        for m in self._registry.keys():
-            if m._meta.db_table == model._meta.db_table: match = m
-        
-        if match: self.unregister(match)
-    
     def register_submission_models(self):
         for model in self.submissions_registered or {}:
-            self.unregister_by_table(model)
+            self.unregister(model)
         self.submissions_registered = {}
         
         if Form._meta.db_table in connection.introspection.table_names():
@@ -57,6 +50,8 @@ class FormativeAdminSite(admin.AdminSite):
                 if form.item_model:
                     self.register(form.item_model, SubmissionItemAdmin)
                     self.submissions_registered[form.item_model] = True
+        
+        form_published_changed.send(self)
 
 
 site = FormativeAdminSite()
