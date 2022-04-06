@@ -91,6 +91,20 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-admin-inline-paginator"
+version = "0.3.0"
+description = "The \"Django Admin Inline Paginator\" is simple way to paginate your inline in django admin"
+category = "main"
+optional = false
+python-versions = ">=3.3"
+
+[package.dependencies]
+django = "*"
+
+[package.extras]
+dev = ["django", "django-mock-queries", "pylint", "pytest", "pytest-cov", "pytest-pylint", "pytest-watch"]
+
+[[package]]
 name = "django-better-admin-arrayfield"
 version = "1.4.2"
 description = "Better ArrayField widget for admin"
@@ -490,7 +504,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e98c05cbdbf6ba89a7095ec17ce0fa27a236424a4f4fa47a08851b25f8bf79d2"
+content-hash = "ef955d67ea8c2e22ec1358cf12a45e632bf8d04ce7c0e63129599dc527716065"
 
 [metadata.files]
 asgiref = [
@@ -538,6 +552,9 @@ deprecated = [
 django = [
     {file = "Django-4.0.3-py3-none-any.whl", hash = "sha256:1239218849e922033a35d2a2f777cb8bee18bd725416744074f455f34ff50d0c"},
     {file = "Django-4.0.3.tar.gz", hash = "sha256:77ff2e7050e3324c9b67e29b6707754566f58514112a9ac73310f60cd5261930"},
+]
+django-admin-inline-paginator = [
+    {file = "django-admin-inline-paginator-0.3.0.tar.gz", hash = "sha256:283e701db35064b9a2afb5675f3c59f0c8f57059364471f61638d835fe17218b"},
 ]
 django-better-admin-arrayfield = [
     {file = "django-better-admin-arrayfield-1.4.2.tar.gz", hash = "sha256:b45423e51bbc0aa31ef658248c058ca8b533a541be4dee9fb8bcd059f8a10a58"},

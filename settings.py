@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.forms',
     'django_better_admin_arrayfield',
+    'django_admin_inline_paginator',
     'polymorphic',
     'webpack_loader',
     'widget_tweaks',
