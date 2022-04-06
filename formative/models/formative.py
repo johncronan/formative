@@ -211,6 +211,11 @@ class Form(AutoSlugModel):
     def unpublish(self):
         if self.status == self.Status.DRAFT: return
         
+        rec_type = SubmissionRecord.RecordType.SUBMISSION
+        recs = SubmissionRecord.objects.filter(program=self.program,
+                                               form=self.slug, type=rec_type)
+        recs.update(deleted=True)
+        
         self.unpublish_model(self.model)
         if self.item_model: self.unpublish_model(self.item_model)
         

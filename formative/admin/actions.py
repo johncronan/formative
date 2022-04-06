@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.db.models import Max
+from django.db.models import Count, Max
 from django.http import HttpResponseRedirect
 from django.template import Template
 from django.template.response import TemplateResponse

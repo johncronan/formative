@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.forms',
     'django_better_admin_arrayfield',
+    'django_admin_inline_paginator',
     'polymorphic',
     'webpack_loader',
     'widget_tweaks',
@@ -119,6 +120,7 @@ EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
 TECH_EMAIL = env('DJANGO_SU_EMAIL')
 CONTACT_EMAIL = env('CONTACT_EMAIL', default=TECH_EMAIL)
 SERVER_EMAIL = env('SERVER_EMAIL', default=CONTACT_EMAIL)
+DEFAULT_FROM_EMAIL = CONTACT_EMAIL
 ADMINS = [(env('ADMIN_NAME', default=''),
            env('ADMIN_EMAIL', default=TECH_EMAIL))]
 
