@@ -433,7 +433,7 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==20.0.1)", "requests (>=2.26.0)"
 
 [[package]]
 name = "reviewpanel"
-version = "0.6.1"
+version = "0.6.5"
 description = "Formative plugin for reviewing and scoring applicant submissions"
 category = "main"
 optional = true
@@ -441,7 +441,7 @@ python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
 "backports.zoneinfo" = {version = "*", markers = "python_version >= \"3.8\" and python_version < \"3.9\""}
-formative = ">=0.9.0"
+formative = ">=0.9.1"
 
 [[package]]
 name = "sqlparse"
@@ -504,7 +504,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ef955d67ea8c2e22ec1358cf12a45e632bf8d04ce7c0e63129599dc527716065"
+content-hash = "1782d82d759fcb9cc2673cb4bfefc564a79508efb8fad727236d6fd0f358629f"
 
 [metadata.files]
 asgiref = [
@@ -786,8 +786,8 @@ redis = [
     {file = "redis-4.2.2.tar.gz", hash = "sha256:0107dc8e98a4f1d1d4aa00100e044287f77121a1e6d2085545c4b7fa94a7a27f"},
 ]
 reviewpanel = [
-    {file = "reviewpanel-0.6.1-py3-none-any.whl", hash = "sha256:33f68d27ba26d581f6c3bd83fb16137fb8f47c342599634f265be24fb7c7d305"},
-    {file = "reviewpanel-0.6.1.tar.gz", hash = "sha256:7fc5a364376df6a29f9281ceb5f0c831066e3108fa1655f54c5363cee3c6a31f"},
+    {file = "reviewpanel-0.6.5-py3-none-any.whl", hash = "sha256:0cbf7017ce8e410dae8fe1273adc4aa2f39c3bbad6058305776ae1180efb53dd"},
+    {file = "reviewpanel-0.6.5.tar.gz", hash = "sha256:f383260643b43da9d5f4ac451029a5a0de027a676b2f4d5e0db4145afffd7250"},
 ]
 sqlparse = [
     {file = "sqlparse-0.4.2-py3-none-any.whl", hash = "sha256:48719e356bb8b42991bdbb1e8b83223757b93789c00910a616a071910ca4a64d"},
