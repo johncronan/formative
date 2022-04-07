@@ -61,7 +61,7 @@ site.register(auth.models.Group, auth.admin.GroupAdmin)
 @admin.register(auth.models.User, site=site)
 class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     change_list_template = 'admin/formative/user/change_list.html'
-    actions = ['send_password_reset']
+    actions = ['make_active', 'make_inactive', 'send_password_reset']
     
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -72,6 +72,16 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
             func.__name__ = name
             actions[name] = self.get_action(func)
         return actions
+    
+    def make_active_ornot(self, request, qs, active=True):
+        for obj in qs:
+            obj.is_active = active
+            obj.save()
+        self.message_user(request, 'User status changed.')
+    def make_active(self, request, queryset):
+        return self.make_active_ornot(request, queryset)
+    def make_inactive(self, request, queryset):
+        return self.make_active_ornot(request, queryset, active=False)
 
 
 @admin.register(Program, site=site)
