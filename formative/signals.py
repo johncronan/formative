@@ -14,12 +14,15 @@ from .utils import any_name_field
 @receiver(pre_delete)
 def submission_pre_delete(sender, instance, **kwargs):
     if not hasattr(sender._meta, 'program_slug'): return
+    if not hasattr(instance, '_get_form'): return
     
     form = instance._get_form()
     SubmissionRecord.objects.filter(
         program=form.program, form=form.slug,
         submission=instance._id, type=SubmissionRecord.RecordType.SUBMISSION
     ).update(deleted=True)
+    
+    all_submissions_pre_delete.send(sender, instance=instance)
 
 @receiver(post_save, sender=Form)
 def form_post_save(sender, instance, created, raw, **kwargs):
@@ -261,6 +264,12 @@ form_published_changed = Signal()
 register_program_settings = Signal()
 
 register_user_actions = Signal()
+
+all_submissions_pre_delete = Signal()
+
+all_forms_publish = Signal()
+
+all_forms_unpublish = Signal()
 
 register_form_settings = FormPluginSignal()
 

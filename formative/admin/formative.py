@@ -544,6 +544,7 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
 @admin.register(CollectionBlock, site=site)
 class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
     form = CollectionBlockAdminForm
+    #radio_fields = {'align_type': admin.VERTICAL}
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
@@ -607,6 +608,13 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     readonly_fields = ('_submitted', 'items_index',)
     form = SubmissionAdminForm
     actions = [send_email_action]
+    
+    def delete_queryset(self, request, queryset):
+        # something is up with model registry. manually delete the related items
+        related = queryset.model._get_form().item_model.objects
+        related.filter(_submission__in=queryset.values_list('pk',
+                                                            flat=True)).delete()
+        super().delete_queryset(request, queryset)
     
     @admin.display(description='items')
     def items_index(self, obj):
