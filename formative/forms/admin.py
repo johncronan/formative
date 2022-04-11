@@ -42,6 +42,8 @@ class JSONPseudoField(forms.Field):
 class NegatedBooleanField(forms.BooleanField):
     def prepare_value(self, value): return not value
     
+    def bound_data(self, data, initial): return not data
+    
     def to_python(self, value): return not super().to_python(value)
     
     def has_changed(self, initial, data):
