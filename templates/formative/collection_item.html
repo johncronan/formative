@@ -9,7 +9,7 @@
 {% endif %}
 
 {% with styles=form_block.form.label_class.LabelStyle %}
-      <tr class="mdc-data-table__row"
+      <tr class="rp-item-row mdc-data-table__row"
           {% if item %}data-id="{{ item|underscore:'id' }}"{% endif %}
           {% if form_block.file_optional %}data-file-optional{% endif %}
           data-block-id="{{ form_block.pk }}">
@@ -24,6 +24,10 @@
           </button>
         </td>
       {% endif %}
+    {% if not form_block.tabular %}
+      <td class="rp-stacked-cell mdc-data-table__cell">
+      <ul class="rp-stacked-list">
+    {%endif %}
       
       {% item_columns item form_block uploading as columns %}
       {% form_hidden item_form 'id' as hidden_id %}
@@ -31,11 +35,16 @@
       {% for field in form_block.collection_fields_as_blocks %}
         {% block_field item_form field as form_field %}
         
+        {% if form_block.tabular %}
         <td class="rp-item-field-cell mdc-data-table__cell"
           {% with fw=field.width h=' display: none;' %}
           style="width: {{ fw }}%;{% if not columns.fields %}{{ h }}{% endif %}"
           {% endwith %}
           {% if not columns.upload and forloop.last %}colspan="2"{% endif %}>
+        {% else %}
+        <li class="rp-item-field-cell">
+        {% endif %}
+        
         {% if form_block.fixed and forloop.first %}
           {{ form_field.initial }}
           <input type="hidden" name="{{ item_form.prefix }}-{{ field.name }}"
@@ -63,7 +72,8 @@
                 name="{{ item_form.prefix }}-_rank" value="{{ i|add:-1 }}" />
             {% endif %}
           {% endif %}
-        </td>
+        
+        {% if form_block.tabular %}</td>{% else %}</li>{% endif %}
       {% empty %}
         <td class="rp-item-field-cell mdc-data-table__cell"
           {% if not columns.upload %}colspan="2"{% endif %}
@@ -81,6 +91,11 @@
       {% endfor %}
     
   {% if form_block.has_file %}
+    {% if not form_block.tabular %}
+    <li>
+      <table class="rp-stacked-item-file">
+        <tbody><tr>
+    {% endif %}
     {% with error=item|underscore:'error' file=item|underscore:'file' %}
       {% with hide=columns.progress|yesno:', style="display: none;"'|safe %}
         <td class="rp-item-progress-cell mdc-data-table__cell"
@@ -114,7 +129,28 @@
         </td>
       {% endwith %}
     {% endwith %}
+    {% if not form_block.tabular %}
+        </tr></tbody>
+      </table>
+    </li>
+    {% endif %}
   {% endif %}
+    {% if not form_block.tabular %}
+      {% if form_block.has_file and item|underscore:'filesize' %}
+        <li class="rp-item-file-cell"
+            style="{% if not columns.fields %}display: none;{% endif %}">
+          <span class="rp-done-icon material-icons">
+            download_done
+          </span>
+          <span style="line-height: 48px;">
+            ({{ item|underscore:'filesize'|human_readable }})
+          </span>
+        </li>
+      {% endif %}
+      </ul>
+      </td>
+    {% endif %}
+      
       {% if not form_block.fixed %}
         <td class="rp-item-action-cell mdc-data-table__cell">
           <button class="rp-item-remove mdc-icon-button material-icons"

@@ -739,6 +739,9 @@ class CollectionBlock(FormBlock):
         
         return fields
     
+    def tabular(self):
+        return self.align_type == self.AlignType.TABULAR
+    
     def max_filesize(self):
         if 'max_filesize' in self.options: return self.options['max_filesize']
         return None # TODO: overall default max
