@@ -213,6 +213,11 @@ function setStatus(rowEl, status) {
   }
   rowEl.querySelectorAll(hide).forEach(row => row.style.display = 'none');
   rowEl.querySelectorAll(show).forEach(row => row.style.display = 'table-cell');
+  
+  let sel = 'li.rp-item-file-cell';
+  if (status == 'normal')
+    rowEl.querySelectorAll(sel).forEach(li => li.style.display = 'list-item');
+  else rowEl.querySelectorAll(sel).forEach(li => li.style.display = 'none');
 }
 
 function updateTotal(blockId, incr) {
@@ -255,7 +260,7 @@ function newItems(blockId, restore, files, itemId) {
         if (!tablePos) {
           tbody.innerHTML = html;
           tablediv.style.display = 'flex';
-          rows = tbody.querySelectorAll('tr');
+          rows = tbody.querySelectorAll('tr.rp-item-row');
         } else {
           var isErr = tablePos.classList.contains('rp-collection-field-errors');
           if (isErr) prevNum -= 1;
@@ -352,6 +357,11 @@ document.querySelectorAll('.rp-collection-button')
 
 function uploadClick(event) {
   var rowEl = event.target.parentElement.parentElement;
+  if (!rowEl.classList.contains('rp-item-row')) {
+    let table = rowEl.parentElement.parentElement;
+    let td = table.parentElement.parentElement.parentElement;
+    rowEl = td.parentElement;
+  }
   var blockId = rowEl.dataset.blockId;
   var id = rowEl.dataset.id;
   var fileInput = document.querySelector('input[name="itemfile' + id + '"]');

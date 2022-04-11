@@ -1,5 +1,6 @@
 from django import urls
 from django.core.cache import cache
+from django.contrib.contenttypes.models import ContentType
 import sys, importlib
 
 from .admin import site
@@ -17,6 +18,7 @@ class DynamicModelMiddleware:
             self.models_version = version
             
             site.register_submission_models()
+            ContentType.objects.clear_cache()
             # unlike normal Django, we might have had changes to the admin urls
             urls.clear_url_caches()
             if 'urls' in sys.modules: importlib.reload(sys.modules['urls'])

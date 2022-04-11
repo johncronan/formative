@@ -14,12 +14,15 @@ from .utils import any_name_field
 @receiver(pre_delete)
 def submission_pre_delete(sender, instance, **kwargs):
     if not hasattr(sender._meta, 'program_slug'): return
+    if not hasattr(instance, '_get_form'): return
     
     form = instance._get_form()
     SubmissionRecord.objects.filter(
         program=form.program, form=form.slug,
         submission=instance._id, type=SubmissionRecord.RecordType.SUBMISSION
     ).update(deleted=True)
+    
+    all_submissions_pre_delete.send(sender, instance=instance)
 
 @receiver(post_save, sender=Form)
 def form_post_save(sender, instance, created, raw, **kwargs):
@@ -150,43 +153,80 @@ def formblock_post_save(sender, instance, created, raw, **kwargs):
     if not new and block._old_name != block.name:
         delete_sub_labels(block.form, block._old_name)
 
+@receiver(pre_save, sender=CollectionBlock)
+def customblock_pre_save(sender, instance, raw, **kwargs):
+    if raw: return
+    
+    if instance.pk:
+        orig = CollectionBlock.objects.get(pk=instance.pk)
+        instance._old_name = orig.name
+
 @receiver(post_save, sender=CollectionBlock)
 def collectionblock_post_save(sender, instance, created, raw, **kwargs):
-    block = instance
+    block, new = instance, created
     if raw: return
     
     fields = block.collection_fields()
     
-    if created:
-        existing = block.form.custom_blocks().filter(name__in=fields, page=0)
-        existing_names = existing.values_list('name', flat=True)
-        for name in fields:
-            if name in existing_names: continue
-        
-            item_field = CustomBlock.text_create(form=block.form, name=name,
-                                                 page=0)
-            item_field.save()
+    existing = block.form.custom_blocks().filter(name__in=fields, page=0)
+    existing_names = existing.values_list('name', flat=True)
+    for name in fields:
+        if name in existing_names: continue
+    
+        item_field = CustomBlock.text_create(form=block.form, name=name, page=0)
+        item_field.save()
     
     refs = CollectionBlock.objects.filter(any_name_field(_=OuterRef('name')),
                                           form=block.form)
-    block.form.collections().filter(~Exists(refs), page=0, _rank__gt=1).delete()
-    
-    if not created: return
+    block.form.custom_blocks().filter(~Exists(refs),
+                                      page=0, _rank__gt=1).delete()
     
     text, style = default_text(block.name) + ':', FormLabel.LabelStyle.VERTICAL
-    l = FormLabel.objects.get_or_create(form=block.form, path=block.name,
-                                        defaults={'style': style, 'text': text})
+    paths, id_name, l = [], f'{block.name}{block.id}', None
+    try: l = FormLabel.objects.get(form=block.form, path=id_name+'_')
+    except FormLabel.DoesNotExist:
+        l, _ = FormLabel.objects.get_or_create(form=block.form, path=block.name,
+                                               defaults={'style': style,
+                                                         'text': text})
+    paths.append(l.path)
     
     if block.fixed: return # no implementation yet for fixed + collection
     style = FormLabel.LabelStyle.WIDGET
     for name in block.collection_fields():
-        text, path = default_text(name), '.'.join((block.name, name))
-        l = FormLabel.objects.get_or_create(form=block.form, path=path,
-                                            defaults={'style': style,
-                                                      'text': text})
+        text = default_text(name)
+        path, id_path = '.'.join((block.name, name)), id_name + f'.{name}_'
+        try: l = FormLabel.objects.get(form=block.form, path=id_path)
+        except FormLabel.DoesNotExist:
+            l, _ = FormLabel.objects.get_or_create(form=block.form, path=path,
+                                                   defaults={'style': style,
+                                                             'text': text})
+        paths.append(l.path)
+    
+    # TODO: field name change: update name of existing label rather than delete
+    
+    delete_sub_labels(block.form, id_name, paths, True)
+    if not new and block._old_name != block.name:
+        delete_sub_labels(block.form, f'{block._old_name}{block.id}', True)
+    
+    labels = block.form.labels
+    blocks = block.form.collections(name=block.name).exclude(id=block.pk)
+    if not blocks: delete_sub_labels(block.form, block.name, paths)
+    else:
+        for label in labels.filter(path__startswith=block.name+'.'):
+            if label.path in paths: continue
+            field = label.path[len(block.name)+1:]
+            if not blocks.filter(any_name_field(_=field)): label.delete()
+    
+    if not new and block._old_name != block.name:
+        blocks = block.form.collections(name=block._old_name)
+        if not blocks: delete_sub_labels(block.form, block._old_name)
+        else:
+            for label in labels.filter(path__startswith=block._old_name+'.'):
+                if not blocks.filter(any_name_field(_=field)): label.delete()
 
-def delete_sub_labels(form, name, exclude=[]):
+def delete_sub_labels(form, name, exclude=[], id=False):
     sl = form.labels.filter(path__startswith=name+'.').exclude(path__in=exclude)
+    if id: sl = sl.filter(path__endswith='_')
     sl.delete()
 
 def delete_block_labels(form, name):
@@ -210,13 +250,17 @@ def collectionblock_post_delete(sender, instance, **kwargs):
                                path__endswith='_')).delete()
     
     blocks = block.form.collections(name=block.name)
-    if not blocks:
-        delete_block_labels(block.form, block.name)
-        return
+    if not blocks: delete_block_labels(block.form, block.name)
+    else:
+        for name in block.collection_fields():
+            if not blocks.filter(any_name_field(_=name)):
+                block.form.labels.filter(path='.'.join((block.name,
+                                                        name))).delete()
     
-    for name in block.collection_fields():
-        if not blocks.filter(any_name_field(_=name)):
-            block.form.labels.filter(path='.'.join((block.name, name))).delete()
+    refs = CollectionBlock.objects.filter(any_name_field(_=OuterRef('name')),
+                                          form=block.form)
+    block.form.custom_blocks().filter(~Exists(refs),
+                                      page=0, _rank__gt=1).delete()
 
 
 app_cache = {}
@@ -261,6 +305,12 @@ form_published_changed = Signal()
 register_program_settings = Signal()
 
 register_user_actions = Signal()
+
+all_submissions_pre_delete = Signal()
+
+all_forms_publish = Signal()
+
+all_forms_unpublish = Signal()
 
 register_form_settings = FormPluginSignal()
 

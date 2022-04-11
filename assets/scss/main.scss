@@ -279,6 +279,20 @@ $maxlines: 30;
       padding: 0 8px 0 8px;
     }
   }
+  
+  & .rp-stacked-list {
+    padding-left: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  
+  & .rp-stacked-item-file {
+    width: 100%;
+    & .rp-item-progress-cell {
+      padding-top: 8px;
+      padding-bottom: 16px;
+    }
+  }
 }
 
 .rp-formset-error {

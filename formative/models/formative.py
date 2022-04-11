@@ -175,6 +175,8 @@ class Form(AutoSlugModel):
         else: cache.incr('models_version')
     
     def publish_model(self, model, admin=None):
+        from ..signals import all_forms_publish
+        
         with connection.schema_editor() as editor:
             editor.create_model(model)
         ctype = ContentType(app_label=model._meta.app_label,
@@ -182,12 +184,16 @@ class Form(AutoSlugModel):
         ctype.save()
         ContentType.objects.clear_cache()
         
+        all_forms_publish.send(self, content_type=ctype)
         self.cache_dirty()
     
     def unpublish_model(self, model):
-        self.cache_dirty()
+        from ..signals import all_forms_unpublish
         
+        self.cache_dirty()
         ctype = ContentType.objects.get_for_model(model)
+        all_forms_unpublish.send(self, content_type=ctype)
+        
         ctype.delete()
         ContentType.objects.clear_cache()
         with connection.schema_editor() as editor:
@@ -705,8 +711,8 @@ class CollectionBlock(FormBlock):
     FIXED_CHOICE_VAL_MAXLEN = 100
     
     class AlignType(models.TextChoices):
-        HORIZONTAL = 'horizontal', _('horizontal')
-        VERTICAL = 'vertical', _('vertical')
+        TABULAR = 'tabular', _('tabular')
+        STACKED = 'stacked', _('stacked')
     
     block = models.OneToOneField(FormBlock, on_delete=models.CASCADE,
                                  parent_link=True, primary_key=True)
@@ -720,7 +726,7 @@ class CollectionBlock(FormBlock):
     name2 = models.CharField(max_length=32, default='', blank=True)
     name3 = models.CharField(max_length=32, default='', blank=True)
     align_type = models.CharField(max_length=16, choices=AlignType.choices,
-                                  default=AlignType.HORIZONTAL)
+                                  default=AlignType.TABULAR)
     
     def fields(self):
         return []
@@ -732,6 +738,9 @@ class CollectionBlock(FormBlock):
         if self.name3: fields.append(self.name3)
         
         return fields
+    
+    def tabular(self):
+        return self.align_type == self.AlignType.TABULAR
     
     def max_filesize(self):
         if 'max_filesize' in self.options: return self.options['max_filesize']

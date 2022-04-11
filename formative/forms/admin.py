@@ -42,6 +42,8 @@ class JSONPseudoField(forms.Field):
 class NegatedBooleanField(forms.BooleanField):
     def prepare_value(self, value): return not value
     
+    def bound_data(self, data, initial): return not data
+    
     def to_python(self, value): return not super().to_python(value)
     
     def has_changed(self, initial, data):
@@ -590,12 +592,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     )
     
     class Meta:
-        exclude = ('form', '_rank', 'align_type')
+        exclude = ('form', '_rank')
         static_fields = ('name', 'page', 'fixed', 'name1', 'name2', 'name3',
                          'has_file', 'min_items', 'max_items', 'file_optional',
-                         'dependence', 'negate_dependencies')
+                         'dependence', 'negate_dependencies', 'align_type')
         json_fields = {'options': ['no_review']}
         dynamic_fields = True
+        labels = {'align_type': 'display type'}
     
     def init_file_fields(self, block):
         admin_fields, total_fields = {}, {}
@@ -684,6 +687,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 msg = 'A fixed collection must have at least one text input'
                 self.add_error('name1', msg)
             return cleaned_data
+        
+        form = self.instance.form
+        if 'align_type' in cleaned_data and form.status == Form.Status.DRAFT:
+            if cleaned_data['align_type'] == CollectionBlock.AlignType.STACKED:
+                if not cleaned_data['name1']:
+                    msg = 'Stacked display must have at least one text input'
+                    self.add_error('name1', msg)
         
         if 'autoinit_filename' in cleaned_data:
             field = cleaned_data['autoinit_filename']
