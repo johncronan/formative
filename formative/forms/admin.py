@@ -686,6 +686,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
                 self.add_error('name1', msg)
             return cleaned_data
         
+        form = self.instance.form
+        if 'align_type' in cleaned_data and form.status == Form.Status.DRAFT:
+            if cleaned_data['align_type'] == CollectionBlock.AlignType.STACKED:
+                if not cleaned_data['name1']:
+                    msg = 'Stacked display must have at least one text input'
+                    self.add_error('name1', msg)
+        
         if 'autoinit_filename' in cleaned_data:
             field = cleaned_data['autoinit_filename']
             if field not in self.instance.collection_fields():
