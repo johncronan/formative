@@ -544,17 +544,17 @@ class CustomBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
 @admin.register(CollectionBlock, site=site)
 class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
     form = CollectionBlockAdminForm
-    #radio_fields = {'align_type': admin.VERTICAL}
+    radio_fields = {'align_type': admin.VERTICAL}
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         fields = fieldsets[0][1]['fields']
         names = ['fixed', 'name1', 'name2', 'name3', 'has_file',
-                 'min_items', 'max_items', 'file_optional']
+                 'min_items', 'max_items', 'align_type', 'file_optional']
         
         if not obj: add = names[:5]
         elif obj.fixed: add = names[:4] + ['choices']
-        elif not obj.has_file: add = names[:6]
+        elif not obj.has_file: add = names[:8]
         else: add = names[:]
         
         main = ['name', 'page'] + add

@@ -590,12 +590,13 @@ class CollectionBlockAdminForm(FormBlockAdminForm, AdminJSONForm):
     )
     
     class Meta:
-        exclude = ('form', '_rank', 'align_type')
+        exclude = ('form', '_rank')
         static_fields = ('name', 'page', 'fixed', 'name1', 'name2', 'name3',
                          'has_file', 'min_items', 'max_items', 'file_optional',
-                         'dependence', 'negate_dependencies')
+                         'dependence', 'negate_dependencies', 'align_type')
         json_fields = {'options': ['no_review']}
         dynamic_fields = True
+        labels = {'align_type': 'display type'}
     
     def init_file_fields(self, block):
         admin_fields, total_fields = {}, {}
