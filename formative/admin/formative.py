@@ -15,13 +15,14 @@ from polymorphic.admin import (PolymorphicParentModelAdmin,
                                PolymorphicChildModelAdmin,
                                PolymorphicChildModelFilter)
 import types
+from functools import partial
 from urllib.parse import unquote, parse_qsl
 
 from ..forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
     CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
     SubmissionItemAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
-    CustomBlock, CollectionBlock
+    CustomBlock, CollectionBlock, SubmissionRecord
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
@@ -619,11 +620,33 @@ class SubmittedListFilter(admin.SimpleListFilter):
         if self.value() == 'no': return queryset.filter(_submitted=None)
 
 
+class SubmissionRecordFormSet(forms.BaseModelFormSet):
+    @classmethod
+    def get_default_prefix(cls): return 'formative-submissionrecord'
+
+class SubmissionRecordInline(admin.TabularInline):
+    model = SubmissionRecord
+    formset = SubmissionRecordFormSet
+    exclude = ('program', 'form', 'submission')
+    readonly_fields = ('type', 'recorded', 'text', 'number', 'deleted')
+    
+    def has_add_permission(self, request, obj=None): return False
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        return forms.modelformset_factory(self.model, **{
+            'form': self.form, 'formset': self.formset, 'fields': (),
+            'formfield_callback': partial(self.formfield_for_dbfield,
+                                          request=request),
+            'extra': 0, 'max_num': 0, 'can_delete': False, 'can_order': False
+        })
+
+
 class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('_submitted', 'items_index',)
     form = SubmissionAdminForm
+    inlines = [SubmissionRecordInline]
     actions = [send_email_action]
     
     def delete_queryset(self, request, queryset):
@@ -632,6 +655,17 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
         related.filter(_submission__in=queryset.values_list('pk',
                                                             flat=True)).delete()
         super().delete_queryset(request, queryset)
+    
+    def get_formsets_with_inlines(self, request, obj=None):
+        for inl in self.get_inline_instances(request, obj):
+            if not isinstance(inl, SubmissionRecordInline) or obj is not None:
+                yield inl.get_formset(request, obj), inl
+    
+    def get_formset_kwargs(self, request, obj, inline, prefix):
+        args = super().get_formset_kwargs(request, obj, inline, prefix)
+        for n in ('instance', 'save_as_new'): args.pop(n, None)
+        args['queryset'] = SubmissionRecord.objects.filter(submission=obj.pk)
+        return args
     
     @admin.display(description='items')
     def items_index(self, obj):
