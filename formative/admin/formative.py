@@ -27,8 +27,8 @@ from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed
 from ..utils import submission_link
-from .actions import move_blocks_action, send_email_action, UserActionsMixin, \
-    FormActionsMixin, SubmissionActionsMixin
+from .actions import send_email_action, UserActionsMixin, FormActionsMixin, \
+    FormBlockActionsMixin, SubmissionActionsMixin
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -364,12 +364,13 @@ class PageListFilter(admin.SimpleListFilter):
                  for p in qs.values_list('page', flat=True) ]
     
     def queryset(self, request, queryset):
+        if not self.value().isdigit(): return queryset.none()
         return queryset.filter(page=self.value())
 
 
 @admin.register(FormBlock, site=site)
-class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
-                     DynamicArrayMixin):
+class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
+                     PolymorphicParentModelAdmin, DynamicArrayMixin):
     child_models = (FormBlock, CustomBlock, CollectionBlock)
     list_display = ('_rank', 'name', 'block_type', 'dependence', 'labels_link')
     list_display_links = ('name',)
@@ -377,7 +378,7 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
     list_filter = (PageListFilter,)
     form = StockBlockAdminForm
     inlines = [FormDependencyInline]
-    actions = [move_blocks_action]
+    actions = ['move_blocks_action']
     sortable_by = ()
     polymorphic_list = True
     
@@ -460,10 +461,15 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
         return qs
     
     def get_changelist_form(self, request, **kwargs):
+        page = request.GET.get('page')
+        if not page.isdigit(): page = None
+        
         class HiddenWithHandleInput(forms.HiddenInput):
             template_name = 'admin/formative/widgets/hidden_with_handle.html'
         
-        kwargs['widgets'] = {'_rank': HiddenWithHandleInput}
+        if 'form_id' in request.resolver_match.kwargs and page and int(page):
+            kwargs['widgets'] = {'_rank': HiddenWithHandleInput}
+        else: kwargs['widgets'] = {'_rank': forms.HiddenInput}
         return super().get_changelist_form(request, **kwargs)
     
     def change_view(self, *args, **kwargs):
@@ -489,6 +495,17 @@ class FormBlockAdmin(FormBlockBase, PolymorphicParentModelAdmin,
                 args['form_id'] = match.kwargs['form_id']
             return urlencode(args)
         return ''
+    
+    def has_delete_permission(self, request, obj=None):
+        match = request.resolver_match
+        if 'form_id' not in match.kwargs: return False
+        try: form = Form.objects.get(id=match.kwargs['form_id'])
+        except Form.DoesNotExist: return False
+        if form.status != Form.Status.DRAFT: return False
+        page = request.GET.get('page')
+        if not page.isdigit(): page = None
+        if page and not int(page): return False
+        return True
 
 
 class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):
