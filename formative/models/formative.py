@@ -553,12 +553,14 @@ class FormBlock(PolymorphicModel, RankedModel):
         return query.values_list('id', flat=True)
     
     def min_allowed_page(self):
+        if not self.page: return 0
         min_page = 1
         
         if self.dependence: min_page = self.dependence.page + 1
         return min_page
     
     def max_allowed_page(self, last_page=None):
+        if not self.page: return 0
         if last_page is None:
             last_page = self.form.blocks.aggregate(p=Max('page'))['p'] or 1
         max_page = last_page
