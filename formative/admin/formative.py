@@ -129,18 +129,20 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
         return FormChangeList
     
     def get_fieldsets(self, request, obj=None):
-        fields = super().get_fields(request, obj)
+        opt_fields = super().get_fields(request, obj)
         main_fields = ['program', 'name', 'slug', 'status', 'hidden']
         
         main = (None, {'fields': main_fields[:3] + main_fields[4:]})
         if not obj: return [main]
         
-        for n in main_fields: fields.remove(n)
+        for n in main_fields: opt_fields.remove(n)
         main[1]['fields'] = main_fields
         
+        email_fields = ['email_names', 'emails']
         ret = [
             main,
-            ('Options', {'fields': fields}),
+            ('Options', {'fields': opt_fields}),
+            ('Emails', {'fields': email_fields})
         ]
         responses = register_form_settings.send(obj)
         for receiver, response in responses:
@@ -165,6 +167,21 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
             if 'status' in form.changed_data: obj.completed = timezone.now()
         else: obj.completed = None
         
+        if 'email_names' in form.cleaned_data:
+            names = []
+            for n in form.cleaned_data['email_names'].split(','):
+                name = n.strip()
+                if not name: continue
+                names.append(name)
+                if name not in obj.emails():
+                    if 'emails' not in obj.options: obj.options['emails'] = {}
+                    obj.options['emails'][name] = {'subject': '', 'content': ''}
+            for name in obj.email_names():
+                if name in ('continue', 'confirmation'): continue
+                if name not in names: del obj.options['emails'][name]
+            if 'emails' in obj.options and not obj.options['emails']:
+                del obj.options['emails']
+        
         return obj
         
     def response_post_save_change(self, request, obj):
@@ -172,6 +189,10 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
         url = reverse('admin:%s_formblock_formlist' % (app_label,),
                       args=(obj.id,), current_app=self.admin_site.name)
         return HttpResponseRedirect(url)
+    
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.status != Form.Status.DRAFT: return False
+        return super().has_delete_permission(request, obj)
 
 
 @admin.register(FormLabel, site=site)
@@ -351,7 +372,17 @@ class FormBlockBase:
         return super().has_add_permission(request)
     
     def has_delete_permission(self, request, obj=None):
-        return self.has_add_permission(request)
+        match = request.resolver_match
+        if 'form_id' not in match.kwargs:
+            return self.has_add_permission(request)
+        
+        try: form = Form.objects.get(id=match.kwargs['form_id'])
+        except Form.DoesNotExist: return False
+        if form.status != Form.Status.DRAFT: return False
+        page = request.GET.get('page')
+        if page is None or not page.isdigit(): page = None
+        if page and not int(page): return False
+        return True
 
 
 class PageListFilter(admin.SimpleListFilter):
@@ -361,11 +392,14 @@ class PageListFilter(admin.SimpleListFilter):
     
     def lookups(self, request, model_admin):
         qs = model_admin.get_queryset(request).distinct().order_by('page')
-        return [ (p, f'Page {p}' if p else 'Auto-created blocks')
-                 for p in qs.values_list('page', flat=True) ]
+        ret = list(qs.values_list('page', flat=True))
+        if len(ret) == 1: ret.append(1)
+        return [ (p, f'Page {p}' if p else 'Auto-created blocks') for p in ret ]
     
     def queryset(self, request, queryset):
-        if not self.value().isdigit(): return queryset.none()
+        val = self.value()
+        if val is None: return queryset
+        if not val.isdigit(): return queryset.none()
         return queryset.filter(page=self.value())
 
 
@@ -463,7 +497,7 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
     
     def get_changelist_form(self, request, **kwargs):
         page = request.GET.get('page')
-        if not page.isdigit(): page = None
+        if page is None or not page.isdigit(): page = None
         
         class HiddenWithHandleInput(forms.HiddenInput):
             template_name = 'admin/formative/widgets/hidden_with_handle.html'
@@ -496,17 +530,6 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
                 args['form_id'] = match.kwargs['form_id']
             return urlencode(args)
         return ''
-    
-    def has_delete_permission(self, request, obj=None):
-        match = request.resolver_match
-        if 'form_id' not in match.kwargs: return False
-        try: form = Form.objects.get(id=match.kwargs['form_id'])
-        except Form.DoesNotExist: return False
-        if form.status != Form.Status.DRAFT: return False
-        page = request.GET.get('page')
-        if not page.isdigit(): page = None
-        if page and not int(page): return False
-        return True
 
 
 class FormBlockChildAdmin(FormBlockBase, PolymorphicChildModelAdmin):

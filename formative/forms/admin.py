@@ -61,7 +61,7 @@ class SplitDictWidget(forms.MultiWidget):
         
         subwidgets = {}
         for name, field in fields.items():
-            widget = forms.TextInput(attrs=attrs)
+            widget = field.widget
             if isinstance(field, forms.IntegerField):
                 if not attrs: int_attrs = {}
                 else: int_attrs = attrs.copy()
@@ -94,6 +94,8 @@ class SplitDictWidget(forms.MultiWidget):
             if name.startswith('min_') or name.startswith('max_'):
                 name = name[4:]
             if name.startswith('proc_'): name = name[5:]
+            if name.endswith('_subject') or name.endswith('_content'):
+                name = name[-7:]
             widget['short_name'] = name
         
         return context
@@ -377,13 +379,18 @@ class FormAdminForm(AdminJSONForm):
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='thanks page text'
     )
+    email_names = forms.CharField(
+        required=False, label='custom email names',
+        help_text='If you want to define custom emails, enter a '
+                  'comma-separated list of names.'
+    )
     
     class Meta:
         static_fields = ('program', 'name', 'slug', 'status', 'hidden')
         json_fields = {'options': [
             'hidden', 'access_enable', 'review_pre', 'review_post',
             'submitted_review_pre', 'timed_completion', 'complete_submit_time',
-            'no_review_after_submit', 'thanks'
+            'no_review_after_submit', 'thanks', 'emails'
         ]}
         dynamic_fields = True
     
@@ -406,8 +413,26 @@ class FormAdminForm(AdminJSONForm):
             del self.fields['status']
             for n in ('access_enable', 'review_pre', 'review_post', 'thanks',
                       'submitted_review_pre', 'timed_completion',
-                      'complete_submit_time', 'no_review_after_submit'):
+                      'complete_submit_time', 'no_review_after_submit',
+                      'email_names'):
                 del self.fields[n]
+        else:
+            custom_emails = {}
+            email_names = []
+            for n in program_form.email_names():
+                fields = {'subject': forms.CharField(),
+                          'content': forms.CharField(widget=forms.Textarea)}
+                custom_emails[n] = SplitDictField(fields,
+                    required=False, widget=SplitDictWidget(fields)
+                )
+                if n not in ('continue', 'confirmation'):
+                    email_names.append(n)
+            self.fields['emails'] = SplitDictField(custom_emails,
+                required=False, widget=SplitDictWidget(custom_emails),
+                help_text='Non-custom emails: leave blank to use the ' \
+                          'default text.'
+            )
+            self.fields['email_names'].initial = ','.join(email_names)
 
 
 class FormBlockAdminForm(forms.ModelForm):
