@@ -12,6 +12,7 @@ from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
     Submission, SubmissionItem
+from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
 
@@ -773,6 +774,15 @@ class MoveBlocksAdminForm(forms.Form):
         choices = [ (n, f'{n}') for n in range(min_page, max_page + 1) ]
         if new_page: choices.append((max_page + 1, f'{max_page+1} (new)'))
         self.fields['page'].choices = choices
+
+
+class FormPluginsAdminForm(forms.Form):
+    plugin = forms.ChoiceField(required=True,
+                               choices=[('', '-')]+
+                                       [ (n, p.name) for n, p
+                                         in get_available_plugins().items() ])
+    which = forms.ChoiceField(choices=[('enable', 'Enable plugin'),
+                                       ('disable', 'Disable plugin')])
 
 
 class UserImportForm(forms.Form):

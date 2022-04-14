@@ -11,12 +11,18 @@ def get_all_plugins(form=None):
             meta = app.FormativePluginMeta
             meta.module, meta.app = app.name, app
             
-            if hasattr(app, 'is_available') and form:
+            if hasattr(app, 'is_available'):
                 if not app.is_available(form): continue
             
             plugins.append(meta)
     
     return plugins
+
+def get_available_plugins(form=None):
+    plugins = get_all_plugins(form)
+    
+    return { plugin.module: plugin for plugin in plugins
+             if not plugin.name.startswith('.') }
 
 def get_matching_plugin(module):
     for app in apps.get_app_configs():

@@ -124,6 +124,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
     form = FormAdminForm
+    actions = ['form_plugins']
     
     def get_changelist(self, request, **kwargs):
         return FormChangeList
@@ -153,6 +154,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
         if obj:
+            fields += ('plugins',)
             if obj.status == Form.Status.DRAFT: fields += ('status',)
             else: fields += ('program', 'slug')
         return fields
@@ -193,6 +195,9 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         if obj and obj.status != Form.Status.DRAFT: return False
         return super().has_delete_permission(request, obj)
+    
+    def plugins(self, obj):
+        return ', '.join(obj.get_plugins()) or None
 
 
 @admin.register(FormLabel, site=site)

@@ -1,0 +1,49 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block cardtitle %} {% trans 'Plugin Enable/Disable' %} {% endblock %}
+
+{% block cardcontent %}
+    <p>Select a plugin:</p>
+    {{ form.as_p }}
+{% endblock %}
+
+{% block rowcontent %}
+    <div class="col-12 col-sm-9">
+      <h4>{% trans 'Forms' %}</h4>
+      <ol>
+        {{ forms|slice:':20'|unordered_list }}
+        {% if forms|length > 20 %}<li>...</li>{% endif %}
+      </ol>
+      {% for form in forms %}
+      <input type="hidden" name="_selected_action" value="{{ form.pk }}">
+      {% endfor %}
+    </div>
+{% endblock %}
+
+{% block rowsidecontent %}
+    <h4>{% trans 'Summary' %}</h4>
+    <table class="table" table-striped">
+      <tbody>
+        <tr>
+          <td>{% trans 'Forms' %}</td>
+          <td>{{ forms|length }}</td>
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}
+
+{% block formcontrols %}
+        <input type="hidden" name="action" value="form_plugins">
+        <div class="form-group">
+          <input type="submit" name="_submit"
+                 class="btn {{ jazzmin_ui.button_classes.danger }}
+                        form-control" value="{% trans "Confirm" %}">
+        </div>
+        <div class="form-group">
+          <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                             cancel-link form-control">
+            {% trans "Cancel" %}
+          </a>
+        </div>
+{% endblock %}

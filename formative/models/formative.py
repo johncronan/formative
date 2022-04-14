@@ -233,10 +233,8 @@ class Form(AutoSlugModel):
         self.save()
     
     def get_available_plugins(self):
-        from ..plugins import get_all_plugins
-        
-        return { plugin.module: plugin for plugin in get_all_plugins(self)
-                 if not plugin.name.startswith('.') }
+        from ..plugins import get_available_plugins
+        return get_available_plugins(self)
     
     def get_plugins(self):
         if 'plugins' in self.options: return self.options['plugins']
@@ -245,7 +243,8 @@ class Form(AutoSlugModel):
     def add_plugins(self, plugins):
         available = self.get_available_plugins()
         
-        enable = [ p for p in plugins if p in available ]
+        enabled = self.get_plugins()
+        enable = [ p for p in plugins if p in available and p not in enabled ]
         for plugin in enable:
             if hasattr(available[plugin].app, 'installed'):
                 getattr(available[plugin].app, 'installed')(self)
@@ -255,12 +254,13 @@ class Form(AutoSlugModel):
     
     def remove_plugins(self, plugins):
         available = self.get_available_plugins()
-
-        for plugin in plugins:
+        
+        enabled = self.get_plugins()
+        for plugin in [ p for p in plugins if p in enabled ]:
             if hasattr(available[plugin].app, 'uninstalled'):
                 getattr(available[plugin].app, 'uninstalled')(self)
 
-        new_plugins = [ p for p in self.options['plugins'] if p not in plugins ]
+        new_plugins = [ p for p in enabled if p not in plugins ]
         self.options['plugins'] = new_plugins
     
     def default_text_label_style(self):
