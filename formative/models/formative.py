@@ -604,7 +604,10 @@ class CustomBlock(FormBlock):
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
     
-    def choices(self):
+    def choices(self, include_empty=False):
+        if include_empty:
+            if 'choices' in self.options: return self.options['choices']
+            return []
         if 'choices' not in self.options or not self.options['choices']:
             raise FieldError('choices not defined')
         

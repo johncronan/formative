@@ -18,9 +18,9 @@ import types
 from functools import partial
 from urllib.parse import unquote, parse_qsl
 
-from ..forms import ProgramAdminForm, FormAdminForm, StockBlockAdminForm, \
-    CustomBlockAdminForm, CollectionBlockAdminForm, SubmissionAdminForm, \
-    SubmissionItemAdminForm
+from ..forms import ProgramAdminForm, FormAdminForm, DependencyAdminForm, \
+    StockBlockAdminForm, CustomBlockAdminForm, CollectionBlockAdminForm, \
+    SubmissionAdminForm, SubmissionItemAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock, SubmissionRecord
 from ..filetype import FileType
@@ -214,9 +214,21 @@ class FormLabelAdmin(admin.ModelAdmin):
         return formfield
 
 
+class FormDependencyFormSet(forms.BaseInlineFormSet):
+    def __init__(self, dependence=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dependence = dependence
+    
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs['dependence'] = self.dependence
+        return kwargs
+
 class FormDependencyInline(admin.TabularInline):
     model = FormDependency
     extra = 0
+    formset = FormDependencyFormSet
+    form = DependencyAdminForm
     verbose_name_plural = 'dependency values'
     
     def has_add_permission(self, request, obj):
@@ -282,6 +294,11 @@ class FormBlockBase:
         
         return {}
     
+    def get_formset_kwargs(self, request, obj=None, *args):
+        kwargs = super().get_formset_kwargs(request, obj, *args)
+        if obj: kwargs['dependence'] = obj.dependence
+        return kwargs
+        
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
             # only show the inline on the change form, not add:

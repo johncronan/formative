@@ -436,6 +436,30 @@ class FormAdminForm(AdminJSONForm):
             self.fields['email_names'].initial = ','.join(email_names)
 
 
+class DependencyAdminForm(forms.ModelForm):
+    value = forms.ChoiceField(choices=[('yes', 'yes'), ('no', 'no')])
+    
+    def __init__(self, dependence=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not dependence:
+            self.fields['value'] = forms.CharField(max_length=64,
+                                                   required=False)
+            return
+        
+        bool_str = {True: 'yes', False: 'no'}
+        if dependence.block_type() == 'stock':
+            vals = [ bool_str[v] if type(v) != str else v
+                     for v in dependence.stock.conditional_values() ]
+            self.fields['value'].choices = [ (n, n) for n in vals ]
+        elif dependence.block_type() == 'custom':
+            if dependence.type == CustomBlock.InputType.CHOICE:
+                vals = dependence.choices(include_empty=True)
+                self.fields['value'].choices = [('', '[none]')]
+                self.fields['value'].choices += [ (n, n) for n in vals ]
+        self.fields['value'].required = False
+
+
 class FormBlockAdminForm(forms.ModelForm):
     name = forms.SlugField(
         label='identifier', allow_unicode=True, max_length=32,
