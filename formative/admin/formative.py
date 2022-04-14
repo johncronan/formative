@@ -28,8 +28,8 @@ from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed
 from ..utils import submission_link
-from .actions import send_email_action, UserActionsMixin, FormActionsMixin, \
-    FormBlockActionsMixin, SubmissionActionsMixin
+from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
+    SubmissionActionsMixin
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -692,7 +692,7 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     readonly_fields = ('_submitted', 'items_index',)
     form = SubmissionAdminForm
     inlines = [SubmissionRecordInline]
-    actions = [send_email_action]
+    actions = ['send_email']
     
     def delete_queryset(self, request, queryset):
         # something is up with model registry. manually delete the related items
