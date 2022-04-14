@@ -60,6 +60,10 @@ def submission_link(s, form, rest=''):
     if ':' in server or server.endswith('.local'): proto = 'http'
     else: proto = 'https'
     
+    if s._valid > 1 and not rest:
+        if s._valid == form.num_pages(): rest = f'page-{form.num_pages()}'
+        else: rest = f'page-{s._valid + 1}'
+    
     return f'{proto}://{server}/{form.program.slug}/{form.slug}/{s._id}/{rest}'
 
 def get_file_extension(name):
