@@ -63,6 +63,9 @@ class StockWidget:
         # default is to return a boolean that's True if we got some input
         return bool([v for v in kwargs.values() if v])
     
+    def conditional_values(self): # possible conditional values
+        return [True, False] # default is that the value is boolean
+    
     def clean(self, data):
         return data
     

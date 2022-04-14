@@ -9,9 +9,11 @@ from django.http import HttpResponseRedirect
 from django.template import Template
 from django.template.response import TemplateResponse
 from django.urls import path
+from django.utils.text import capfirst
 import time, csv, io
 
-from ..forms import MoveBlocksAdminForm, EmailAdminForm, UserImportForm
+from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
+    UserImportForm
 from ..models import Form, FormBlock, SubmissionRecord
 from ..utils import send_email
 
@@ -189,6 +191,32 @@ class FormActionsMixin:
             return TemplateResponse(request, template_name, context)
         
         return super().response_change(request, obj)
+    
+    @admin.action(description='Enable/disable a plugin')
+    def form_plugins(self, request, queryset):
+        if '_submit' in request.POST:
+            which, plugin, n = request.POST['which'], request.POST['plugin'], 0
+            for form in queryset:
+                if plugin not in form.get_available_plugins(): continue
+                if which == 'enable': form.add_plugins([plugin])
+                else: form.remove_plugins([plugin])
+                form.save()
+                n += 1
+            
+            msg = f"{capfirst(which)}d plugin '{plugin}' for {n} forms."
+            if n: self.message_user(request, msg, messages.SUCCESS)
+            
+            return HttpResponseRedirect(request.get_full_path())
+        
+        template_name = 'admin/formative/form_plugins.html'
+        request.current_app = self.admin_site.name
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta, 'media': self.media,
+            'forms': queryset, 'title': 'Enable or Disable Plugin',
+            'form': FormPluginsAdminForm()
+        }
+        return TemplateResponse(request, template_name, context)
 
 
 class FormBlockActionsMixin:

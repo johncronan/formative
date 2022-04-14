@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "formative"
-version = "0.9.4"
+version = "0.9.5"
 description = "Self-hosted web app for collecting form responses and files"
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"

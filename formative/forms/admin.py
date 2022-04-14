@@ -12,6 +12,7 @@ from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
     Submission, SubmissionItem
+from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
 
@@ -61,7 +62,7 @@ class SplitDictWidget(forms.MultiWidget):
         
         subwidgets = {}
         for name, field in fields.items():
-            widget = forms.TextInput(attrs=attrs)
+            widget = field.widget
             if isinstance(field, forms.IntegerField):
                 if not attrs: int_attrs = {}
                 else: int_attrs = attrs.copy()
@@ -94,6 +95,8 @@ class SplitDictWidget(forms.MultiWidget):
             if name.startswith('min_') or name.startswith('max_'):
                 name = name[4:]
             if name.startswith('proc_'): name = name[5:]
+            if name.endswith('_subject') or name.endswith('_content'):
+                name = name[-7:]
             widget['short_name'] = name
         
         return context
@@ -377,13 +380,18 @@ class FormAdminForm(AdminJSONForm):
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
         label='thanks page text'
     )
+    email_names = forms.CharField(
+        required=False, label='custom email names',
+        help_text='If you want to define custom emails, enter a '
+                  'comma-separated list of names.'
+    )
     
     class Meta:
         static_fields = ('program', 'name', 'slug', 'status', 'hidden')
         json_fields = {'options': [
             'hidden', 'access_enable', 'review_pre', 'review_post',
             'submitted_review_pre', 'timed_completion', 'complete_submit_time',
-            'no_review_after_submit', 'thanks'
+            'no_review_after_submit', 'thanks', 'emails'
         ]}
         dynamic_fields = True
     
@@ -406,8 +414,50 @@ class FormAdminForm(AdminJSONForm):
             del self.fields['status']
             for n in ('access_enable', 'review_pre', 'review_post', 'thanks',
                       'submitted_review_pre', 'timed_completion',
-                      'complete_submit_time', 'no_review_after_submit'):
+                      'complete_submit_time', 'no_review_after_submit',
+                      'email_names'):
                 del self.fields[n]
+        else:
+            custom_emails = {}
+            email_names = []
+            for n in program_form.email_names():
+                fields = {'subject': forms.CharField(),
+                          'content': forms.CharField(widget=forms.Textarea)}
+                custom_emails[n] = SplitDictField(fields,
+                    required=False, widget=SplitDictWidget(fields)
+                )
+                if n not in ('continue', 'confirmation'):
+                    email_names.append(n)
+            self.fields['emails'] = SplitDictField(custom_emails,
+                required=False, widget=SplitDictWidget(custom_emails),
+                help_text='Non-custom emails: leave blank to use the ' \
+                          'default text.'
+            )
+            self.fields['email_names'].initial = ','.join(email_names)
+
+
+class DependencyAdminForm(forms.ModelForm):
+    value = forms.ChoiceField(choices=[('yes', 'yes'), ('no', 'no')])
+    
+    def __init__(self, dependence=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not dependence:
+            self.fields['value'] = forms.CharField(max_length=64,
+                                                   required=False)
+            return
+        
+        bool_str = {True: 'yes', False: 'no'}
+        if dependence.block_type() == 'stock':
+            vals = [ bool_str[v] if type(v) != str else v
+                     for v in dependence.stock.conditional_values() ]
+            self.fields['value'].choices = [ (n, n) for n in vals ]
+        elif dependence.block_type() == 'custom':
+            if dependence.type == CustomBlock.InputType.CHOICE:
+                vals = dependence.choices(include_empty=True)
+                self.fields['value'].choices = [('', '[none]')]
+                self.fields['value'].choices += [ (n, n) for n in vals ]
+        self.fields['value'].required = False
 
 
 class FormBlockAdminForm(forms.ModelForm):
@@ -748,6 +798,15 @@ class MoveBlocksAdminForm(forms.Form):
         choices = [ (n, f'{n}') for n in range(min_page, max_page + 1) ]
         if new_page: choices.append((max_page + 1, f'{max_page+1} (new)'))
         self.fields['page'].choices = choices
+
+
+class FormPluginsAdminForm(forms.Form):
+    plugin = forms.ChoiceField(required=True,
+                               choices=[('', '-')]+
+                                       [ (n, p.name) for n, p
+                                         in get_available_plugins().items() ])
+    which = forms.ChoiceField(choices=[('enable', 'Enable plugin'),
+                                       ('disable', 'Disable plugin')])
 
 
 class UserImportForm(forms.Form):
