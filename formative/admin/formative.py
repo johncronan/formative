@@ -692,7 +692,7 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     readonly_fields = ('_submitted', 'items_index',)
     form = SubmissionAdminForm
     inlines = [SubmissionRecordInline]
-    actions = ['send_email']
+    actions = ['send_email', 'export_csv']
     
     def delete_queryset(self, request, queryset):
         # something is up with model registry. manually delete the related items

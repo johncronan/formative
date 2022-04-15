@@ -15,6 +15,7 @@ from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
 from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
+from ..utils import any_name_field
 
 
 class NullWidget(forms.Widget):
@@ -785,6 +786,35 @@ class EmailAdminForm(forms.Form):
         if not form: return
         self.fields['name'].choices = [ (n, n) for n in form.email_names() ]
         self.fields['name'].choices.append(('', '[untitled]'))
+
+
+class ExportAdminForm(forms.Form):
+    def __init__(self, program_form=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not program_form: return
+        for block in program_form.submission_blocks():
+            name = 'block_' + block.name
+            self.fields[name] = forms.BooleanField(required=False, initial=True,
+                                                   label=block.name)
+        
+        base = [('no', 'not included'), ('repeat', 'repeated columns')]
+        # TODO this should be no/repeat/combine for collection, check for fields
+        for block in program_form.collection_field_blocks():
+            default = 'no'
+            if program_form.collections().filter(any_name_field(_=block.name),
+                                                 fixed=True).exists():
+                default = 'combine'
+            name = 'cfield_' + block.name
+            self.fields[name] = forms.ChoiceField(label=block.name,
+                choices=base+[('combine', 'separated with commas')],
+                initial=default
+            )
+        for block in program_form.collections().filter(has_file=True):
+            name = 'file_' + block.name
+            self.fields[name] = forms.ChoiceField(label=block.name,
+                choices=base+[('combine', 'separated with spaces')]
+            )
 
 
 class MoveBlocksAdminForm(forms.Form):

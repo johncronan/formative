@@ -51,6 +51,14 @@ python-versions = ">=3.6"
 tzdata = ["tzdata"]
 
 [[package]]
+name = "chardet"
+version = "4.0.0"
+description = "Universal encoding detector for Python 2 and 3"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
@@ -236,6 +244,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "lml"
+version = "0.1.0"
+description = "Load me later. A lazy plugin management system."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "lxml"
 version = "4.8.0"
 description = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
@@ -342,6 +358,65 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "pyexcel"
+version = "0.7.0"
+description = "A wrapper library that provides one API to read, manipulate and writedata in different excel formats"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+chardet = "*"
+lml = ">=0.0.4"
+pyexcel-io = ">=0.6.2"
+texttable = ">=0.8.2"
+
+[package.extras]
+ods = ["pyexcel-ods3 (>=0.6.0)"]
+xls = ["pyexcel-xls (>=0.6.0)"]
+xlsx = ["pyexcel-xlsx (>=0.6.0)"]
+
+[[package]]
+name = "pyexcel-ezodf"
+version = "0.3.4"
+description = "A Python package to create/manipulate OpenDocumentFormat files"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+lxml = "*"
+
+[[package]]
+name = "pyexcel-io"
+version = "0.6.6"
+description = "A python library to read and write structured data in csv, zipped csvformat and to/from databases"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+lml = ">=0.0.4"
+
+[package.extras]
+ods = ["pyexcel-ods3 (>=0.6.0)"]
+xls = ["pyexcel-xls (>=0.6.0)"]
+xlsx = ["pyexcel-xlsx (>=0.6.0)"]
+
+[[package]]
+name = "pyexcel-ods3"
+version = "0.6.1"
+description = "A wrapper library to read, manipulate and write data in ods format"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+lxml = "*"
+pyexcel-ezodf = ">=0.3.3"
+pyexcel-io = ">=0.6.2"
 
 [[package]]
 name = "pyparsing"
@@ -452,6 +527,14 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "texttable"
+version = "1.6.4"
+description = "module for creating simple ASCII tables"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -504,7 +587,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "67649bd716a46a1e6c14784b1b832a02febb8fb6826a7be37c363e1c31ddd203"
+content-hash = "052d11be902624d99603467fe6cde46062b90740f6b3414f8548458486dc0dde"
 
 [metadata.files]
 asgiref = [
@@ -540,6 +623,10 @@ attrs = [
     {file = "backports.zoneinfo-0.2.1-cp38-cp38-win32.whl", hash = "sha256:1b13e654a55cd45672cb54ed12148cd33628f672548f373963b0bff67b217328"},
     {file = "backports.zoneinfo-0.2.1-cp38-cp38-win_amd64.whl", hash = "sha256:4a0f800587060bf8880f954dbef70de6c11bbe59c673c3d818921f042f9954a6"},
     {file = "backports.zoneinfo-0.2.1.tar.gz", hash = "sha256:fadbfe37f74051d024037f223b8e001611eac868b5c5b06144ef4d8b799862f2"},
+]
+chardet = [
+    {file = "chardet-4.0.0-py2.py3-none-any.whl", hash = "sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5"},
+    {file = "chardet-4.0.0.tar.gz", hash = "sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -602,6 +689,10 @@ importlib-metadata = [
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
+]
+lml = [
+    {file = "lml-0.1.0-py2.py3-none-any.whl", hash = "sha256:ec06e850019942a485639c8c2a26bdb99eae24505bee7492b649df98a0bed101"},
+    {file = "lml-0.1.0.tar.gz", hash = "sha256:57a085a29bb7991d70d41c6c3144c560a8e35b4c1030ffb36d85fa058773bcc5"},
 ]
 lxml = [
     {file = "lxml-4.8.0-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:e1ab2fac607842ac36864e358c42feb0960ae62c34aa4caaf12ada0a1fb5d99b"},
@@ -768,6 +859,22 @@ py = [
     {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
 ]
+pyexcel = [
+    {file = "pyexcel-0.7.0-py2.py3-none-any.whl", hash = "sha256:ddc6904512bfa2ecda509fb3b58229bb30db14498632fd9e7a5ba7bbfb02ed1b"},
+    {file = "pyexcel-0.7.0.tar.gz", hash = "sha256:fbf0eee5d93b96cef6f19a9f00703f22c0a64f19728d91b95428009a52129709"},
+]
+pyexcel-ezodf = [
+    {file = "pyexcel-ezodf-0.3.4.tar.gz", hash = "sha256:972eeea9b0e4bab60dfc5cdcb7378cc7ba5e070a0b7282746c0182c5de011ff1"},
+    {file = "pyexcel_ezodf-0.3.4-py2.py3-none-any.whl", hash = "sha256:a74ac7636a015fff31d35c5350dc5ad347ba98ecb453de4dbcbb9a9168434e8c"},
+]
+pyexcel-io = [
+    {file = "pyexcel-io-0.6.6.tar.gz", hash = "sha256:f6084bf1afa5fbf4c61cf7df44370fa513821af188b02e3e19b5efb66d8a969f"},
+    {file = "pyexcel_io-0.6.6-py2.py3-none-any.whl", hash = "sha256:19ff1d599a8a6c0982e4181ef86aa50e1f8d231410fa7e0e204d62e37551c1d6"},
+]
+pyexcel-ods3 = [
+    {file = "pyexcel-ods3-0.6.1.tar.gz", hash = "sha256:53740fc9bc6e91e43cdc0ee4f557bb3b252d8493d34f2c11d26a93c53cfebc2e"},
+    {file = "pyexcel_ods3-0.6.1-py3-none-any.whl", hash = "sha256:ca61d139879349a5d4b0a241add6504474c59fa280d1804b76f56ee4ba30eb8b"},
+]
 pyparsing = [
     {file = "pyparsing-3.0.8-py3-none-any.whl", hash = "sha256:ef7b523f6356f763771559412c0d7134753f037822dad1b16945b7b846f7ad06"},
     {file = "pyparsing-3.0.8.tar.gz", hash = "sha256:7bf433498c016c4314268d95df76c81b842a4cb2b276fa3312cfb1e1d85f6954"},
@@ -798,6 +905,10 @@ reviewpanel = [
 sqlparse = [
     {file = "sqlparse-0.4.2-py3-none-any.whl", hash = "sha256:48719e356bb8b42991bdbb1e8b83223757b93789c00910a616a071910ca4a64d"},
     {file = "sqlparse-0.4.2.tar.gz", hash = "sha256:0c00730c74263a94e5a9919ade150dfc3b19c574389985446148402998287dae"},
+]
+texttable = [
+    {file = "texttable-1.6.4-py2.py3-none-any.whl", hash = "sha256:dd2b0eaebb2a9e167d1cefedab4700e5dcbdb076114eed30b58b97ed6b37d6f2"},
+    {file = "texttable-1.6.4.tar.gz", hash = "sha256:42ee7b9e15f7b225747c3fa08f43c5d6c83bc899f80ff9bae9319334824076e9"},
 ]
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

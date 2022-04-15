@@ -2,13 +2,16 @@ from django.apps import apps
 from django.db.models import Model, Q
 from django.conf import settings
 from django.core import mail
+from django.http import HttpResponse
 from django.template import Context, Template, loader
 from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 import os, glob
 from pathlib import Path
+import pyexcel
 import markdown
 from markdown_link_attr_modifier import LinkAttrModifierExtension
+from urllib.parse import quote
 
 
 def create_model(name, fields, app_label='formative', module='',
@@ -54,6 +57,59 @@ def send_email(template, to, subject, context={}, connection=None):
     email = mail.EmailMessage(sub, message, settings.CONTACT_EMAIL, [to],
                               connection=connection)
     return email.send()
+
+
+class TabularExport:
+    def __init__(self, filename, form, **kwargs):
+        self.form, self.filename = form, filename
+        self.args, self.fields = kwargs, []
+        
+        names = []
+        for name in self.args:
+            if name.startswith('block_'): names.append(name[len('block_'):])
+        blocks = { 'block_'+b.name: b
+                   for b in form.submission_blocks().filter(name__in=names) }
+        
+        for name in self.args:
+            if name.startswith('block_'):
+                if blocks[name].block_type() == 'stock':
+                    for n in blocks[name].stock.widget_names():
+                        self.fields.append(blocks[name].stock.field_name(n))
+                else: self.fields.append(blocks[name].name)
+            
+            elif name.startswith('cfield_'):
+                pass
+    
+    def header_row(self):
+        ret = []
+        for name in self.fields:
+            if name.startswith('_'): ret.append(name[1:])
+            else: ret.append(name)
+        return ret
+    
+    def data_rows(self, queryset):
+        ret = []
+        for submission in queryset:
+            row = []
+            for name in self.fields:
+                val = getattr(submission, name)
+                if val is None: out = ''
+                else: out = str(val)
+                row.append(out)
+            ret.append(row)
+        return ret
+    
+    def response(self, queryset):
+        data = [self.header_row()]
+        data += self.data_rows(queryset)
+        
+        stream = pyexcel.save_as(array=data, dest_file_type='csv')
+        response = HttpResponse(stream, content_type='text/csv')
+        
+        disp = f"attachment; filename*=UTF-8''" + quote(self.filename)
+        response['Content-Disposition'] = disp
+        return response
+
 
 def submission_link(s, form, rest=''):
     server = settings.DJANGO_SERVER

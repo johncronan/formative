@@ -13,9 +13,9 @@ from django.utils.text import capfirst
 import time, csv, io
 
 from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
-    UserImportForm
+    UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
-from ..utils import send_email, submission_link
+from ..utils import send_email, submission_link, TabularExport
 
 
 class UserActionsMixin:
@@ -252,6 +252,23 @@ class SubmissionActionsMixin:
             'submissions': queryset, 'title': 'Email Applicants',
             'form': EmailAdminForm(form=form),
             'email_templates': form.email_templates(),
+        }
+        return TemplateResponse(request, template_name, context)
+    
+    @admin.action(description='Export submissions as CSV')
+    def export_csv(self, request, queryset):
+        program_form = queryset.model._get_form()
+        if '_export' in request.POST:
+            filename = f'{program_form.slug}_export_selected.csv'
+            export = TabularExport(filename, program_form, **request.POST)
+            return export.response(queryset)
+        
+        template_name = 'admin/formative/export_submissions.html'
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta, 'media': self.media,
+            'submissions': queryset, 'title': 'Export Submissions',
+            'form': ExportAdminForm(program_form=program_form)
         }
         return TemplateResponse(request, template_name, context)
     
