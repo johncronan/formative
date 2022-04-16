@@ -125,36 +125,42 @@ class TabularExport:
         
         return ret
     
+    def data_row(self, submission, sub_items):
+        row = [submission._email]
+        
+        for name in self.fields:
+            val = getattr(submission, name)
+            if val is None: out = ''
+            else: out = str(val)
+            row.append(out)
+        
+        def item_val(item, field):
+            if field == '_file' and item._file:
+                return 'https://' + settings.DJANGO_SERVER + item._file.url
+            val = getattr(item, field)
+            if val is None: return ''
+            return str(val)
+        
+        for collection, (n, fields) in self.collections.items():
+            col_items = sub_items.setdefault(collection, [])
+            if n < 0:
+                for field in fields:
+                    vals = [ item_val(item, field) for item in col_items ]
+                    sep = ' ' if field == '_file' else ', '
+                    out = sep.join(vals)
+                    row.append(out)
+            else:
+                for item in col_items:
+                    for field in fields: row.append(item_val(item, field))
+                row.extend([''] * (n-len(col_items)) * len(fields))
+                
+        return row
+    
     def data_rows(self, queryset):
         ret = []
         for submission in queryset:
             sub_items = self.items.setdefault(submission._id, {})
-            row = [submission._email]
-            
-            for name in self.fields:
-                val = getattr(submission, name)
-                if val is None: out = ''
-                else: out = str(val)
-                row.append(out)
-            
-            def item_val(item, field):
-                if field == '_file' and item._file:
-                    return 'https://' + settings.DJANGO_SERVER + item._file.url
-                val = getattr(item, field)
-                if val is None: return ''
-                return str(val)
-            
-            for collection, (n, fields) in self.collections.items():
-                col_items = sub_items.setdefault(collection, [])
-                if n < 0:
-                    for field in fields:
-                        vals = [ item_val(item, field) for item in col_items ]
-                        sep = ' ' if field == '_file' else ', '
-                        out = sep.join(vals)
-                        row.append(out)
-                else:
-                    for item in col_items:
-                        for field in fields: row.append(item_val(item, field))
+            row = self.data_row(submission, sub_items)
             ret.append(row)
         return ret
     
