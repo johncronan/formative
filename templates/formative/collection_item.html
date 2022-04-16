@@ -46,9 +46,11 @@
         {% endif %}
         
         {% if form_block.fixed and forloop.first %}
-          {{ form_field.initial }}
+        {% with val=form_field.initial|default_if_none:form_field.value %}
+          {{ val }}
           <input type="hidden" name="{{ item_form.prefix }}-{{ field.name }}"
-            value="{{ form_field.initial }}" />
+            value="{{ val }}" />
+        {% endwith %}
         {% else %}
           <label class="rp-item-field mdc-text-field mdc-text-field--filled
             {% if form_field.errors %}rp-text-field--invalid{% endif %}">

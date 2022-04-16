@@ -147,8 +147,7 @@ class Form(AutoSlugModel):
                                               related_query_name='_item'))
         ]
         
-        field_blocks = { b.name: b for b in
-                         self.custom_blocks().filter(page=0, _rank__gt=1) }
+        field_blocks = { b.name: b for b in self.collection_field_blocks() }
         for n in names:
             # look for a CustomBlock with the same name on page 0 (hidden)
             if n in field_blocks: block = field_blocks[n]
@@ -277,6 +276,9 @@ class Form(AutoSlugModel):
     def submission_blocks(self):
         blocks = self.blocks.not_instance_of(CollectionBlock)
         return blocks.exclude(page=0, _rank__gt=0)
+    
+    def collection_field_blocks(self):
+        return self.custom_blocks().filter(page=0, _rank__gt=1)
     
     def collections(self, name=None):
         blocks = CollectionBlock.objects.filter(form=self)

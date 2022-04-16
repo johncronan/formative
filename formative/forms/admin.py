@@ -15,6 +15,7 @@ from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
 from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
+from ..utils import any_name_field
 
 
 class NullWidget(forms.Widget):
@@ -785,6 +786,33 @@ class EmailAdminForm(forms.Form):
         if not form: return
         self.fields['name'].choices = [ (n, n) for n in form.email_names() ]
         self.fields['name'].choices.append(('', '[untitled]'))
+
+
+class ExportAdminForm(forms.Form):
+    def __init__(self, program_form=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not program_form: return
+        for block in program_form.submission_blocks():
+            name = 'block_' + block.name
+            self.fields[name] = forms.BooleanField(required=False, initial=True,
+                                                   label=block.name)
+        
+        choices = [('no', 'not included'), ('repeat', 'repeated columns'),
+                   ('combine', 'in one column')]
+        for block in program_form.collections():
+            name = 'collection_' + block.name
+            self.fields[name] = forms.ChoiceField(label=block.name,
+                choices=choices, initial='combine' if block.fixed else 'no'
+            )
+            for field in block.collection_fields():
+                name = f'cfield_{block.name}.{field}'
+                self.fields[name] = forms.BooleanField(label=field,
+                    required=False, initial=block.fixed)
+            if block.has_file:
+                self.fields[f'cfield_{block.name}._file'] = forms.BooleanField(
+                    label='file URL', required=False
+                )
 
 
 class MoveBlocksAdminForm(forms.Form):

@@ -202,9 +202,6 @@ class SubmissionView(ProgramFormMixin, generic.UpdateView):
                 kwargs['initial'] = choices
             
             fields = block.collection_fields()
-            if block.fixed and queryset:
-                if self.request.method == 'POST': fields = fields[1:]
-            
             FormSet = modelformset_factory(item_model,
                                            formset=ItemsFormSet, form=ItemsForm,
                                            fields=fields,

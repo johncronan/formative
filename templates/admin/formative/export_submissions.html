@@ -1,0 +1,49 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block cardtitle %} {% trans 'Export Submissions' %} {% endblock %}
+
+{% block cardcontent %}
+    <p>Select the columns to include in your CSV export:</p>
+    <table style="margin-bottom: 1em;">{{ form.as_table }}</table>
+{% endblock %}
+
+{% block rowcontent %}
+    <div class="col-12 col-sm-9">
+      <h4>{% trans 'Submissions' %}</h4>
+      <ol>
+        {{ submissions|slice:':20'|unordered_list }}
+        {% if submissions|length > 20 %}<li>...</li>{% endif %}
+      </ol>
+      {% for submission in submissions %}
+      <input type="hidden" name="_selected_action" value="{{ submission.pk }}">
+      {% endfor %}
+    </div>
+{% endblock %}
+
+{% block rowsidecontent %}
+    <h4>{% trans 'Summary' %}</h4>
+    <table class="table" table-striped">
+      <tbody>
+        <tr>
+          <td>{% trans 'Submissions' %}</td>
+          <td>{{ submissions|length }}</td>
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}
+
+{% block formcontrols %}
+        <input type="hidden" name="action" value="export_csv">
+        <div class="form-group">
+          <input type="submit" name="_export"
+                 class="btn {{ jazzmin_ui.button_classes.danger }}
+                        form-control" value="{% trans "Export CSV" %}">
+        </div>
+        <div class="form-group">
+          <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                             cancel-link form-control">
+            {% trans "Cancel" %}
+          </a>
+        </div>
+{% endblock %}

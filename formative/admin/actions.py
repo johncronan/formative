@@ -13,66 +13,9 @@ from django.utils.text import capfirst
 import time, csv, io
 
 from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
-    UserImportForm
+    UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
-from ..utils import send_email
-
-
-EMAILS_PER_SECOND = 10
-
-@admin.action(description='Send an email to applicants')
-def send_email_action(modeladmin, request, queryset):
-    if '_send' in request.POST:
-        # TODO: celery task
-        subject = Template(request.POST['subject'])
-        content = Template(request.POST['content'])
-        
-        iterator = queryset.iterator()
-        batch, form, last_time, done, n = [], None, None, False, 0
-        while not done:
-            submission = next(iterator, None)
-            if not submission: done = True
-            else: batch.append(submission)
-            
-            if len(batch) == EMAILS_PER_SECOND or done:
-                if last_time:
-                    this_time = time.time()
-                    remaining = last_time + 1 - this_time
-                    if remaining > 0: time.sleep(remaining)
-                last_time = time.time()
-                
-                with mail.get_connection() as conn:
-                    for sub in batch:
-                        if not form: form = sub._get_form()
-                        context = {
-                            'submission': sub, 'form': form,
-                            'submission_link': submission_link(sub, form)
-                        }
-                        if sub._submitted: sub._update_context(form, context)
-                        
-                        n += 1
-                        send_email(content, sub._email, subject,
-                                   context=context, connection=conn)
-                batch = []
-        
-        msg = f'Emails sent to {n} recipients.'
-        modeladmin.message_user(request, msg, messages.SUCCESS)
-        
-        return HttpResponseRedirect(request.get_full_path())
-    
-    form = queryset[0]._get_form()
-    template_name = 'admin/formative/email_applicants.html'
-    request.current_app = modeladmin.admin_site.name
-    context = {
-        **modeladmin.admin_site.each_context(request),
-        'opts': modeladmin.model._meta,
-        'media': modeladmin.media,
-        'submissions': queryset,
-        'form': EmailAdminForm(form=form),
-        'email_templates': form.email_templates(),
-        'title': 'Email Applicants'
-    }
-    return TemplateResponse(request, template_name, context)
+from ..utils import send_email, submission_link, TabularExport
 
 
 class UserActionsMixin:
@@ -258,6 +201,78 @@ class FormBlockActionsMixin:
 
 
 class SubmissionActionsMixin:
+    EMAILS_PER_SECOND = 10
+    
+    @admin.action(description='Send an email to applicants')
+    def send_email(self, request, queryset):
+        if '_send' in request.POST:
+            # TODO: celery task
+            subject = Template(request.POST['subject'])
+            content = Template(request.POST['content'])
+            
+            iterator = queryset.iterator()
+            batch, form, last_time, done, n = [], None, None, False, 0
+            while not done:
+                submission = next(iterator, None)
+                if not submission: done = True
+                else: batch.append(submission)
+                
+                if len(batch) == self.EMAILS_PER_SECOND or done:
+                    if last_time:
+                        this_time = time.time()
+                        remaining = last_time + 1 - this_time
+                        if remaining > 0: time.sleep(remaining)
+                    last_time = time.time()
+                    
+                    with mail.get_connection() as conn:
+                        for sub in batch:
+                            if not form: form = sub._get_form()
+                            context = {
+                                'submission': sub, 'form': form,
+                                'submission_link': submission_link(sub, form)
+                            }
+                            if sub._submitted: sub._update_context(form,
+                                                                   context)
+                            n += 1
+                            send_email(content, sub._email, subject,
+                                       context=context, connection=conn)
+                    batch = []
+            
+            msg = f'Emails sent to {n} recipients.'
+            self.message_user(request, msg, messages.SUCCESS)
+            
+            return HttpResponseRedirect(request.get_full_path())
+        
+        form = queryset[0]._get_form()
+        template_name = 'admin/formative/email_applicants.html'
+        request.current_app = self.admin_site.name
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta, 'media': self.media,
+            'submissions': queryset, 'title': 'Email Applicants',
+            'form': EmailAdminForm(form=form),
+            'email_templates': form.email_templates(),
+        }
+        return TemplateResponse(request, template_name, context)
+    
+    @admin.action(description='Export submissions as CSV')
+    def export_csv(self, request, queryset):
+        program_form = queryset.model._get_form()
+        if '_export' in request.POST:
+            filename = f'{program_form.slug}_export_selected.csv'
+            export = TabularExport(filename, program_form, queryset,
+                                   **request.POST)
+            return export.response(queryset)
+        
+        template_name = 'admin/formative/export_submissions.html'
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta, 'media': self.media,
+            'submissions': queryset, 'title': 'Export Submissions',
+            'form': ExportAdminForm(program_form=program_form)
+        }
+        return TemplateResponse(request, template_name, context)
+    
     def change_view(self, request, object_id, **kwargs):
         action, kwargs = None, {}
         if '_submit_confirmed' in request.POST: action = 'submit'
