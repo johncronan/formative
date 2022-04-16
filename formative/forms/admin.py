@@ -798,23 +798,21 @@ class ExportAdminForm(forms.Form):
             self.fields[name] = forms.BooleanField(required=False, initial=True,
                                                    label=block.name)
         
-        base = [('no', 'not included'), ('repeat', 'repeated columns')]
-        # TODO this should be no/repeat/combine for collection, check for fields
-        for block in program_form.collection_field_blocks():
-            default = 'no'
-            if program_form.collections().filter(any_name_field(_=block.name),
-                                                 fixed=True).exists():
-                default = 'combine'
-            name = 'cfield_' + block.name
+        choices = [('no', 'not included'), ('repeat', 'repeated columns'),
+                   ('combine', 'in one column')]
+        for block in program_form.collections():
+            name = 'collection_' + block.name
             self.fields[name] = forms.ChoiceField(label=block.name,
-                choices=base+[('combine', 'separated with commas')],
-                initial=default
+                choices=choices, initial='combine' if block.fixed else 'no'
             )
-        for block in program_form.collections().filter(has_file=True):
-            name = 'file_' + block.name
-            self.fields[name] = forms.ChoiceField(label=block.name,
-                choices=base+[('combine', 'separated with spaces')]
-            )
+            for field in block.collection_fields():
+                name = f'cfield_{block.name}.{field}'
+                self.fields[name] = forms.BooleanField(label=field,
+                    required=False, initial=block.fixed)
+            if block.has_file:
+                self.fields[f'cfield_{block.name}._file'] = forms.BooleanField(
+                    label='file URL', required=False
+                )
 
 
 class MoveBlocksAdminForm(forms.Form):

@@ -260,7 +260,8 @@ class SubmissionActionsMixin:
         program_form = queryset.model._get_form()
         if '_export' in request.POST:
             filename = f'{program_form.slug}_export_selected.csv'
-            export = TabularExport(filename, program_form, **request.POST)
+            export = TabularExport(filename, program_form, queryset,
+                                   **request.POST)
             return export.response(queryset)
         
         template_name = 'admin/formative/export_submissions.html'
