@@ -104,11 +104,13 @@ document.addEventListener('dragover', function(e) { e.preventDefault() });
 
 const sortables = [];
 document.querySelectorAll('.rp-collection-table-body')
-        .forEach(tbody => sortables.push(Sortable.create(tbody, {
+        .forEach(tbody => { var restore = unsaved;
+                            sortables.push(Sortable.create(tbody, {
           animation: 120,
           handle: '.rp-sort-handle-cell',
           filter: '.rp-collection-field-errors',
           onMove: e => {
+            restore = unsaved;
             return !e.related.classList.contains('rp-collection-field-errors');
           },
           onEnd: event => {
@@ -124,8 +126,9 @@ document.querySelectorAll('.rp-collection-table-body')
                 }
               }
             }
+            unsaved = restore;
           }
-        })));
+        }))});
 
 function postUrlBase() {
   var href = document.location.href;
@@ -177,7 +180,7 @@ function postFile(rowEl, file, restore) {
     .catch(err => {
       setError(rowEl, err, 'upload failed');
     });
-    unsaved = true;
+  unsaved = true;
 }
 
 function processQueue(restore) {
