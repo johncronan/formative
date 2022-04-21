@@ -154,7 +154,7 @@ def formblock_post_save(sender, instance, created, raw, **kwargs):
         delete_sub_labels(block.form, block._old_name)
 
 @receiver(pre_save, sender=CollectionBlock)
-def customblock_pre_save(sender, instance, raw, **kwargs):
+def collectionblock_pre_save(sender, instance, raw, **kwargs):
     if raw: return
     
     if instance.pk:
