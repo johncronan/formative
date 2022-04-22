@@ -104,11 +104,13 @@ document.addEventListener('dragover', function(e) { e.preventDefault() });
 
 const sortables = [];
 document.querySelectorAll('.rp-collection-table-body')
-        .forEach(tbody => sortables.push(Sortable.create(tbody, {
+        .forEach(tbody => { var restore = unsaved;
+                            sortables.push(Sortable.create(tbody, {
           animation: 120,
           handle: '.rp-sort-handle-cell',
           filter: '.rp-collection-field-errors',
           onMove: e => {
+            restore = unsaved;
             return !e.related.classList.contains('rp-collection-field-errors');
           },
           onEnd: event => {
@@ -124,8 +126,9 @@ document.querySelectorAll('.rp-collection-table-body')
                 }
               }
             }
+            unsaved = restore;
           }
-        })));
+        }))});
 
 function postUrlBase() {
   var href = document.location.href;
@@ -136,7 +139,7 @@ function postUrlBase() {
 const filesQueue = [];
 const simultaneous = 4;
 
-function postFile(rowEl, file) {
+function postFile(rowEl, file, restore) {
   var itemId = rowEl.dataset.id
   var url = postUrlBase();
   var data = new FormData();
@@ -167,22 +170,25 @@ function postFile(rowEl, file) {
           break;
         }
       }
-      if (!filesQueue.length)
+      if (!filesQueue.length) {
         document.querySelectorAll('.rp-save-button,.rp-continue-button')
                 .forEach(button => button.disabled = false);
-      processQueue();
+        unsaved = restore;
+      }
+      processQueue(restore);
     })
     .catch(err => {
       setError(rowEl, err, 'upload failed');
     });
+  unsaved = true;
 }
 
-function processQueue() {
+function processQueue(restore) {
   for (let i=0; i < filesQueue.length; i++) {
     if (i >= simultaneous) break;
     if (!filesQueue[i][0]) {
       filesQueue[i][0] = true;
-      postFile(filesQueue[i][1], filesQueue[i][2]);
+      postFile(filesQueue[i][1], filesQueue[i][2], restore);
     }
   }
 }
@@ -284,9 +290,8 @@ function newItems(blockId, restore, files, itemId) {
       if (haveFile) for (let i=0; i < rows.length; i++) {
         if (rowStatus(rows[i]) == 'upload') uploadFile(rows[i], filesArray[i]);
       }
-      processQueue();
+      processQueue(restore);
       
-      unsaved = restore;
       document.querySelectorAll('.rp-item-upload')
               .forEach(button => button.onclick = uploadClick);
       document.querySelectorAll('.rp-item-remove')

@@ -76,6 +76,7 @@ class TabularExport:
         blocks = { 'block_'+b.name: b
                    for b in form.submission_blocks().filter(name__in=names) }
         
+        self.items = {}
         if self.collections:
             item_model = form.item_model
             # item_model's _submission rel doesn't recognize original queryset
@@ -83,7 +84,6 @@ class TabularExport:
             
             sub_items = item_model.objects.filter(_submission__in=qs)
             items_qs = sub_items.filter(_collection__in=self.collections)
-            self.items = {}
             # TODO order should be by block_rank, cf Submission._collections()
             for item in items_qs.order_by('_collection', '_block', '_rank'):
                 app = self.items.setdefault(item._submission_id, {})

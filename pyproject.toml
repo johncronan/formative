@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "formative"
-version = "0.9.5"
+version = "0.9.6"
 description = "Self-hosted web app for collecting form responses and files"
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
@@ -47,7 +47,7 @@ django-jazzmin = "*"
 django-widget-tweaks = "*"
 markdown = "*"
 pillow = "*"
-pikepdf = ">=5.1.1"
+# pikepdf = ">=5.1.1"
 pyexcel = "*"
 pyexcel-io = "*"
 pyexcel-ods3 = "*"
