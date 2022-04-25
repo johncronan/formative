@@ -33,6 +33,9 @@ from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
 
 
 class FormativeAdminSite(admin.AdminSite):
+    site_header = 'Formative'
+    site_title = 'Formative admin'
+    
     def __init__(self, *args, **kwargs):
         self.submissions_registered = None
         super().__init__(*args, **kwargs)

@@ -60,18 +60,17 @@ def send_email(template, to, subject, context={}, connection=None):
 
 
 class TabularExport:
-    def __init__(self, filename, form, queryset, **kwargs):
-        self.filename, self.args = filename, kwargs
-        self.fields, self.collections = [], {}
+    def __init__(self, form, queryset, **kwargs):
+        self.args, self.fields, self.collections = kwargs, [], {}
         
         names = []
         for name in self.args:
             if not self.args[name]: continue
             if name.startswith('block_'): names.append(name[len('block_'):])
-            elif name.startswith('collection_') and self.args[name][0] != 'no':
+            elif name.startswith('collection_') and self.args[name] != 'no':
                 cname = name[len('collection_'):]
                 self.collections[cname] = [0, []]
-                if self.args[name][0] == 'combine':
+                if self.args[name] == 'combine':
                     self.collections[cname][0] = -1
         blocks = { 'block_'+b.name: b
                    for b in form.submission_blocks().filter(name__in=names) }
@@ -164,14 +163,18 @@ class TabularExport:
             ret.append(row)
         return ret
     
-    def response(self, queryset):
-        data = [self.header_row()]
-        data += self.data_rows(queryset)
+    def data(self, queryset):
+        ret = [self.header_row()]
+        ret += self.data_rows(queryset)
+        return ret
+    
+    def csv_response(self, filename, queryset):
+        data = self.data(queryset)
         
         stream = pyexcel.save_as(array=data, dest_file_type='csv')
         response = HttpResponse(stream, content_type='text/csv')
         
-        disp = f"attachment; filename*=UTF-8''" + quote(self.filename)
+        disp = f"attachment; filename*=UTF-8''" + quote(filename)
         response['Content-Disposition'] = disp
         return response
 

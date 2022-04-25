@@ -259,10 +259,12 @@ class SubmissionActionsMixin:
     def export_csv(self, request, queryset):
         program_form = queryset.model._get_form()
         if '_export' in request.POST:
+            args = { k: request.POST[k] for k in request.POST
+                     if k.startswith('block_') or k.startswith('collection_')
+                        or k.startswith('cfield_') }
+            export = TabularExport(program_form, queryset, **args)
             filename = f'{program_form.slug}_export_selected.csv'
-            export = TabularExport(filename, program_form, queryset,
-                                   **request.POST)
-            return export.response(queryset)
+            return export.csv_response(filename, queryset)
         
         template_name = 'admin/formative/export_submissions.html'
         context = {
