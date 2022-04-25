@@ -259,7 +259,10 @@ class SubmissionActionsMixin:
     def export_csv(self, request, queryset):
         program_form = queryset.model._get_form()
         if '_export' in request.POST:
-            export = TabularExport(program_form, queryset, **request.POST)
+            args = { k: request.POST[k] for k in request.POST
+                     if k.startswith('block_') or k.startswith('collection_')
+                        or k.startswith('cfield_') }
+            export = TabularExport(program_form, queryset, **args)
             filename = f'{program_form.slug}_export_selected.csv'
             return export.csv_response(filename, queryset)
         

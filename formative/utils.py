@@ -67,10 +67,10 @@ class TabularExport:
         for name in self.args:
             if not self.args[name]: continue
             if name.startswith('block_'): names.append(name[len('block_'):])
-            elif name.startswith('collection_') and self.args[name][0] != 'no':
+            elif name.startswith('collection_') and self.args[name] != 'no':
                 cname = name[len('collection_'):]
                 self.collections[cname] = [0, []]
-                if self.args[name][0] == 'combine':
+                if self.args[name] == 'combine':
                     self.collections[cname][0] = -1
         blocks = { 'block_'+b.name: b
                    for b in form.submission_blocks().filter(name__in=names) }
