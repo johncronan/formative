@@ -25,7 +25,7 @@
   {% else %}
     {% if form_id %}
     <a href="{% url 'admin:formative_formblock_formlist' form_id %}">
-    {% else %}
+    {% elif original.form %}
     <a href="{% url 'admin:formative_formblock_formlist' original.form.id %}">
     {% endif %}
   {% endif %}

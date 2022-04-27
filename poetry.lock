@@ -773,7 +773,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "aad2e3d6c34206f5ccd18e844b7e9157b79735c91b3ece4e6752526b5d81f89d"
+content-hash = "669b8aaf2d67058f8c437f9de2ddb76135b7315ec5249419a0a480d5116aa36b"
 
 [metadata.files]
 amqp = [

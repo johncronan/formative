@@ -21,6 +21,8 @@ COPY . /opt/services/djangoapp/src
 RUN poetry install --no-dev
 
 COPY resources/s6-rc.d /etc/s6-overlay/s6-rc.d
+COPY resources/run /opt/services/djangoapp/run
+
 ARG S6_VERSION=3.1.0.1
 ARG S6_URL=https://github.com/just-containers/s6-overlay/releases/download
 RUN arch="$(dpkg --print-architecture)"; \
@@ -36,3 +38,4 @@ EXPOSE 8000
 ENTRYPOINT ["/init"]
 
 # TODO: change to an app user?
+CMD ["/command/with-contenv", "../run"]

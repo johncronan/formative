@@ -9,6 +9,7 @@ services:
       - .env
     environment:
       DOCKER_ENV: 'on'
+      S6_KILL_GRACETIME: 1
     volumes:
       - requirements_volume:/opt/services/djangoapp/requirements
       - static_volume:/opt/services/djangoapp/static
