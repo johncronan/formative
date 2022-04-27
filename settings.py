@@ -110,7 +110,7 @@ DATABASES = {
 }
 
 CACHES = {
-    'default': env.cache_url('REDIS_URL', default='redis://redis/',
+    'default': env.cache_url('REDIS_URL', default='redis://localhost/',
          backend='django.core.cache.backends.redis.RedisCache'
     )
 }
@@ -216,6 +216,10 @@ WEBPACK_LOADER = {
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CELERY_BROKER_URL = 'redis://localhost'
+CELERY_RESULT_BACKEND = 'redis://localhost'
 
 
 JAZZMIN_SETTINGS = {

@@ -1,0 +1,6 @@
+#!/command/execlineb -P
+
+cd /var/lib/redis
+with-contenv
+s6-setuidgid redis
+redis-server

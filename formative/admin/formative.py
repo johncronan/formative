@@ -27,6 +27,7 @@ from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed
+from ..tasks import timed_complete_form
 from ..utils import submission_link
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
     SubmissionActionsMixin
@@ -186,6 +187,10 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
                 if name not in names: del obj.options['emails'][name]
             if 'emails' in obj.options and not obj.options['emails']:
                 del obj.options['emails']
+        
+        if 'timed_completion' in form.changed_data:
+            val = form.cleaned_data['timed_completion']
+            timed_complete_form.apply_async(args=(obj.id, val), eta=val)
         
         return obj
         

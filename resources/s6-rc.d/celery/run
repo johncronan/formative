@@ -1,0 +1,4 @@
+#!/command/execlineb -P
+
+with-contenv
+celery -A config.celery worker -l INFO

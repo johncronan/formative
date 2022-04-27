@@ -1,0 +1,5 @@
+#!/command/execlineb -P
+
+cd /opt/services/djangoapp/src
+with-contenv
+python3 manage.py collectstatic --noinput

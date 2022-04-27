@@ -1,0 +1,3 @@
+#!/command/execlineb -S2
+
+s6-svscanctl -t /run/service
