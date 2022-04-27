@@ -314,6 +314,8 @@ all_forms_unpublish = Signal()
 
 register_form_settings = FormPluginSignal()
 
+form_settings_changed = FormPluginSignal()
+
 submission_review_pre = FormPluginSignal()
 
 submission_review_post = FormPluginSignal()

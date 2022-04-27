@@ -26,7 +26,7 @@ from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
-    register_user_actions, form_published_changed
+    register_user_actions, form_published_changed, form_settings_changed
 from ..tasks import timed_complete_form
 from ..utils import submission_link
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
@@ -193,7 +193,11 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
             timed_complete_form.apply_async(args=(obj.id, val), eta=val)
         
         return obj
-        
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        form_settings_changed.send(obj, changed_data=form.changed_data)
+    
     def response_post_save_change(self, request, obj):
         app_label = self.model._meta.app_label
         url = reverse('admin:%s_formblock_formlist' % (app_label,),
