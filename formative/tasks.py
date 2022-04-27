@@ -1,6 +1,7 @@
 from django.apps import apps
 from django.core import mail
 from django.template import Template
+from django.utils import timezone
 from celery import shared_task
 import time
 
@@ -43,3 +44,16 @@ def send_email_for_submissions(model_name, id_values, subject_str, content_str):
                                context=context, connection=conn)
             batch = []
     return n
+
+@shared_task
+def timed_complete_form(form_id, datetime_val):
+    try: form = Form.objects.get(id=form_id)
+    except Form.DoesNotExist: return
+    
+    if form.timed_completion() != datetime_val:
+        return False # it gets rescheduled on value change, so don't do anything
+    
+    form.status = Form.Status.COMPLETED
+    form.completed = timezone.now()
+    form.save()
+    return True
