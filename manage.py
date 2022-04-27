@@ -3,6 +3,7 @@
 import os
 import sys
 
+from config.celery import app as celery_app
 
 def main():
     """Run administrative tasks."""

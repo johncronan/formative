@@ -1,0 +1,6 @@
+#!/command/execlineb -P
+
+cd /opt/services/djangoapp/src
+# if { test -n $AUTO_MIGRATE } i don't know how
+with-contenv
+python3 manage.py migrate --noinput
