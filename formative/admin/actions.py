@@ -1,21 +1,20 @@
 from django.conf import settings
 from django.contrib import admin, auth, messages
 from django.contrib.auth.models import User
-from django.core import mail
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Count, Max
 from django.http import HttpResponseRedirect
-from django.template import Template
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.text import capfirst
-import time, csv, io
+import csv, io
 
 from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
     UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
-from ..utils import send_email, submission_link, TabularExport
+from ..tasks import send_email_for_submissions
+from ..utils import TabularExport
 
 
 class UserActionsMixin:
@@ -201,44 +200,15 @@ class FormBlockActionsMixin:
 
 
 class SubmissionActionsMixin:
-    EMAILS_PER_SECOND = 10
-    
     @admin.action(description='Send an email to applicants')
     def send_email(self, request, queryset):
         if '_send' in request.POST:
-            # TODO: celery task
-            subject = Template(request.POST['subject'])
-            content = Template(request.POST['content'])
-            
-            iterator = queryset.iterator()
-            batch, form, last_time, done, n = [], None, None, False, 0
-            while not done:
-                submission = next(iterator, None)
-                if not submission: done = True
-                else: batch.append(submission)
-                
-                if len(batch) == self.EMAILS_PER_SECOND or done:
-                    if last_time:
-                        this_time = time.time()
-                        remaining = last_time + 1 - this_time
-                        if remaining > 0: time.sleep(remaining)
-                    last_time = time.time()
-                    
-                    with mail.get_connection() as conn:
-                        for sub in batch:
-                            if not form: form = sub._get_form()
-                            context = {
-                                'submission': sub, 'form': form,
-                                'submission_link': submission_link(sub, form)
-                            }
-                            if sub._submitted: sub._update_context(form,
-                                                                   context)
-                            n += 1
-                            send_email(content, sub._email, subject,
-                                       context=context, connection=conn)
-                    batch = []
-            
-            msg = f'Emails sent to {n} recipients.'
+            send_email_for_submissions.delay(
+                queryset.model._meta.model_name,
+                list(queryset.values_list('pk', flat=True)),
+                request.POST['subject'], request.POST['content']
+            )
+            msg = f'Email sending started for {queryset.count()} recipients.'
             self.message_user(request, msg, messages.SUCCESS)
             
             return HttpResponseRedirect(request.get_full_path())

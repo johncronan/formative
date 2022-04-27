@@ -1,4 +1,3 @@
-from django.apps import apps
 from django.db.models import Model, Q, OuterRef, Max, Count
 from django.conf import settings
 from django.core import mail
