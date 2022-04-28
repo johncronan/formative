@@ -223,6 +223,8 @@ CELERY_RESULT_BACKEND = 'redis://localhost'
 
 
 JAZZMIN_SETTINGS = {
+    'site_brand': 'Formative',
+    'site_title': 'Formative admin',
     'related_modal_active': True,
     'hide_models': ['formative.collectionblock', 'formative.customblock',
                     'formative.formblock'],
