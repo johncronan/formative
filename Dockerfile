@@ -26,7 +26,7 @@ COPY resources/run /opt/services/djangoapp/run
 ARG S6_VERSION=3.1.0.1
 ARG S6_URL=https://github.com/just-containers/s6-overlay/releases/download
 RUN arch="$(dpkg --print-architecture)"; \
-    case "$arch" in arm64) s6arch='aarch64' ;; amd64) s6arch='amd64' ;; esac; \
+    case "$arch" in arm64) s6arch='aarch64' ;; amd64) s6arch='x86_64' ;; esac; \
     wget -O s6.tar.xz ${S6_URL}/v${S6_VERSION}/s6-overlay-noarch.tar.xz; \
     wget -O s6arch.tar.xz ${S6_URL}/v${S6_VERSION}/s6-overlay-$s6arch.tar.xz; \
     tar -C / -Jxpf s6.tar.xz; \
