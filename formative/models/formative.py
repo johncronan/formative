@@ -329,9 +329,15 @@ class Form(AutoSlugModel):
         if self.status == self.Status.DRAFT:
             return 'NA'
         elif self.status == self.Status.DISABLED:
+            if 'disabled_message' in self.options:
+                return self.options['disabled_message']
             return _('Not yet open for submissions')
         elif self.status == self.Status.COMPLETED:
+            if 'completed_message' in self.options:
+                return self.options['completed_message']
             return _('Closed')
+        if 'enabled_message' in self.options:
+            return self.options['enabled_message']
         return _('Open for submissions')
     
     def hidden(self):

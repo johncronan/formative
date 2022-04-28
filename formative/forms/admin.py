@@ -357,6 +357,18 @@ class FormAdminForm(AdminJSONForm):
         widget=widgets.AdminRadioSelect(attrs={'class': 'radiolist'})
     )
     hidden = forms.BooleanField(required=False)
+    enabled_message = forms.CharField(required=False,
+        widget=widgets.AdminTextInputWidget,
+        help_text='If not specified, default is "Open for submissions."'
+    )
+    disabled_message = forms.CharField(required=False,
+        widget=widgets.AdminTextInputWidget,
+        help_text='If not specified, default is "Not yet open for submissions."'
+    )
+    completed_message = forms.CharField(required=False,
+        widget=widgets.AdminTextInputWidget,
+        help_text='If not specified, default is "Closed."'
+    )
     access_enable = forms.CharField(required=False, label='?access= password')
     review_pre = forms.CharField(
         required=False, widget=widgets.AdminTextareaWidget(attrs={'rows': 5}),
@@ -390,7 +402,8 @@ class FormAdminForm(AdminJSONForm):
     class Meta:
         static_fields = ('program', 'name', 'slug', 'status', 'hidden')
         json_fields = {'options': [
-            'hidden', 'access_enable', 'review_pre', 'review_post',
+            'hidden', 'enabled_message', 'disabled_message',
+            'completed_message', 'access_enable', 'review_pre', 'review_post',
             'submitted_review_pre', 'timed_completion', 'complete_submit_time',
             'no_review_after_submit', 'thanks', 'emails'
         ]}
