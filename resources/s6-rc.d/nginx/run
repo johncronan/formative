@@ -1,0 +1,6 @@
+#!/command/execlineb -P
+
+cd /opt/services/djangoapp
+foreground { chown www-data:www-data media }
+with-contenv
+nginx -g "daemon off;"

@@ -8,11 +8,11 @@ COPY pyproject.toml poetry.lock /opt/services/djangoapp/src/
 # dependencies
 RUN apt-get update \
     && apt-get install -y build-essential libpq-dev libqpdf-dev pip xz-utils \
-                          python3-dev python3-importlib-metadata wget redis \
+        python3-dev python3-importlib-metadata wget redis nginx \
     && apt-get install -y --no-install-recommends ffmpeg \
     && pip install wheel poetry && poetry config virtualenvs.create false \
     && poetry install --no-dev --no-root -E reviewpanel \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default \
     && apt-get purge -y --auto-remove build-essential
 # virtualenvs.create option because we don't need an extra virtualenv here
 
@@ -21,6 +21,7 @@ COPY . /opt/services/djangoapp/src
 RUN poetry install --no-dev
 
 COPY resources/s6-rc.d /etc/s6-overlay/s6-rc.d
+COPY resources/nginx /etc/nginx/conf.d
 COPY resources/run /opt/services/djangoapp/run
 
 ARG S6_VERSION=3.1.0.1
@@ -33,9 +34,8 @@ RUN arch="$(dpkg --print-architecture)"; \
     tar -C / -Jxpf s6arch.tar.xz; \
     rm s6.tar.xz s6arch.tar.xz
 
-EXPOSE 8000
+EXPOSE 80
 
 ENTRYPOINT ["/init"]
 
-# TODO: change to an app user?
 CMD ["/command/with-contenv", "../run"]
