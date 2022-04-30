@@ -1,14 +1,19 @@
+from django.apps import apps
 from django.conf import settings
 from django.contrib import admin, auth, messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.db.models import Count, Max
-from django.http import HttpResponseRedirect
+from django.db.models import Count, Max, Subquery
+from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.text import capfirst
-import csv, io
+from urllib.parse import quote
+from stream_zip import ZIP_64, stream_zip
+from datetime import datetime
+from pathlib import Path
+import csv, io, os
 
 from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
     UserImportForm, ExportAdminForm
@@ -259,16 +264,24 @@ class SubmissionActionsMixin:
         try: rec = SubmissionRecord.objects.get(submission=obj._id, type=rtype)
         except SubmissionRecord.DoesNotExist: pass
         
+        obj_dir = os.path.join(settings.MEDIA_ROOT, str(obj._id))
+        submit_file = os.path.join(obj_dir, 'submitted')
         if action == 'submit':
             if not rec: obj._get_form().submit_submission(obj)
             else:
                 obj._submit()
                 rec.deleted = False
+                
+                if os.path.isdir(obj_dir): Path(submit_file).touch()
         else:
             obj._submitted = None
             obj.save()
             if rec: rec.deleted = True
+            
+            if os.path.isdir(obj_dir):
+                if os.path.exists(submit_file): os.remove(submit_file)
         if rec: rec.save()
+        
         return HttpResponseRedirect(request.get_full_path())
     
     def response_change(self, request, obj):
@@ -288,3 +301,45 @@ class SubmissionActionsMixin:
             return TemplateResponse(request, template_name, context)
         
         return super().response_change(request, obj)
+    
+    @admin.action(description='Download submission files')
+    def download_files(self, request, queryset):
+        def files(queryset):
+            item_model_name = self.model._meta.model_name + '_i'
+            item_model = apps.get_model('formative.' + item_model_name)
+            subs = queryset.values('pk')
+            items = item_model.objects.filter(_submission__in=Subquery(subs))
+            
+            modified, last_sub = datetime.now(), None
+            for item in items.exclude(_file='').order_by('_submission'):
+                def file_data(path):
+                    CHUNK_SIZE = 8192
+                    with open(path, 'rb') as f:
+                        while True:
+                            data = f.read(CHUNK_SIZE)
+                            if not data: break
+                            yield data
+                
+                if last_sub is None or last_sub != item._submission_id:
+                    sub_id = str(item._submission_id)
+                    rel_path = os.path.join(sub_id, 'id.txt')
+                    full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+                    if os.path.exists(full_path):
+                        with open(full_path, 'rb') as f:
+                            yield rel_path, modified, 0o644, ZIP_64, [f.read()]
+                    rel_path = os.path.join(sub_id, 'submitted')
+                    full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+                    if os.path.exists(full_path):
+                        yield rel_path, modified, 0o644, ZIP_64, [b'']
+                last_sub = item._submission_id
+                
+                data = file_data(item._file.path)
+                yield item._file.name, modified, 0o644, ZIP_64, data
+        
+        response = StreamingHttpResponse(stream_zip(files(queryset)),
+                                         content_type='application/zip')
+        
+        filename = f'{self.model._meta.model_name}_files.zip'
+        disp = f"attachment; filename*=UTF-8''" + quote(filename)
+        response['Content-Disposition'] = disp
+        return response
