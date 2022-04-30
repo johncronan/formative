@@ -30,7 +30,7 @@ from ..signals import register_program_settings, register_form_settings, \
 from ..tasks import timed_complete_form
 from ..utils import submission_link
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
-    SubmissionActionsMixin
+    SubmissionActionsMixin, download_view
 
 
 class FormativeAdminSite(admin.AdminSite):
@@ -53,6 +53,13 @@ class FormativeAdminSite(admin.AdminSite):
                     self.submissions_registered[form.item_model] = True
         
         form_published_changed.send(self)
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        url = path('files_download/<int:form_id>/',
+                   self.admin_view(download_view),
+                   name='formative_files_download')
+        return [url] + urls
 
 
 site = FormativeAdminSite()
