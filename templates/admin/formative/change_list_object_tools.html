@@ -1,0 +1,20 @@
+{% load admin_urls jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block object-tools-items %}
+  {% if has_add_permission %}
+    {% url cl.opts|admin_urlname:'add' as add_url %}
+    <a href="{% add_preserved_filters add_url is_popup to_field %}"
+       class="btn {{ jazzmin_ui.button_classes.success }} float-right">
+      {% with name=cl.opts.verbose_name %}
+      <i class="fa fa-plus-circle"></i>&nbsp;
+      Add {% if opts.program_slug %}submission{% else %}{{ name }}{% endif %}
+      {% endwith %}
+    </a>
+  {% endif %}
+  
+  {% if opts.program_slug and opts.model_name|slice:'-2:' != '_i' %}
+    <input type="submit" name="_manage_files" value="Manage Files"
+           class="btn {{ jazzmin_ui.button_classes.primary }} float-right">
+  {% endif %}
+{% endblock %}

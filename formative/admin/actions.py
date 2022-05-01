@@ -4,7 +4,7 @@ from django.contrib import admin, auth, messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Sum, Exists, OuterRef
 from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -20,7 +20,7 @@ from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
     UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
 from ..tasks import send_email_for_submissions
-from ..utils import TabularExport
+from ..utils import TabularExport, delete_submission_files
 
 
 class UserActionsMixin:
@@ -114,26 +114,26 @@ class FormActionsMixin:
         return HttpResponseRedirect(request.get_full_path())
     
     def response_change(self, request, obj):
-        subs = []
-        if obj.status != Form.Status.DRAFT:
-            qs = obj.model.objects.all()
-            if obj.item_model:
-                qs = qs.annotate(num_items=Count('_item'))
-                subs = qs.values_list('_email', 'num_items')
-            else: subs = qs.values_list('_email')
-        
         context = {
             **self.admin_site.each_context(request),
             'opts': self.model._meta,
             'media': self.media,
             'object': obj,
-            'submissions': subs,
             'title': 'Confirmation'
         }
 #        if '_publish' in request.POST:
 #            return TemplateResponse(request, 'admin/publish_confirmation.html',
 #                                    context)
         if '_unpublish' in request.POST:
+            subs = []
+            if obj.status != Form.Status.DRAFT:
+                qs = obj.model.objects.all()
+                if obj.item_model:
+                    qs = qs.annotate(num_items=Count('_item'))
+                    subs = qs.values_list('_email', 'num_items')
+                else: subs = qs.values_list('_email')
+            context['submissions'] = subs
+        
             request.current_app = self.admin_site.name
             template_name = 'admin/formative/unpublish_confirmation.html'
             return TemplateResponse(request, template_name, context)
@@ -293,8 +293,8 @@ class SubmissionActionsMixin:
             'object': obj,
             'title': 'Confirmation'
         }
-        template_name = 'admin/formative/submit_confirmation.html'
         if '_submit' in request.POST or '_unsubmit' in request.POST:
+            template_name = 'admin/formative/submit_confirmation.html'
             request.current_app = self.admin_site.name
             if '_submit' in request.POST: context['submit'] = True
             else: context['unsubmit'] = True
@@ -302,6 +302,57 @@ class SubmissionActionsMixin:
             return TemplateResponse(request, template_name, context)
         
         return super().response_change(request, obj)
+    
+    def changelist_view(self, request, **kwargs):
+        context = {
+            **self.admin_site.each_context(request), 'title': 'Manage Files',
+            'opts': self.model._meta, 'media': self.media
+        }
+        files_type = SubmissionRecord.RecordType.FILES
+        
+        if '_manage_submit' in request.POST:
+            target = request.POST['manage_action']
+            form = self.model._get_form()
+            sr = SubmissionRecord.objects.all()
+            
+            qs = sr.filter(program=form.program, form=form.slug, deleted=False,
+                           type=SubmissionRecord.RecordType.FILES)
+            q1 = self.model.objects.filter(_id=OuterRef('submission'))
+            q2 = sr.filter(submission=OuterRef('submission'), deleted=False,
+                           type=SubmissionRecord.RecordType.SUBMISSION)
+            if target == 'draft': qs = qs.exclude(Exists(q2)).filter(Exists(q1))
+            elif target == 'deleted': qs = qs.exclude(Exists(q1))
+            
+            delete_submission_files(qs)
+            qs.update(deleted=True)
+            self.message_user(request, 'Files deleted.', messages.SUCCESS)
+            return HttpResponseRedirect(request.get_full_path())
+        
+        if '_manage_files' in request.POST:
+            template_name = 'admin/formative/manage_files.html'
+            request.current_app = self.admin_site.name
+            
+            form = self.model._get_form()
+            context['program_form'] = form
+            sr = SubmissionRecord.objects.all()
+            aggs = {'size': Sum('number'), 'count': Count('*')}
+            qs = sr.filter(program=form.program, form=form.slug,
+                           type=files_type, deleted=False)
+            context['total'] = qs.aggregate(**aggs)
+            
+            submission_type = SubmissionRecord.RecordType.SUBMISSION
+            model_subq = self.model.objects.filter(_id=OuterRef('submission'))
+            subq = sr.filter(submission=OuterRef('submission'),
+                             type=submission_type, deleted=False)
+            draft = qs.exclude(Exists(subq)).filter(Exists(model_subq))
+            context['draft'] = draft.aggregate(**aggs)
+            
+            deleted = qs.exclude(Exists(model_subq))
+            context['deleted'] = deleted.aggregate(**aggs)
+            
+            return TemplateResponse(request, template_name, context)
+        
+        return super().changelist_view(request, **kwargs)
     
     @admin.action(description='Download submission files')
     def download_files(self, request, queryset):
