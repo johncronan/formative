@@ -323,7 +323,7 @@ class SubmissionActionsMixin:
             if target == 'draft': qs = qs.exclude(Exists(q2)).filter(Exists(q1))
             elif target == 'deleted': qs = qs.exclude(Exists(q1))
             
-            delete_submission_files(qs)
+            delete_submission_files(qs) # TODO: should skip if item still exists
             qs.update(deleted=True)
             self.message_user(request, 'Files deleted.', messages.SUCCESS)
             return HttpResponseRedirect(request.get_full_path())

@@ -627,7 +627,11 @@ class SubmissionItemUploadView(SubmissionItemBase):
             type=SubmissionRecord.RecordType.FILES
         )
         if created: rec.number = item._filesize
-        else: rec.number = F('number') + item._filesize
+        else:
+            if rec.deleted: # start over
+                rec.deleted = False
+                rec.number = item._filesize
+            else: rec.number = F('number') + item._filesize
         rec.save()
         
         return HttpResponse(msg)
