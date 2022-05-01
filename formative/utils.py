@@ -200,6 +200,15 @@ def subtitle_path(path, lang):
     idx = path.rindex('.')
     return path[:idx] + '_s_' + lang + '.vtt'
 
+def delete_submission_files(files_recs):
+    for rec in files_recs:
+        submission_dir = os.path.join(settings.MEDIA_ROOT, str(rec.submission))
+        if not os.path.isdir(submission_dir): continue
+        
+        for filename in os.listdir(submission_dir):
+            os.remove(os.path.join(submission_dir, filename))
+        os.rmdir(submission_dir)
+
 def delete_file(file):
     if os.path.isfile(file.path): os.remove(file.path)
     

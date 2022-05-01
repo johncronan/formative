@@ -710,6 +710,12 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
     inlines = [SubmissionRecordInline]
     actions = ['send_email', 'export_csv', 'download_files']
     
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        desc = 'Delete selected submissions'
+        actions['delete_selected'][0].short_description = desc
+        return actions
+    
     def delete_queryset(self, request, queryset):
         # something is up with model registry. manually delete the related items
         related = queryset.model._get_form().item_model.objects

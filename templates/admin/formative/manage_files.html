@@ -1,0 +1,75 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n admin_urls static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block content_title %} {% trans 'Files' %} {% endblock %}
+
+{% block content %}
+<div class="col-12">
+  <div class="card card-primary card-outline">
+    <div class="card-header with-border">
+      <h4 class="card-title">
+        Manage Files
+      </h4>
+    </div>
+    
+    <div class="card-body">
+      <div id="content-main">
+        <form method="post">
+        {% csrf_token %}
+        
+        <p>Form: {{ program_form.name }}</p>
+        
+        <table cellpadding="5" style="margin-bottom: 1em; margin-left: 2em;">
+          <tr>
+            <td>Total file size:</td>
+            <td>{% if total.size %}{{ total.size }} bytes{% endif %}</td>
+            <td>{{ total.count }} submissions</td>
+          </tr>
+          <tr>
+            <td>Draft submissions:</td>
+            <td>{% if draft.size %}{{ draft.size }} bytes{% endif %}</td>
+            <td>{{ draft.count }} submissions</td>
+          </tr>
+          <tr>
+            <td>Deleted submissions:</td>
+            <td>{% if deleted.size %}{{ deleted.size }} bytes{% endif %}</td>
+            <td>{{ deleted.count }} submissions</td>
+          </tr>
+        </table>
+        
+        <div class="row">
+          <div class="col-12 col-sm-9">
+            <p>Select an action:</p>
+            <p>
+              <select name="manage_action" required>
+              <option value="all">Delete files from all submissions</option>
+              <option value="draft">Delete files from draft submissions</option>
+              <option value="deleted" selected>
+                Delete files from deleted submissions
+              </option>
+              </select>
+            </p>
+          </div>
+        
+          <div class="col-12 col-sm-3">
+            <div class="form-group">
+              <input type="submit" name="_manage_submit"
+                     class="btn {{ jazzmin_ui.button_classes.danger }}
+                            form-control" value="{% trans "Delete Files" %}">
+            </div>
+            <div class="form-group">
+              <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                                 cancel-link form-control">
+                {% trans "Cancel" %}
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
