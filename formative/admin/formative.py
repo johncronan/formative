@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib import admin, auth
+from django.contrib import admin, auth, sites
 from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
@@ -20,9 +20,9 @@ from urllib.parse import unquote, parse_qsl
 
 from ..forms import ProgramAdminForm, FormAdminForm, DependencyAdminForm, \
     StockBlockAdminForm, CustomBlockAdminForm, CollectionBlockAdminForm, \
-    SubmissionAdminForm, SubmissionItemAdminForm
+    SubmissionAdminForm, SubmissionItemAdminForm, SiteAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
-    CustomBlock, CollectionBlock, SubmissionRecord
+    CustomBlock, CollectionBlock, SubmissionRecord, Site
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
@@ -763,3 +763,14 @@ class SubmissionItemAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Site, site=site)
+class SiteAdmin(admin.ModelAdmin):
+    form = SiteAdminForm
+    list_display = ('domain', 'name', 'time_zone')
+    search_fields = ('domain', 'name')
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        Site.objects.clear_cache()
