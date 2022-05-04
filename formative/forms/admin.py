@@ -331,9 +331,6 @@ class ProgramAdminForm(AdminJSONForm):
             'description': widgets.AdminTextareaWidget(attrs={'rows': 3}),
             'sites': forms.CheckboxSelectMultiple()
         }
-        help_texts = {
-            'sites': 'If none are selected, program is available on all sites.'
-        }
     
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
@@ -343,7 +340,8 @@ class ProgramAdminForm(AdminJSONForm):
             kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
-        self.fields['sites'].widget.can_add_related = False
+        if 'sites' in self.fields:
+            self.fields['sites'].widget.can_add_related = False
 
 
 class FormAdminForm(AdminJSONForm):

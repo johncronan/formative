@@ -28,7 +28,7 @@ from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed, form_settings_changed
 from ..tasks import timed_complete_form
-from ..utils import submission_link
+from ..utils import submission_link, get_current_site
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
     SubmissionActionsMixin, download_view
 
@@ -101,7 +101,11 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def get_fieldsets(self, request, obj=None):
         fields = self.get_fields(request, obj)
         
-        main = (None, {'fields': fields})
+        exclude = []
+        site = get_current_site(request)
+        if site and not request.user.is_superuser: exclude.append('sites')
+        
+        main = (None, {'fields': [ f for f in fields if f not in exclude ] })
         if not obj: return [main]
         
         responses = register_program_settings.send(self)
@@ -116,6 +120,12 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         fields = super().get_readonly_fields(request, obj)
         if obj: fields += ('slug',)
         return fields
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change and not request.user.is_superuser:
+            site = get_current_site(request)
+            if site: obj.sites.add(site)
 
 
 class FormChangeList(ChangeList):
