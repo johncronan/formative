@@ -121,6 +121,13 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         if obj: fields += ('slug',)
         return fields
     
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(sites=site)
+        return queryset
+    
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if not change and not request.user.is_superuser:
@@ -176,6 +183,13 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
             if obj.status == Form.Status.DRAFT: fields += ('status',)
             else: fields += ('program', 'slug')
         return fields
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(program__sites=site)
+        return queryset
     
     def save_form(self, request, form, change):
         obj = super().save_form(request, form, change)
@@ -238,6 +252,13 @@ class FormLabelAdmin(admin.ModelAdmin):
             attrs['class'], attrs['cols'] = 'vTextArea', 60
             formfield.widget = forms.Textarea(attrs=attrs)
         return formfield
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(form__program__sites=site)
+        return queryset
 
 
 class FormDependencyFormSet(forms.BaseInlineFormSet):
@@ -331,6 +352,13 @@ class FormBlockBase:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
     
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            qs = qs.filter(form__program__sites=site)
+        return qs
+        
     def response_add(self, request, obj, **kwargs):
         if '_popup' in request.POST or '_continue' not in request.POST:
             return super().response_add(request, obj, **kwargs)
@@ -535,6 +563,7 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        
         match, app_label = request.resolver_match, self.model._meta.app_label
         if match and match.url_name == f'{app_label}_formblock_formlist':
             qs = qs.filter(form_id=match.kwargs['form_id'])
@@ -679,6 +708,20 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         return fields
 
 
+class AccessMixin:
+    def has_change_permission(self, request, obj=None):
+        slug = self.model._meta.program_slug
+        site = get_current_site(request)
+        if not site: return True
+        
+        return slug in site.programs.values_list('slug', flat=True)
+    
+    def has_delete_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)
+    def has_add_permission(self, request):
+        return self.has_change_permission(request, None)
+
+
 class SubmittedListFilter(admin.SimpleListFilter):
     title = 'status'
     parameter_name = '_submitted'
@@ -712,7 +755,7 @@ class SubmissionRecordInline(admin.TabularInline):
         })
 
 
-class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
+class SubmissionAdmin(AccessMixin, SubmissionActionsMixin, admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('_submitted', 'items_index',)
@@ -761,7 +804,7 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
         return url
 
 
-class SubmissionItemAdmin(admin.ModelAdmin):
+class SubmissionItemAdmin(AccessMixin, admin.ModelAdmin):
     list_display = ('_id', '_submission', '_collection', '_rank', '_file')
     list_filter = (
         '_submission', '_collection',
@@ -780,6 +823,9 @@ class SiteAdmin(admin.ModelAdmin):
     form = SiteAdminForm
     list_display = ('domain', 'name', 'time_zone')
     search_fields = ('domain', 'name')
+    
+    def has_module_permission(self, request):
+        return request.user.is_superuser
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
