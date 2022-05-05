@@ -707,7 +707,17 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         return fields
 
 
-class AccessMixin:
+class SuperuserAccessMixin:
+    def has_module_permission(self, request): return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+class SiteAccessMixin:
     def has_change_permission(self, request, obj=None):
         slug = self.model._meta.program_slug
         site = get_current_site(request)
@@ -754,7 +764,8 @@ class SubmissionRecordInline(admin.TabularInline):
         })
 
 
-class SubmissionAdmin(AccessMixin, SubmissionActionsMixin, admin.ModelAdmin):
+class SubmissionAdmin(SiteAccessMixin, SubmissionActionsMixin,
+                      admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('_submitted', 'items_index',)
@@ -803,7 +814,7 @@ class SubmissionAdmin(AccessMixin, SubmissionActionsMixin, admin.ModelAdmin):
         return url
 
 
-class SubmissionItemAdmin(AccessMixin, admin.ModelAdmin):
+class SubmissionItemAdmin(SiteAccessMixin, admin.ModelAdmin):
     list_display = ('_id', '_submission', '_collection', '_rank', '_file')
     list_filter = (
         '_submission', '_collection',
@@ -818,13 +829,10 @@ class SubmissionItemAdmin(AccessMixin, admin.ModelAdmin):
 
 
 @admin.register(Site, site=site)
-class SiteAdmin(admin.ModelAdmin):
+class SiteAdmin(SuperuserAccessMixin, admin.ModelAdmin):
     form = SiteAdminForm
     list_display = ('domain', 'name', 'time_zone')
     search_fields = ('domain', 'name')
-    
-    def has_module_permission(self, request):
-        return request.user.is_superuser
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
