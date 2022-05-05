@@ -102,8 +102,7 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         fields = self.get_fields(request, obj)
         
         exclude = []
-        site = get_current_site(request)
-        if site and not request.user.is_superuser: exclude.append('sites')
+        if not request.user.is_superuser: exclude.append('sites')
         
         main = (None, {'fields': [ f for f in fields if f not in exclude ] })
         if not obj: return [main]
@@ -829,4 +828,8 @@ class SiteAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
+        Site.objects.clear_cache()
+    
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
         Site.objects.clear_cache()
