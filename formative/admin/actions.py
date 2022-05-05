@@ -133,7 +133,8 @@ class FormActionsMixin:
                     subs = qs.values_list('_email', 'num_items')
                 else: subs = qs.values_list('_email')
             context['submissions'] = subs
-        
+            model_name = obj.model._meta.model_name
+            context['link_name'] = f'admin:formative_{model_name}_changelist'
             request.current_app = self.admin_site.name
             template_name = 'admin/formative/unpublish_confirmation.html'
             return TemplateResponse(request, template_name, context)
@@ -323,7 +324,7 @@ class SubmissionActionsMixin:
             if target == 'draft': qs = qs.exclude(Exists(q2)).filter(Exists(q1))
             elif target == 'deleted': qs = qs.exclude(Exists(q1))
             
-            delete_submission_files(qs)
+            delete_submission_files(qs) # TODO: should skip if item still exists
             qs.update(deleted=True)
             self.message_user(request, 'Files deleted.', messages.SUCCESS)
             return HttpResponseRedirect(request.get_full_path())

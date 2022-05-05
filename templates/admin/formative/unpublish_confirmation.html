@@ -14,9 +14,17 @@
     {% if submissions %}
       <p>
         It is NOT recommended to unpublish a form that has submissions.<br>
-        Consider making the form hidden, instead. TODO: link to export
+        Consider making the form hidden, instead.
       </p>
-      <p>All of the following related items will be deleted:</p>
+      <p>
+        Make sure you have saved an export of the
+        <a href="{% url link_name %}">submission data</a>
+        before proceeding.
+      </p>
+      <p>
+        All of the following related items will be deleted:
+        &nbsp; TODO: option to also delete files
+      </p>
     {% endif %}
 {% endblock %}
 

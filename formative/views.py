@@ -16,18 +16,24 @@ from .forms import OpenForm, SubmissionForm, ItemFileForm, ItemsFormSet, \
     ItemsForm
 from .filetype import FileType
 from .signals import submission_handle_submit
-from .utils import delete_file, get_file_extension, get_tooltips
+from .utils import delete_file, get_file_extension, get_tooltips, \
+    get_current_site
 
 
-class ProgramIndexView(generic.ListView):
+class ProgramMixin:
+    def get_queryset(self):
+        queryset = Program.objects.filter(hidden=False)
+        site = get_current_site(self.request)
+        if site: return queryset.filter(sites=site)
+        return queryset
+
+    
+class ProgramIndexView(ProgramMixin, generic.ListView):
     template_name = 'formative/index.html'
     context_object_name = 'programs'
-    
-    def get_queryset(self):
-        return Program.objects.filter(hidden=False)
 
 
-class ProgramView(generic.DetailView):
+class ProgramView(ProgramMixin, generic.DetailView):
     model = Program
     template_name = 'formative/program.html'
     slug_field = 'slug'
@@ -35,9 +41,11 @@ class ProgramView(generic.DetailView):
 
 class ProgramFormMixin(generic.edit.FormMixin):
     def dispatch(self, request, *args, **kwargs):
-        form = get_object_or_404(Form.objects.select_related('program'),
-                                 program__slug=self.kwargs['program_slug'],
-                                 slug=self.kwargs['form_slug'])
+        args = {'program__slug': self.kwargs['program_slug'],
+                'slug': self.kwargs['form_slug']}
+        site = get_current_site(self.request)
+        if site: args['program__sites'] = site
+        form = get_object_or_404(Form.objects.select_related('program'), **args)
         self.program_form = form
         
         if self.program_form.hidden(): # and 'sid' not in kwargs:
@@ -419,9 +427,11 @@ class SubmissionBase(generic.View):
         return context
     
     def dispatch(self, request, *args, **kwargs):
-        form = get_object_or_404(Form,
-                                 program__slug=self.kwargs['program_slug'],
-                                 slug=self.kwargs['form_slug'])
+        args = {'program__slug': self.kwargs['program_slug'],
+                'slug': self.kwargs['form_slug']}
+        site = get_current_site(self.request)
+        if site: args['program__sites'] = site
+        form = get_object_or_404(Form, **args)
         self.program_form = form
         if not self.program_form.item_model: raise Http404()
         
@@ -627,7 +637,11 @@ class SubmissionItemUploadView(SubmissionItemBase):
             type=SubmissionRecord.RecordType.FILES
         )
         if created: rec.number = item._filesize
-        else: rec.number = F('number') + item._filesize
+        else:
+            if rec.deleted: # start over
+                rec.deleted = False
+                rec.number = item._filesize
+            else: rec.number = F('number') + item._filesize
         rec.save()
         
         return HttpResponse(msg)

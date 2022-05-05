@@ -2,6 +2,7 @@ from django.db import models, connection
 from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
     UniqueConstraint, Subquery
 from django.conf import settings
+from django.contrib import sites
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import FieldError, ValidationError
@@ -13,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.urls import reverse
 from polymorphic.models import PolymorphicModel
+from polymorphic.managers import PolymorphicManager
 import uuid
 from itertools import groupby
 from pathlib import Path
@@ -30,10 +32,17 @@ from .automatic import AutoSlugModel
 markdown = MarkdownFormatter()
 
 
+class ProgramManager(models.Manager):
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
 class Program(AutoSlugModel):
     class Meta:
         ordering = ['created']
     
+    sites = models.ManyToManyField('Site', null=True, blank=True,
+                                   related_name='programs',
+                                   related_query_name='program')
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True, allow_unicode=True,
                             verbose_name='identifier')
@@ -43,9 +52,14 @@ class Program(AutoSlugModel):
     options = models.JSONField(default=dict, blank=True)
     hidden = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
+    
+    objects = ProgramManager()
 
     def __str__(self):
         return self.name
+    
+    def natural_key(self):
+        return (self.slug,)
     
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -63,6 +77,10 @@ class Program(AutoSlugModel):
         if 'home_url' in self.options: return self.options['home_url']
         return None
 
+
+class FormManager(models.Manager):
+    def get_by_natural_key(self, program_slug, slug):
+        return self.get(program__slug=program_slug, slug=slug)
 
 class Form(AutoSlugModel):
     class Meta:
@@ -99,9 +117,14 @@ class Form(AutoSlugModel):
     validation_type = models.CharField(max_length=16, editable=False,
                                        default=Validation.EMAIL,
                                        choices=Validation.choices)
+    objects = FormManager()
     
     def __str__(self):
         return self.name
+    
+    def natural_key(self):
+        return self.program.natural_key() + (self.slug,)
+    natural_key.dependencies = ['formative.program']
     
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -430,6 +453,11 @@ class Form(AutoSlugModel):
         return emails
 
 
+class FormLabelManager(models.Manager):
+    def get_by_natural_key(self, program_slug, form_slug, path, style):
+        return self.get(form__program__slug=program_slug, form__slug=form_slug,
+                        path=path, style=style)
+
 class FormLabel(models.Model):
     class Meta:
         constraints = [
@@ -449,8 +477,14 @@ class FormLabel(models.Model):
     style = models.CharField(max_length=16, choices=LabelStyle.choices,
                              default=LabelStyle.WIDGET)
     
+    objects = FormLabelManager()
+    
     def __str__(self):
         return self.path
+    
+    def natural_key(self):
+        return self.form.natural_key() + (self.path, self.style)
+    natural_key.dependencies = ['formative.form']
     
     def display(self, inline=False):
         s = markdown.convert(self.text)
@@ -460,6 +494,12 @@ class FormLabel(models.Model):
     def display_inline(self):
         return self.display(inline=True)
 
+
+class FormDependencyManager(models.Manager):
+    def get_by_natural_key(self, program_slug, form_slug, name, value):
+        return self.get(block__form__program__slug=program_slug,
+                        block__form__slug=form_slug,
+                        block__name=name, value=value)
 
 class FormDependency(models.Model):
     class Meta:
@@ -474,11 +514,22 @@ class FormDependency(models.Model):
                               related_query_name='dependency')
     value = models.CharField(max_length=64, blank=True)
     
+    objects = FormDependencyManager()
+    
     def __str__(self):
         if self.block.dependence:
             return f'{self.block.dependence.name}="{self.value}"'
         return f'?="{self.value}"'
+    
+    def natural_key(self):
+        return self.block.natural_key() + (self.value,)
+    natural_key.dependencies = ['formative.formblock']
 
+
+class FormBlockManager(PolymorphicManager):
+    def get_by_natural_key(self, program_slug, form_slug, name):
+        return self.get(form__program__slug=program_slug, form__slug=form_slug,
+                        name=name)
 
 class FormBlock(PolymorphicModel, RankedModel):
     class Meta(PolymorphicModel.Meta, RankedModel.Meta):
@@ -500,9 +551,14 @@ class FormBlock(PolymorphicModel, RankedModel):
                                    related_query_name='dependent')
     negate_dependencies = models.BooleanField(default=False,
                                               verbose_name='negate dependency')
+    objects = FormBlockManager()
     
     def __str__(self):
         return self.name
+    
+    def natural_key(self):
+        return self.form.natural_key() + (self.name,)
+    natural_key.dependencies = ['formative.form']
     
     def rank_group(self):
         return FormBlock.objects.filter(form=self.form, page=self.page)
@@ -611,6 +667,10 @@ class CustomBlock(FormBlock):
         if 'max_chars' not in kwargs:
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
+    
+    def natural_key(self):
+        return self.block.natural_key()
+    natural_key.dependencies = ['formative.formblock']
     
     def choices(self, include_empty=False):
         if include_empty:
@@ -740,6 +800,10 @@ class CollectionBlock(FormBlock):
     name3 = models.CharField(max_length=32, default='', blank=True)
     align_type = models.CharField(max_length=16, choices=AlignType.choices,
                                   default=AlignType.TABULAR)
+    
+    def natural_key(self):
+        return self.block.natural_key()
+    natural_key.dependencies = ['formative.formblock']
     
     def fields(self):
         return []
@@ -1000,3 +1064,7 @@ class SubmissionItem(UnderscoredRankedModel):
         if type == 'image': return thumbnail_path(self._file.url)
         elif type == 'video': return thumbnail_path(self._file.url, ext='jpg')
         return None
+
+
+class Site(sites.models.Site):
+    time_zone = models.CharField(max_length=32)

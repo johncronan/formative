@@ -13,6 +13,13 @@ from markdown_link_attr_modifier import LinkAttrModifierExtension
 from urllib.parse import quote
 
 
+def get_current_site(request):
+    from .models import Site
+    try: return Site.objects.get_current(request)
+    except Site.DoesNotExist: pass
+    
+    return None
+
 def create_model(name, fields, app_label='formative', module='',
                  program=None, meta=None, base_class=Model):
     class Meta:

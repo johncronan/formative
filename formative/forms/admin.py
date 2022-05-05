@@ -5,13 +5,14 @@ from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 from django_better_admin_arrayfield.forms.widgets import DynamicArrayWidget
 
-import datetime
+from datetime import datetime
+import pytz, babel.dates
 
 from ..signals import register_program_settings, register_form_settings
 from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
-    Submission, SubmissionItem
+    Submission, SubmissionItem, Site
 from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
@@ -164,7 +165,7 @@ class JSONDateTimeWidget(widgets.AdminSplitDateTime):
     def decompress(self, val):
         if not val: return super().decompress(val)
         
-        return super().decompress(datetime.datetime.fromisoformat(val))
+        return super().decompress(datetime.fromisoformat(val))
 
 
 class JSONDateTimeField(forms.SplitDateTimeField):
@@ -322,11 +323,13 @@ class ProgramAdminForm(AdminJSONForm):
     )
     
     class Meta:
-        static_fields = ('name', 'slug', 'description', 'hidden', 'home_url')
+        static_fields = ('name', 'slug', 'description', 'hidden', 'home_url',
+                         'sites')
         json_fields = {'options': ['home_url']}
         dynamic_fields = True
         widgets = {
-            'description': widgets.AdminTextareaWidget(attrs={'rows': 3})
+            'description': widgets.AdminTextareaWidget(attrs={'rows': 3}),
+            'sites': forms.CheckboxSelectMultiple()
         }
     
     def __init__(self, *args, **kwargs):
@@ -337,6 +340,8 @@ class ProgramAdminForm(AdminJSONForm):
             kwargs['admin_fields'] = admin_fields
         
         super().__init__(*args, **kwargs)
+        if 'sites' in self.fields:
+            self.fields['sites'].widget.can_add_related = False
 
 
 class FormAdminForm(AdminJSONForm):
@@ -783,6 +788,27 @@ class SubmissionItemAdminForm(forms.ModelForm):
             if isinstance(field, forms.ModelChoiceField): continue
             if n in [ f.name for f in  SubmissionItem._meta.fields ]: continue
             if field.required: field.required = False
+
+
+offsets = {}
+for name in pytz.common_timezones:
+    zone = pytz.timezone(name)
+    offset = int(zone.utcoffset(datetime(2022, 7, 1)).total_seconds()) // 60
+    if offset not in offsets: offsets[offset] = []
+    display_name = babel.dates.get_timezone_name(babel.dates.get_timezone(name))
+    offsets[offset].append((name, f'{display_name} - {name}'))
+
+TZ_CHOICES = [ (('+' if k >= 0 else '') + f'{k // 60}:{k % 60:02d}',
+                sorted(offsets[k], key=lambda x: x[1]))
+               for k in sorted(offsets.keys()) ]
+
+class SiteAdminForm(forms.ModelForm):
+    time_zone = forms.ChoiceField(choices=TZ_CHOICES)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['time_zone'].widget.attrs['data-dropdown-css-class'] = \
+            'larger'
 
 
 class EmailAdminForm(forms.Form):

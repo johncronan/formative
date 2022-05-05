@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib import admin, auth
+from django.contrib import admin, auth, sites
 from django.contrib.admin.views.main import ChangeList
 from django.db import connection
 from django.db.models import Count, F, Q
@@ -20,15 +20,15 @@ from urllib.parse import unquote, parse_qsl
 
 from ..forms import ProgramAdminForm, FormAdminForm, DependencyAdminForm, \
     StockBlockAdminForm, CustomBlockAdminForm, CollectionBlockAdminForm, \
-    SubmissionAdminForm, SubmissionItemAdminForm
+    SubmissionAdminForm, SubmissionItemAdminForm, SiteAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
-    CustomBlock, CollectionBlock, SubmissionRecord
+    CustomBlock, CollectionBlock, SubmissionRecord, Site
 from ..filetype import FileType
 from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed, form_settings_changed
 from ..tasks import timed_complete_form
-from ..utils import submission_link
+from ..utils import submission_link, get_current_site
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
     SubmissionActionsMixin, download_view
 
@@ -101,7 +101,10 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def get_fieldsets(self, request, obj=None):
         fields = self.get_fields(request, obj)
         
-        main = (None, {'fields': fields})
+        exclude = []
+        if not request.user.is_superuser: exclude.append('sites')
+        
+        main = (None, {'fields': [ f for f in fields if f not in exclude ] })
         if not obj: return [main]
         
         responses = register_program_settings.send(self)
@@ -116,6 +119,19 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         fields = super().get_readonly_fields(request, obj)
         if obj: fields += ('slug',)
         return fields
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(sites=site)
+        return queryset
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change and not request.user.is_superuser:
+            site = get_current_site(request)
+            if site: obj.sites.add(site)
 
 
 class FormChangeList(ChangeList):
@@ -166,6 +182,13 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
             if obj.status == Form.Status.DRAFT: fields += ('status',)
             else: fields += ('program', 'slug')
         return fields
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(program__sites=site)
+        return queryset
     
     def save_form(self, request, form, change):
         obj = super().save_form(request, form, change)
@@ -228,6 +251,13 @@ class FormLabelAdmin(admin.ModelAdmin):
             attrs['class'], attrs['cols'] = 'vTextArea', 60
             formfield.widget = forms.Textarea(attrs=attrs)
         return formfield
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            queryset = queryset.filter(form__program__sites=site)
+        return queryset
 
 
 class FormDependencyFormSet(forms.BaseInlineFormSet):
@@ -321,6 +351,13 @@ class FormBlockBase:
             if not isinstance(inline, FormDependencyInline) or obj is not None:
                 yield inline.get_formset(request, obj), inline
     
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        site = get_current_site(request)
+        if site and not request.user.is_superuser:
+            qs = qs.filter(form__program__sites=site)
+        return qs
+        
     def response_add(self, request, obj, **kwargs):
         if '_popup' in request.POST or '_continue' not in request.POST:
             return super().response_add(request, obj, **kwargs)
@@ -525,6 +562,7 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        
         match, app_label = request.resolver_match, self.model._meta.app_label
         if match and match.url_name == f'{app_label}_formblock_formlist':
             qs = qs.filter(form_id=match.kwargs['form_id'])
@@ -669,6 +707,30 @@ class CollectionBlockAdmin(FormBlockChildAdmin, DynamicArrayMixin):
         return fields
 
 
+class SuperuserAccessMixin:
+    def has_module_permission(self, request): return request.user.is_superuser
+    
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+class SiteAccessMixin:
+    def has_change_permission(self, request, obj=None):
+        slug = self.model._meta.program_slug
+        site = get_current_site(request)
+        if not site: return True
+        
+        return slug in site.programs.values_list('slug', flat=True)
+    
+    def has_delete_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)
+    def has_add_permission(self, request):
+        return self.has_change_permission(request, None)
+
+
 class SubmittedListFilter(admin.SimpleListFilter):
     title = 'status'
     parameter_name = '_submitted'
@@ -702,7 +764,8 @@ class SubmissionRecordInline(admin.TabularInline):
         })
 
 
-class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
+class SubmissionAdmin(SiteAccessMixin, SubmissionActionsMixin,
+                      admin.ModelAdmin):
     list_display = ('_email', '_created', '_modified', '_submitted')
     list_filter = ('_email', SubmittedListFilter)
     readonly_fields = ('_submitted', 'items_index',)
@@ -751,7 +814,7 @@ class SubmissionAdmin(SubmissionActionsMixin, admin.ModelAdmin):
         return url
 
 
-class SubmissionItemAdmin(admin.ModelAdmin):
+class SubmissionItemAdmin(SiteAccessMixin, admin.ModelAdmin):
     list_display = ('_id', '_submission', '_collection', '_rank', '_file')
     list_filter = (
         '_submission', '_collection',
@@ -763,3 +826,18 @@ class SubmissionItemAdmin(admin.ModelAdmin):
     
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(Site, site=site)
+class SiteAdmin(SuperuserAccessMixin, admin.ModelAdmin):
+    form = SiteAdminForm
+    list_display = ('domain', 'name', 'time_zone')
+    search_fields = ('domain', 'name')
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        Site.objects.clear_cache()
+    
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        Site.objects.clear_cache()
