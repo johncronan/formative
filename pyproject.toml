@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "formative"
-version = "0.9.7"
+version = "0.9.8"
 description = "Self-hosted web app for collecting form responses and files"
 authors = ["John Kyle Cronan"]
 license = "LGPL-2.1"
@@ -42,7 +42,6 @@ gunicorn = "*"
 psycopg2 = "*"
 redis = "*"
 django-environ = "*"
-django-webpack-loader = "*"
 django-polymorphic = "*"
 django-jazzmin = "*"
 django-widget-tweaks = "*"
