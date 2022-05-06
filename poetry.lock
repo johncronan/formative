@@ -691,7 +691,7 @@ rlpycairo = ["rlPyCairo (>=0.0.5)"]
 
 [[package]]
 name = "reviewpanel"
-version = "0.8.2"
+version = "0.8.3"
 description = "Formative plugin for reviewing and scoring applicant submissions"
 category = "main"
 optional = true
@@ -699,7 +699,7 @@ python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
 "backports.zoneinfo" = {version = "*", markers = "python_version >= \"3.8\" and python_version < \"3.9\""}
-formative = ">=0.9.6"
+formative = ">=0.9.7"
 
 [[package]]
 name = "six"
@@ -791,7 +791,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "76091cadcf479d0fffb3d71c1e2a2c34b332b5302ffeb48d0286a118b70e2b90"
+content-hash = "6868ace6f5e348fd721405fdd01c5ccfacbd2666bc964975812a520bfbeb9a5f"
 
 [metadata.files]
 amqp = [
@@ -1181,8 +1181,8 @@ reportlab = [
     {file = "reportlab-3.6.9.tar.gz", hash = "sha256:5d0cc3682456ad213150f6dbffe7d47eab737d809e517c316103376be548fb84"},
 ]
 reviewpanel = [
-    {file = "reviewpanel-0.8.2-py3-none-any.whl", hash = "sha256:b6b27f22719e0ed45011d7a5f3132bf420a4271444be97670dfe4962339bc4d6"},
-    {file = "reviewpanel-0.8.2.tar.gz", hash = "sha256:2392b21d1d10a7931c5146f7a232869c57abf3e977f7b1ca8092e76c577c7d20"},
+    {file = "reviewpanel-0.8.3-py3-none-any.whl", hash = "sha256:87d855f9dfe1f6aae510c7ca59fd0f30ae7f9d09210ab313e92d46f563101a17"},
+    {file = "reviewpanel-0.8.3.tar.gz", hash = "sha256:f2b9d6013d7f6fdf87fb7bc0348e61865b0a631a9037506436d59a01e3284ce5"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
