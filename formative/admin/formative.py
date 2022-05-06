@@ -186,9 +186,16 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         site = get_current_site(request)
-        if site and not request.user.is_superuser:
-            queryset = queryset.filter(program__sites=site)
+        if site: queryset = queryset.filter(program__sites=site)
         return queryset
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        qs = form.base_fields['program'].queryset
+        site = get_current_site(request)
+        if site: form.base_fields['program'].queryset = qs.filter(sites=site)
+        return form
     
     def save_form(self, request, form, change):
         obj = super().save_form(request, form, change)
@@ -252,11 +259,19 @@ class FormLabelAdmin(admin.ModelAdmin):
             formfield.widget = forms.Textarea(attrs=attrs)
         return formfield
     
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        qs = form.base_fields['form'].queryset
+        site = get_current_site(request)
+        if site:
+            form.base_fields['form'].queryset = qs.filter(program__sites=site)
+        return form
+    
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         site = get_current_site(request)
-        if site and not request.user.is_superuser:
-            queryset = queryset.filter(form__program__sites=site)
+        if site: queryset = queryset.filter(form__program__sites=site)
         return queryset
 
 
@@ -322,7 +337,6 @@ class FormBlockBase:
         if form_id: form.form_id = form_id
         
         if obj and obj.form.status == Form.Status.DRAFT:
-            # TODO: where would we modify form.fields instead?
             if 'dependence' in form.base_fields:
                 qs = form.base_fields['dependence'].queryset
                 qs = qs.filter(form=obj.form, page__gt=0)
@@ -354,8 +368,7 @@ class FormBlockBase:
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         site = get_current_site(request)
-        if site and not request.user.is_superuser:
-            qs = qs.filter(form__program__sites=site)
+        if site: qs = qs.filter(form__program__sites=site)
         return qs
         
     def response_add(self, request, obj, **kwargs):
@@ -725,6 +738,8 @@ class SiteAccessMixin:
         
         return slug in site.programs.values_list('slug', flat=True)
     
+    def has_view_permission(self, request, obj=None):
+        return self.has_change_permission(request, obj)
     def has_delete_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)
     def has_add_permission(self, request):
@@ -776,6 +791,7 @@ class SubmissionAdmin(SiteAccessMixin, SubmissionActionsMixin,
     def get_actions(self, request):
         actions = super().get_actions(request)
         desc = 'Delete selected submissions'
+        if 'delete_selected' not in actions: return actions
         actions['delete_selected'][0].short_description = desc
         return actions
     

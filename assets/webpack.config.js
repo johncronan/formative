@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const BundleTracker = require("webpack-bundle-tracker");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const autoprefixer = require("autoprefixer");
@@ -9,13 +8,13 @@ const TerserPlugin = require('terser-webpack-plugin');
 const resolve = path.resolve.bind(path, __dirname);
 
 module.exports = (env, argv) => {
-  let output, outputPath, publicPath, cssFilename;
+  let ret, output, outputPath, publicPath, cssFilename;
 
   switch (env.env) {
     case "prod":
       publicPath = "/static/bundles/prod/";
       outputPath = resolve("bundles/prod");
-      cssFilename = "[name].[contenthash].css";
+      cssFilename = "[name].css";
       break;
     case "dev":
       publicPath = "/static/bundles/dev/";
@@ -24,30 +23,14 @@ module.exports = (env, argv) => {
       break;
   }
 
-  switch (argv.mode) {
-    case "production":
-      output = {
-        path: outputPath,
-        filename: "[name].[contenthash].js",
-        chunkFilename: "[name]-[id].[contenthash].js",
-        publicPath: publicPath
-      };
-      break;
+  output = {
+    path: outputPath,
+    filename: "[name].js",
+    chunkFilename: "[name]-[id].[contenthash].js",
+    publicPath: publicPath
+  };
 
-    case "development":
-      output = {
-        path: outputPath,
-        filename: "[name].js",
-        chunkFilename: "[name]-[id].js",
-        publicPath: publicPath
-      };
-      break;
-
-    default:
-      break;
-  }
-
-  return {
+  ret = {
     mode: argv.mode,
     entry: {
       'es6-promise': './js/es6-promise.js',
@@ -67,7 +50,7 @@ module.exports = (env, argv) => {
             {
               loader: "css-loader",
               options: {
-                sourceMap: true,
+                sourceMap: false //argv.mode != 'production',
               }
             },
             {
@@ -81,7 +64,7 @@ module.exports = (env, argv) => {
             {
               loader: "sass-loader",
               options: {
-                sourceMap: true,
+                sourceMap: argv.mode != 'production',
                 sassOptions: {
                   includePaths: ['./node_modules']
                 }
@@ -101,9 +84,6 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
-      new BundleTracker({
-        filename: `bundles/webpack-bundle.${env.env}.json`
-      }),
       new MiniCssExtractPlugin({
         filename: cssFilename
       })
@@ -113,7 +93,12 @@ module.exports = (env, argv) => {
         new TerserPlugin(),
         new CssMinimizerPlugin()
       ]
-    },
-    devtool: "source-map"
+    }
   };
+  if (argv.mode != 'production') {
+    ret.plugins.push(new webpack.SourceMapDevToolPlugin({
+      filename: '[name].map'
+    }));
+  }
+  return ret;
 };

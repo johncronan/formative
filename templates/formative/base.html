@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load render_bundle from webpack_loader %}
+{% load static utils %}
 
 {% block page_extra_meta %}
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
@@ -7,7 +7,9 @@
 {% endblock %}
 
 {% block head_trailing %}
-  {% render_bundle 'formative' 'css' %}
+  {% env_bundle as bundle %}{% with csspath=bundle|add:'/formative.css' %}
+  <link rel="stylesheet" type="text/css" href="{% static csspath %}">
+  {% endwith %}
 {% endblock %}
 
 {% block body_attributes %} class="mdc-typography"{% endblock %}
@@ -38,5 +40,7 @@
   </div>
   {% block post_layout %}{% endblock %}
 </main>
-{% render_bundle 'formative' 'js' %}
+{% env_bundle as bundle %}{% with jspath=bundle|add:'/formative.js' %}
+<script type="text/javascript" src="{% static jspath %}"></script>
+{% endwith %}
 {% endblock %}

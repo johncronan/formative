@@ -111,7 +111,12 @@ class FormActionsMixin:
         obj = self.get_object(request, object_id)
         getattr(obj, action)(**kwargs)
         
+        self.log_change(request, obj, action + 'ed')
         return HttpResponseRedirect(request.get_full_path())
+    
+    def log_change(self, request, obj, message):
+        if not message: return
+        return super().log_change(request, obj, message)
     
     def response_change(self, request, obj):
         context = {
@@ -284,7 +289,12 @@ class SubmissionActionsMixin:
                 if os.path.exists(submit_file): os.remove(submit_file)
         if rec: rec.save()
         
+        self.log_change(request, obj, action + 'ted')
         return HttpResponseRedirect(request.get_full_path())
+    
+    def log_change(self, request, obj, message):
+        if not message: return
+        return super().log_change(request, obj, message)
     
     def response_change(self, request, obj):
         context = {

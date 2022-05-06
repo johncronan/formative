@@ -20,6 +20,10 @@ def file_thumbnail(file):
     
     return None
 
+@register.simple_tag
+def env_bundle():
+    return 'bundles/' + settings.ENV
+
 register.filter('human_readable', human_readable_filesize)
 
 @register.filter

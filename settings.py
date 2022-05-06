@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'django_better_admin_arrayfield',
     'django_admin_inline_paginator',
     'polymorphic',
-    'webpack_loader',
     'widget_tweaks',
     'formative',
 ]
@@ -191,8 +190,8 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
 
-#STATICFILES_STORAGE = \
-#    'django.contrib.staticfiles.storage.ManifestStaticFilesStorage' TODO
+STATICFILES_STORAGE = \
+    'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media')
 MEDIA_URL = 'media/'
@@ -202,19 +201,6 @@ STATICFILES_DIRS = (
 #    ("img", os.path.join(BASE_DIR, 'assets/img')),
     os.path.join(BASE_DIR, 'assets/static')
 )
-
-
-WEBPACK_LOADER = {
-    'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': 'bundles/',
-        'STATS_FILE': os.path.join(os.path.join(BASE_DIR, 'assets/bundles/',
-                                                f'webpack-bundle.{ENV}.json')),
-        'POLL_INTERVAL': 0.5,
-        'TIMEOUT': None,
-        'IGNORE': [r".+\.hot-update.js", r".+\.map"]
-    }
-}
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

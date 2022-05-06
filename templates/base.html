@@ -1,4 +1,4 @@
-{% load get_files from webpack_loader %}
+{% load static utils %}
 <!doctype html>
 <html lang="en" {% block html_attributes %}{% endblock %}>
   <head>
@@ -16,13 +16,12 @@
   <script>
       if (!("Promise" in window)) {
           var head = document.getElementsByTagName("head")[0];
-      {% get_files 'es6-promise' 'js' as promise_files %}
-      {% for jsfile in promise_files %}
           var script = document.createElement("script");
           script.type = 'text/javascript';
-          script.src = "{{ jsfile.url }}";
+          {% env_bundle as bundle %}{% with path=bundle|add:'/es6-promise.js' %}
+          script.src = "{% static path %}";
+          {% endwith %}
           head.appendChild(script);
-      {% endfor %}
       }
   </script>
   </body>
