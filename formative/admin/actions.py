@@ -1,11 +1,12 @@
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin, auth, messages
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core import exceptions, serializers
 from django.db import IntegrityError
 from django.db.models import Count, Max, Sum, Exists, OuterRef
-from django.http import HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.text import capfirst
@@ -56,7 +57,7 @@ class UserActionsMixin:
             email, username, *rest = row
             if not username: return 'Username is required.', None
             try: validator(username)
-            except ValidationError:
+            except exceptions.ValidationError:
                 return 'Invalid characters in username.', None
             
             user = {'email': email, 'username': username}
@@ -171,6 +172,24 @@ class FormActionsMixin:
             'form': FormPluginsAdminForm()
         }
         return TemplateResponse(request, template_name, context)
+    
+    @admin.action(description='Export selected forms as JSON')
+    def export_json(self, request, queryset):
+        response = HttpResponse(content_type='text/javascript')
+        
+        collector = NestedObjects(using='default')
+        collector.collect(queryset)
+        rel = [ obj for cls, objs in collector.data.items() for obj in objs
+                if cls._meta.app_label == 'formative' ]
+        serializers.serialize('json', rel, stream=response,
+                              use_natural_foreign_keys=True,
+                              use_natural_primary_keys=True)
+        
+        if len(queryset) == 1: filename = f'{queryset[0].slug}_export.json'
+        else: filename = f'{queryset[0].program.slug}_selected__export.json'
+        disp = f"attachment; filename*=UTF-8''" + quote(filename)
+        response['Content-Disposition'] = disp
+        return response
 
 
 class FormBlockActionsMixin:

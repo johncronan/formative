@@ -40,8 +40,7 @@ class Program(AutoSlugModel):
     class Meta:
         ordering = ['created']
     
-    sites = models.ManyToManyField('Site', null=True, blank=True,
-                                   related_name='programs',
+    sites = models.ManyToManyField('Site', blank=True, related_name='programs',
                                    related_query_name='program')
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True, allow_unicode=True,
@@ -528,8 +527,8 @@ class FormDependency(models.Model):
 
 class FormBlockManager(PolymorphicManager):
     def get_by_natural_key(self, program_slug, form_slug, name):
-        return self.get(form__program__slug=program_slug, form__slug=form_slug,
-                        name=name)
+        return self.non_polymorphic().get(form__program__slug=program_slug,
+                                          form__slug=form_slug, name=name)
 
 class FormBlock(PolymorphicModel, RankedModel):
     class Meta(PolymorphicModel.Meta, RankedModel.Meta):
