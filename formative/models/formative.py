@@ -522,7 +522,8 @@ class FormDependency(models.Model):
     
     def natural_key(self):
         return self.block.natural_key() + (self.value,)
-    natural_key.dependencies = ['formative.formblock']
+    natural_key.dependencies = ['formative.formblock', 'formative.customblock',
+                                'formative.collectionblock']
 
 
 class FormBlockManager(PolymorphicManager):
@@ -667,10 +668,6 @@ class CustomBlock(FormBlock):
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
     
-    def natural_key(self):
-        return self.block.natural_key()
-    natural_key.dependencies = ['formative.formblock']
-    
     def choices(self, include_empty=False):
         if include_empty:
             if 'choices' in self.options: return self.options['choices']
@@ -799,10 +796,6 @@ class CollectionBlock(FormBlock):
     name3 = models.CharField(max_length=32, default='', blank=True)
     align_type = models.CharField(max_length=16, choices=AlignType.choices,
                                   default=AlignType.TABULAR)
-    
-    def natural_key(self):
-        return self.block.natural_key()
-    natural_key.dependencies = ['formative.formblock']
     
     def fields(self):
         return []

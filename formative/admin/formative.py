@@ -148,7 +148,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
     form = FormAdminForm
-    actions = ['form_plugins', 'export_json']
+    actions = ['form_plugins', 'export_json', 'duplicate']
     
     def get_changelist(self, request, **kwargs):
         return FormChangeList

@@ -1,0 +1,54 @@
+{% extends "admin/formative/confirmation.html" %}
+{% load i18n %}
+
+{% block content_title %} {% trans 'Copy a Form' %} {% endblock %}
+
+{% block cardtitle %} {% trans 'Form Copy' %} {% endblock %}
+
+{% block cardcontent %}
+  {% if allowed %}
+    <p>Change the identifier for the form, and set a new name, below:</p>
+    <table>
+    {{ form.as_table }}
+    </table>
+  {% else %}
+    <p>
+      <strong>Only one form at a time can be copied.</strong>
+    </p>
+  {% endif %}
+{% endblock %}
+
+{% block rowcontent %}
+  <div class="col-12 col-sm-9">
+    <input type="hidden" name="_selected_action" value="{{ program_form.pk }}">
+  </div>
+{% endblock %}
+
+{% block rowsidecontent %}
+    <h4>{% trans 'Summary' %}</h4>
+    <table class="table" table-striped">
+      <tbody>
+        <tr>
+          <td>{% trans 'Forms' %}</td>
+          <td>1</td>
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}
+
+{% block formcontrols %}
+    <input type="hidden" name="action" value="duplicate">
+  {% if allowed %}
+    <div class="form-group">
+      <input type="submit" name="_duplicate"
+             class="btn {{ jazzmin_ui.button_classes.danger }}
+                    form-control" value="{% trans "Yes, I'm sure" %}">
+    </div>
+  {% endif %}
+    <div class="form-group">
+      <a href="#" class="btn {{ jazzmin_ui.button_classes.primary }}
+                         cancel-link form-control">
+        {% trans "No, take me back" %}
+      </a>
+    </div>
+{% endblock %}
