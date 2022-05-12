@@ -1,11 +1,13 @@
+from django import forms
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin, auth, messages
+from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.core import exceptions, serializers
+from django.db import transaction, IntegrityError
 from django.db.models import Count, Max, Sum, Exists, OuterRef
-from django.http import HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.text import capfirst
@@ -56,7 +58,7 @@ class UserActionsMixin:
             email, username, *rest = row
             if not username: return 'Username is required.', None
             try: validator(username)
-            except ValidationError:
+            except exceptions.ValidationError:
                 return 'Invalid characters in username.', None
             
             user = {'email': email, 'username': username}
@@ -98,6 +100,14 @@ class UserActionsMixin:
         }
         template_name = 'admin/formative/import_users.html'
         return TemplateResponse(request, template_name, context)
+
+
+class NonPolymorphicNestedObjects(NestedObjects):
+    def related_objects(self, related_model, related_fields, objs):
+        qs = super().related_objects(related_model, related_fields, objs)
+        # somehow, the dumpdata management command doesn't have this problem
+        if hasattr(qs, 'non_polymorphic'): return qs.non_polymorphic()
+        return qs
 
 
 class FormActionsMixin:
@@ -169,6 +179,71 @@ class FormActionsMixin:
             'opts': self.model._meta, 'media': self.media,
             'forms': queryset, 'title': 'Enable or Disable Plugin',
             'form': FormPluginsAdminForm()
+        }
+        return TemplateResponse(request, template_name, context)
+    
+    @admin.action(description='Export selected forms as JSON')
+    def export_json(self, request, queryset):
+        response = HttpResponse(content_type='text/javascript')
+        
+        collector = NestedObjects(using='default')
+        collector.collect(queryset)
+        rel = [ obj for cls, objs in collector.data.items() for obj in objs
+                if cls._meta.app_label == 'formative' ]
+        serializers.serialize('json', rel, stream=response,
+                              use_natural_foreign_keys=True,
+                              use_natural_primary_keys=True)
+        
+        if len(queryset) == 1: filename = f'{queryset[0].slug}_export.json'
+        else: filename = f'{queryset[0].program.slug}_selected__export.json'
+        disp = f"attachment; filename*=UTF-8''" + quote(filename)
+        response['Content-Disposition'] = disp
+        return response
+    
+    @admin.action(description='Copy a form')
+    def duplicate(self, request, queryset):
+        form = queryset[0]
+        if '_duplicate' in request.POST:
+            new = None
+            with transaction.atomic():
+                form.slug = request.POST['new_slug']
+                form.name = request.POST['new_name']
+                form.save()
+                
+                collector = NonPolymorphicNestedObjects(using='default')
+                collector.collect(Form.objects.filter(pk=form.pk))
+                models = serializers.sort_dependencies(
+                    [(None, collector.data.keys())]
+                )
+                rel = [ obj for cls in models for obj in collector.data[cls]
+                        if cls._meta.app_label == 'formative' ]
+                new = serializers.serialize('json', rel,
+                                            use_natural_foreign_keys=True,
+                                            use_natural_primary_keys=True)
+                transaction.set_rollback(True)
+            
+            with transaction.atomic():
+                for obj in serializers.deserialize('json', new):
+                    if obj.object._meta.model_name == 'form':
+                        obj.object.status = Form.Status.DRAFT
+                    obj.save()
+            
+            self.message_user(request, 'Form copied.', messages.SUCCESS)
+            return HttpResponseRedirect(request.get_full_path())
+        
+        name_maxlen = Form._meta.get_field('name').max_length
+        class FormCopyForm(forms.Form):
+            new_slug = forms.SlugField(allow_unicode=True,
+                                       label='New identifier')
+            new_name = forms.CharField(max_length=name_maxlen)
+        
+        template_name = 'admin/formative/copy_form.html'
+        request.current_app = self.admin_site.name
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta, 'media': self.media, 'title': 'Copy Form',
+            'allowed': len(queryset) == 1, 'program_form': form,
+            'form': FormCopyForm(initial={'new_slug': form.slug})
         }
         return TemplateResponse(request, template_name, context)
 

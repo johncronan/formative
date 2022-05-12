@@ -115,6 +115,8 @@ CACHES = {
     )
 }
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
 
 EMAIL_HOST = env('POSTFIX_HOST', default='localhost')
 TECH_EMAIL = env('DJANGO_SU_EMAIL')

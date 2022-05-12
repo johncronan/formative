@@ -148,7 +148,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     list_display = ('name', 'program', 'created', 'modified')
     list_filter = ('program',)
     form = FormAdminForm
-    actions = ['form_plugins']
+    actions = ['form_plugins', 'export_json', 'duplicate']
     
     def get_changelist(self, request, **kwargs):
         return FormChangeList
@@ -192,6 +192,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         
+        if 'program' not in form.base_fields: return form
         qs = form.base_fields['program'].queryset
         site = get_current_site(request)
         if site: form.base_fields['program'].queryset = qs.filter(sites=site)

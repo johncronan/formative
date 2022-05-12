@@ -40,8 +40,7 @@ class Program(AutoSlugModel):
     class Meta:
         ordering = ['created']
     
-    sites = models.ManyToManyField('Site', null=True, blank=True,
-                                   related_name='programs',
+    sites = models.ManyToManyField('Site', blank=True, related_name='programs',
                                    related_query_name='program')
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True, allow_unicode=True,
@@ -523,13 +522,14 @@ class FormDependency(models.Model):
     
     def natural_key(self):
         return self.block.natural_key() + (self.value,)
-    natural_key.dependencies = ['formative.formblock']
+    natural_key.dependencies = ['formative.formblock', 'formative.customblock',
+                                'formative.collectionblock']
 
 
 class FormBlockManager(PolymorphicManager):
     def get_by_natural_key(self, program_slug, form_slug, name):
-        return self.get(form__program__slug=program_slug, form__slug=form_slug,
-                        name=name)
+        return self.non_polymorphic().get(form__program__slug=program_slug,
+                                          form__slug=form_slug, name=name)
 
 class FormBlock(PolymorphicModel, RankedModel):
     class Meta(PolymorphicModel.Meta, RankedModel.Meta):
@@ -668,10 +668,6 @@ class CustomBlock(FormBlock):
             kwargs['max_chars'] = cls.DEFAULT_TEXT_MAXLEN
         return cls(*args, **kwargs, type=cls.InputType.TEXT)
     
-    def natural_key(self):
-        return self.block.natural_key()
-    natural_key.dependencies = ['formative.formblock']
-    
     def choices(self, include_empty=False):
         if include_empty:
             if 'choices' in self.options: return self.options['choices']
@@ -800,10 +796,6 @@ class CollectionBlock(FormBlock):
     name3 = models.CharField(max_length=32, default='', blank=True)
     align_type = models.CharField(max_length=16, choices=AlignType.choices,
                                   default=AlignType.TABULAR)
-    
-    def natural_key(self):
-        return self.block.natural_key()
-    natural_key.dependencies = ['formative.formblock']
     
     def fields(self):
         return []
