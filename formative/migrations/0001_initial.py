@@ -1,4 +1,3 @@
-import os
 import django.contrib.auth.models
 import django.contrib.auth.validators
 from django.db import migrations, models
@@ -11,16 +10,6 @@ class Migration(migrations.Migration):
         ('auth', '0012_alter_user_first_name_max_length'),
     ]
     
-    def generate_superuser(apps, schema_editor):
-        from django.contrib import auth
-        
-        superuser = auth.get_user_model().objects.create_superuser(
-            username=os.environ.get('DJANGO_SU_NAME'),
-            email=os.environ.get('DJANGO_SU_EMAIL'),
-            password=os.environ.get('DJANGO_SU_PASSWORD')
-        )
-        superuser.save()
-
     operations = [
         migrations.CreateModel(
             name='User',
@@ -46,5 +35,4 @@ class Migration(migrations.Migration):
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
         ),
-        migrations.RunPython(generate_superuser),
     ]
