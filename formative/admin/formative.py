@@ -67,7 +67,7 @@ site = FormativeAdminSite()
 site.register(auth.models.Group, auth.admin.GroupAdmin)
 
 
-@admin.register(auth.models.User, site=site)
+@admin.register(auth.get_user_model(), site=site)
 class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     change_list_template = 'admin/formative/user/change_list.html'
     actions = ['make_active', 'make_inactive', 'send_password_reset']

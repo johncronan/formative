@@ -3,7 +3,6 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import admin, auth, messages
 from django.contrib.admin.utils import NestedObjects
-from django.contrib.auth.models import User
 from django.core import exceptions, serializers
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Max, Sum, Exists, OuterRef
@@ -69,7 +68,7 @@ class UserActionsMixin:
         return None, data
     
     def import_csv(self, request):
-        err = None
+        User, err = auth.get_user_model(), None
         if request.method == 'POST':
             csv_file = request.FILES['csv_file']
             reader = csv.reader(io.TextIOWrapper(csv_file, encoding='utf-8'))
