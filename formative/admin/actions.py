@@ -182,17 +182,19 @@ class FormActionsMixin:
         }
         return TemplateResponse(request, template_name, context)
     
+    def form_objects(self, queryset):
+        collector = NonPolymorphicNestedObjects(using='default')
+        collector.collect(queryset)
+        models = serializers.sort_dependencies([(None, collector.data.keys())])
+        return [ obj for cls in models for obj in collector.data[cls]
+                 if cls._meta.app_label == 'formative' ]
+    
     @admin.action(description='Export selected forms as JSON')
     def export_json(self, request, queryset):
         response = HttpResponse(content_type='text/javascript')
-        
-        collector = NestedObjects(using='default')
-        collector.collect(queryset)
-        rel = [ obj for cls, objs in collector.data.items() for obj in objs
-                if cls._meta.app_label == 'formative' ]
-        serializers.serialize('json', rel, stream=response,
+        serializers.serialize('json', self.form_objects(queryset),
                               use_natural_foreign_keys=True,
-                              use_natural_primary_keys=True)
+                              use_natural_primary_keys=True, stream=response)
         
         if len(queryset) == 1: filename = f'{queryset[0].slug}_export.json'
         else: filename = f'{queryset[0].program.slug}_selected__export.json'
@@ -210,14 +212,8 @@ class FormActionsMixin:
                 form.name = request.POST['new_name']
                 form.save()
                 
-                collector = NonPolymorphicNestedObjects(using='default')
-                collector.collect(Form.objects.filter(pk=form.pk))
-                models = serializers.sort_dependencies(
-                    [(None, collector.data.keys())]
-                )
-                rel = [ obj for cls in models for obj in collector.data[cls]
-                        if cls._meta.app_label == 'formative' ]
-                new = serializers.serialize('json', rel,
+                related = self.form_objects(Form.objects.filter(pk=form.pk))
+                new = serializers.serialize('json', related,
                                             use_natural_foreign_keys=True,
                                             use_natural_primary_keys=True)
                 transaction.set_rollback(True)
