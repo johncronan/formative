@@ -127,6 +127,8 @@ ADMINS = [(env('ADMIN_NAME', default=''),
            env('ADMIN_EMAIL', default=TECH_EMAIL))]
 
 
+AUTH_USER_MODEL = 'formative.User'
+
 prefix = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [
     {
