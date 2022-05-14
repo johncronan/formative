@@ -803,7 +803,7 @@ TZ_CHOICES = [ (('+' if k >= 0 else '') + f'{k // 60}:{k % 60:02d}',
                for k in sorted(offsets.keys()) ]
 
 class SiteAdminForm(forms.ModelForm):
-    time_zone = forms.ChoiceField(choices=TZ_CHOICES)
+    time_zone = forms.ChoiceField(choices=[('', '[not localized]')]+TZ_CHOICES)
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

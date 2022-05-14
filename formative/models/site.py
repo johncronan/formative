@@ -4,7 +4,7 @@ from django.contrib import auth, sites
 
 
 class Site(sites.models.Site):
-    time_zone = models.CharField(max_length=32)
+    time_zone = models.CharField(max_length=32, blank=True)
 
 
 class User(auth.models.AbstractUser):

@@ -5,7 +5,7 @@ import django.db.models.deletion
 
 def set_usernames(apps, schema_editor):
     User = apps.get_model('formative', 'User')
-    User.objects.update(username=models.F('email'))
+    User.objects.filter(is_superuser=False).update(username=models.F('email'))
 
 def nop(apps, schema_editor): pass
 
@@ -17,6 +17,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='site',
+            name='time_zone',
+            field=models.CharField(blank=True, max_length=32),
+        ),
         migrations.AlterModelOptions(
             name='user',
             options={'ordering': ['site', 'email']},
