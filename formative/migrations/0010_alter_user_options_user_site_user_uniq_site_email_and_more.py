@@ -31,6 +31,11 @@ class Migration(migrations.Migration):
             name='site',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='users', related_query_name='user', to='formative.site'),
         ),
+        migrations.AddField(
+            model_name='user',
+            name='programs',
+            field=models.ManyToManyField(blank=True, related_name='users', related_query_name='user', to='formative.program'),
+        ),
         migrations.AddConstraint(
             model_name='user',
             constraint=models.UniqueConstraint(fields=('site', 'email'), name='uniq_site_email'),

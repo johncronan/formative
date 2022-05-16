@@ -128,6 +128,7 @@ ADMINS = [(env('ADMIN_NAME', default=''),
 
 
 AUTH_USER_MODEL = 'formative.User'
+AUTHENTICATION_BACKENDS = ('formative.backends.SiteAuthBackend',)
 
 prefix = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [

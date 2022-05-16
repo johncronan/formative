@@ -21,7 +21,7 @@ from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
     UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
 from ..tasks import send_email_for_submissions
-from ..utils import TabularExport, delete_submission_files
+from ..utils import TabularExport, delete_submission_files, get_current_site
 
 
 class UserActionsMixin:
@@ -42,7 +42,7 @@ class UserActionsMixin:
             })
         self.message_user(request, 'Password reset emails sent.')
     
-    def read_csv(self, reader):
+    def read_csv(self, site, reader):
         rows = list(reader)
         if not rows: return 'File is empty.', None
         if not rows[0]: return 'File has empty line.', None
@@ -53,9 +53,8 @@ class UserActionsMixin:
             if '@' not in row[0]:
                 return 'Email address must be in first column.', None
             n = len(row)
-            if n < 2: return 'Required columns: email, username.', None
-            email, username, *rest = row
-            if not username: return 'Username is required.', None
+            email, *rest = row
+            username = f'{email}__{site.id}'
             try: validator(username)
             except exceptions.ValidationError:
                 return 'Invalid characters in username.', None
@@ -70,14 +69,16 @@ class UserActionsMixin:
     def import_csv(self, request):
         User, err = auth.get_user_model(), None
         if request.method == 'POST':
+            site = get_current_site(request)
+            
             csv_file = request.FILES['csv_file']
             reader = csv.reader(io.TextIOWrapper(csv_file, encoding='utf-8'))
-            err, user_data = self.read_csv(reader)
+            err, user_data = self.read_csv(site, reader)
             if not err:
                 skipped = 0
                 for entry in user_data:
                     password = entry.pop('password', None)
-                    u = User(**entry)
+                    u = User(site=site, **entry)
                     if not password: u.set_unusable_password()
                     else: u.set_password(password)
                     try: u.save()

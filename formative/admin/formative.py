@@ -20,7 +20,8 @@ from urllib.parse import unquote, parse_qsl
 
 from ..forms import ProgramAdminForm, FormAdminForm, DependencyAdminForm, \
     StockBlockAdminForm, CustomBlockAdminForm, CollectionBlockAdminForm, \
-    SubmissionAdminForm, SubmissionItemAdminForm, SiteAdminForm
+    SubmissionAdminForm, SubmissionItemAdminForm, SiteAdminForm, \
+    UserCreationAdminForm
 from ..models import Program, Form, FormLabel, FormBlock, FormDependency, \
     CustomBlock, CollectionBlock, SubmissionRecord, Site
 from ..filetype import FileType
@@ -71,6 +72,87 @@ site.register(auth.models.Group, auth.admin.GroupAdmin)
 class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     change_list_template = 'admin/formative/user/change_list.html'
     actions = ['make_active', 'make_inactive', 'send_password_reset']
+    add_form = UserCreationAdminForm
+    add_fieldsets = ((None, {'classes': ('wide',),
+                             'fields': ('email', 'password1', 'password2')}),)
+    
+    def get_queryset(self, request):
+        queryset, user = super().get_queryset(request), request.user
+        
+        if user.site: queryset = queryset.filter(site=user.site)
+        if not user.is_superuser:
+            queryset = queryset.filter(Q(is_staff=False) | Q(pk=user.pk))
+        return queryset
+    
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if not obj: return fieldsets
+        
+        if obj.is_staff:
+            main = ((None, {'fields': ('username', 'password', 'programs')}),)
+        else: main = ((None, {'fields': ('email', 'password')}),)
+        if request.user.is_superuser:
+            main = ((None, {'fields': main[0][1]['fields'] + ('site',)}),)
+        
+        info = ((fieldsets[1][0], {
+            'fields': tuple(f for f in fieldsets[1][1]['fields']
+                            if obj.is_staff or f != 'email')
+        }),)
+        return main + info + fieldsets[2:]
+    
+    def get_list_display(self, request):
+        display = super().get_list_display(request)
+        if not request.user.is_superuser:
+            keep = tuple(f for f in display if f not in ('email', 'username'))
+            return ('user_id',) + keep + ('is_active',)
+        return display + ('is_active', 'site')
+    
+    def get_list_filter(self, request):
+        filters = super().get_list_filter(request)
+        if request.user.is_superuser: return filters + ('site',)
+        return filters
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if not obj or not obj.is_staff:
+            form.base_fields['email'].required = True
+        
+        if 'programs' not in form.base_fields: return form
+        qs = form.base_fields['programs'].queryset
+        site = get_current_site(request)
+        if site: form.base_fields['programs'].queryset = qs.filter(sites=site)
+        return form
+    
+    def has_change_permission(self, request, obj=None):
+        if not request.user.is_superuser and obj and obj.is_staff:
+            if obj.pk != request.user.pk: return False
+        return super().has_change_permission(request, obj)
+    
+    def has_delete_permission(self, request, obj=None):
+        if not request.user.is_superuser and obj and obj.is_staff: return False
+        return super().has_delete_permission(request, obj)
+    
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if not request.user.is_superuser and obj:
+            ro = ('programs', 'is_staff', 'is_superuser',
+                  'groups', 'user_permissions')
+            if obj.is_staff: ro = ('password',) + ro
+            return ro + fields
+        return fields
+    
+    def save_model(self, request, obj, form, change):
+        if request.user.site and not request.user.is_superuser:
+            obj.site = request.user.site
+        if not obj.is_staff:
+            obj.username = obj.email
+            if obj.site: obj.username += f'__{obj.site_id}'
+        super().save_model(request, obj, form, change)
+    
+    @admin.display(description='username')
+    def user_id(self, obj):
+        if obj.is_staff: return obj.username
+        return obj.email # we hide the __{site_id} username from regular admins
     
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -298,10 +380,10 @@ class FormDependencyInline(admin.TabularInline):
         
         return obj.form.status == Form.Status.DRAFT
     
-    def has_change_permission(self, request, obj):
+    def has_change_permission(self, request, obj=None):
         return self.has_add_permission(request, obj)
     
-    def has_delete_permission(self, request, obj):
+    def has_delete_permission(self, request, obj=None):
         return self.has_add_permission(request, obj)
 
 
@@ -769,7 +851,7 @@ class SubmissionRecordInline(admin.TabularInline):
     exclude = ('program', 'form', 'submission')
     readonly_fields = ('type', 'recorded', 'text', 'number', 'deleted')
     
-    def has_add_permission(self, request, obj=None): return False
+    def has_add_permission(self, request, obj): return False
     
     def get_formset(self, request, obj=None, **kwargs):
         return forms.modelformset_factory(self.model, **{

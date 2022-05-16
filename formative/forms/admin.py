@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.admin import widgets
+from django.contrib.auth.forms import UserCreationForm
 from copy import deepcopy
 from django_better_admin_arrayfield.forms.fields import DynamicArrayField
 from django_better_admin_arrayfield.forms.widgets import DynamicArrayWidget
@@ -12,7 +13,7 @@ from ..signals import register_program_settings, register_form_settings
 from ..filetype import FileType
 from ..stock import StockWidget
 from ..models import Program, Form, FormBlock, CustomBlock, CollectionBlock, \
-    Submission, SubmissionItem, Site
+    Submission, SubmissionItem, Site, User
 from ..plugins import get_available_plugins
 from ..validators import validate_program_identifier, validate_form_identifier,\
     validate_formblock_identifier
@@ -303,6 +304,17 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
         
         return cleaned_data
 
+
+class UserCreationAdminForm(UserCreationForm):
+    class Meta:
+        fields = ('email',)
+        model = User
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = user.email
+        if commit: user.save()
+        return user
 
 class ProgramAdminForm(AdminJSONForm):
     name = forms.CharField(

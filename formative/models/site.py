@@ -16,3 +16,6 @@ class User(auth.models.AbstractUser):
     
     site = models.ForeignKey(Site, models.CASCADE, null=True, blank=True,
                              related_name='users', related_query_name='user')
+    programs = models.ManyToManyField('Program', blank=True,
+                                      related_name='users',
+                                      related_query_name='user')
