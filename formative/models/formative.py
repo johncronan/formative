@@ -2,7 +2,6 @@ from django.db import models, connection
 from django.db.models import Q, Max, Case, Value, When, Exists, OuterRef, \
     UniqueConstraint, Subquery
 from django.conf import settings
-from django.contrib import sites
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import FieldError, ValidationError
@@ -1056,7 +1055,3 @@ class SubmissionItem(UnderscoredRankedModel):
         if type == 'image': return thumbnail_path(self._file.url)
         elif type == 'video': return thumbnail_path(self._file.url, ext='jpg')
         return None
-
-
-class Site(sites.models.Site):
-    time_zone = models.CharField(max_length=32)

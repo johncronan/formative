@@ -69,7 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'formative.middleware.TimezoneMiddleware',
+    'formative.middleware.SitesMiddleware',
     'formative.middleware.DynamicModelMiddleware',
 ]
 
@@ -126,6 +126,9 @@ DEFAULT_FROM_EMAIL = CONTACT_EMAIL
 ADMINS = [(env('ADMIN_NAME', default=''),
            env('ADMIN_EMAIL', default=TECH_EMAIL))]
 
+
+AUTH_USER_MODEL = 'formative.User'
+AUTHENTICATION_BACKENDS = ('formative.backends.SiteAuthBackend',)
 
 prefix = 'django.contrib.auth.password_validation'
 AUTH_PASSWORD_VALIDATORS = [

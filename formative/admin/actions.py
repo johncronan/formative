@@ -3,7 +3,6 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import admin, auth, messages
 from django.contrib.admin.utils import NestedObjects
-from django.contrib.auth.models import User
 from django.core import exceptions, serializers
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Max, Sum, Exists, OuterRef
@@ -22,7 +21,7 @@ from ..forms import MoveBlocksAdminForm, EmailAdminForm, FormPluginsAdminForm, \
     UserImportForm, ExportAdminForm
 from ..models import Form, FormBlock, SubmissionRecord
 from ..tasks import send_email_for_submissions
-from ..utils import TabularExport, delete_submission_files
+from ..utils import TabularExport, delete_submission_files, get_current_site
 
 
 class UserActionsMixin:
@@ -43,7 +42,7 @@ class UserActionsMixin:
             })
         self.message_user(request, 'Password reset emails sent.')
     
-    def read_csv(self, reader):
+    def read_csv(self, site, reader):
         rows = list(reader)
         if not rows: return 'File is empty.', None
         if not rows[0]: return 'File has empty line.', None
@@ -54,9 +53,8 @@ class UserActionsMixin:
             if '@' not in row[0]:
                 return 'Email address must be in first column.', None
             n = len(row)
-            if n < 2: return 'Required columns: email, username.', None
-            email, username, *rest = row
-            if not username: return 'Username is required.', None
+            email, *rest = row
+            username = f'{email}__{site.id}'
             try: validator(username)
             except exceptions.ValidationError:
                 return 'Invalid characters in username.', None
@@ -69,16 +67,18 @@ class UserActionsMixin:
         return None, data
     
     def import_csv(self, request):
-        err = None
+        User, err = auth.get_user_model(), None
         if request.method == 'POST':
+            site = get_current_site(request)
+            
             csv_file = request.FILES['csv_file']
             reader = csv.reader(io.TextIOWrapper(csv_file, encoding='utf-8'))
-            err, user_data = self.read_csv(reader)
+            err, user_data = self.read_csv(site, reader)
             if not err:
                 skipped = 0
                 for entry in user_data:
                     password = entry.pop('password', None)
-                    u = User(**entry)
+                    u = User(site=site, **entry)
                     if not password: u.set_unusable_password()
                     else: u.set_password(password)
                     try: u.save()
@@ -182,17 +182,19 @@ class FormActionsMixin:
         }
         return TemplateResponse(request, template_name, context)
     
+    def form_objects(self, queryset):
+        collector = NonPolymorphicNestedObjects(using='default')
+        collector.collect(queryset)
+        models = serializers.sort_dependencies([(None, collector.data.keys())])
+        return [ obj for cls in models for obj in collector.data[cls]
+                 if cls._meta.app_label == 'formative' ]
+    
     @admin.action(description='Export selected forms as JSON')
     def export_json(self, request, queryset):
         response = HttpResponse(content_type='text/javascript')
-        
-        collector = NestedObjects(using='default')
-        collector.collect(queryset)
-        rel = [ obj for cls, objs in collector.data.items() for obj in objs
-                if cls._meta.app_label == 'formative' ]
-        serializers.serialize('json', rel, stream=response,
+        serializers.serialize('json', self.form_objects(queryset),
                               use_natural_foreign_keys=True,
-                              use_natural_primary_keys=True)
+                              use_natural_primary_keys=True, stream=response)
         
         if len(queryset) == 1: filename = f'{queryset[0].slug}_export.json'
         else: filename = f'{queryset[0].program.slug}_selected__export.json'
@@ -210,14 +212,8 @@ class FormActionsMixin:
                 form.name = request.POST['new_name']
                 form.save()
                 
-                collector = NonPolymorphicNestedObjects(using='default')
-                collector.collect(Form.objects.filter(pk=form.pk))
-                models = serializers.sort_dependencies(
-                    [(None, collector.data.keys())]
-                )
-                rel = [ obj for cls in models for obj in collector.data[cls]
-                        if cls._meta.app_label == 'formative' ]
-                new = serializers.serialize('json', rel,
+                related = self.form_objects(Form.objects.filter(pk=form.pk))
+                new = serializers.serialize('json', related,
                                             use_natural_foreign_keys=True,
                                             use_natural_primary_keys=True)
                 transaction.set_rollback(True)

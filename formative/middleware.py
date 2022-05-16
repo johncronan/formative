@@ -5,6 +5,7 @@ from django.utils import timezone
 import sys, importlib, zoneinfo
 
 from .admin import site
+from .models import Site
 from .utils import get_current_site
 
 
@@ -28,13 +29,19 @@ class DynamicModelMiddleware:
         return self.get_response(request)
 
 
-class TimezoneMiddleware:
+class SitesMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
     
     def __call__(self, request):
         site = get_current_site(request)
-        if site: timezone.activate(zoneinfo.ZoneInfo(site.time_zone))
-        else: timezone.deactivate()
+        if site and site.time_zone:
+            timezone.activate(zoneinfo.ZoneInfo(site.time_zone))
+        else:
+            timezone.deactivate()
+            if not site: # Django expects a site obj if contrib.sites installed
+                # any request domain that we see here has been set up by admin
+                Site(domain=request.get_host(), name='Formative').save()
+                Site.objects.clear_cache()
         
         return self.get_response(request)

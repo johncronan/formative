@@ -3,10 +3,9 @@ from django.urls import include, path
 from django.views.defaults import page_not_found, server_error
 from django.http import Http404
 from django.contrib.auth.views import LoginView
+import importlib.util
 
 from formative import admin
-
-import importlib.util
 
 
 plugin_patterns = []
