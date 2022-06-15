@@ -29,7 +29,7 @@ from ..plugins import get_matching_plugin
 from ..signals import register_program_settings, register_form_settings, \
     register_user_actions, form_published_changed, form_settings_changed
 from ..tasks import timed_complete_form
-from ..utils import submission_link, get_current_site
+from ..utils import submission_link, get_current_site, user_programs
 from .actions import UserActionsMixin, FormActionsMixin,FormBlockActionsMixin, \
     SubmissionActionsMixin, download_view
 
@@ -207,7 +207,14 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         site = get_current_site(request)
         if site and not request.user.is_superuser:
             queryset = queryset.filter(sites=site)
-        return queryset
+        return user_programs(queryset, '', request)
+    
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        site = get_current_site(request)
+        if site and request.user.is_superuser:
+            initial['sites'] = (get_current_site(request),)
+        return initial
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -269,7 +276,7 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
         queryset = super().get_queryset(request)
         site = get_current_site(request)
         if site: queryset = queryset.filter(program__sites=site)
-        return queryset
+        return user_programs(queryset, 'program__', request)
     
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -277,7 +284,9 @@ class FormAdmin(FormActionsMixin, admin.ModelAdmin):
         if 'program' not in form.base_fields: return form
         qs = form.base_fields['program'].queryset
         site = get_current_site(request)
-        if site: form.base_fields['program'].queryset = qs.filter(sites=site)
+        if site:
+            qs = user_programs(qs.filter(sites=site), '', request)
+            form.base_fields['program'].queryset = qs
         return form
     
     def save_form(self, request, form, change):
@@ -345,17 +354,17 @@ class FormLabelAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         
-        qs = form.base_fields['form'].queryset
         site = get_current_site(request)
-        if site:
-            form.base_fields['form'].queryset = qs.filter(program__sites=site)
+        qs = form.base_fields['form'].queryset.filter(program__sites=site)
+        form.base_fields['form'].queryset = user_programs(qs, 'program__',
+                                                          request)
         return form
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         site = get_current_site(request)
-        if site: queryset = queryset.filter(form__program__sites=site)
-        return queryset
+        return user_programs(queryset.filter(form__program__sites=site),
+                             'form__program__', request)
 
 
 class FormDependencyFormSet(forms.BaseInlineFormSet):
@@ -451,8 +460,8 @@ class FormBlockBase:
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         site = get_current_site(request)
-        if site: qs = qs.filter(form__program__sites=site)
-        return qs
+        return user_programs(qs.filter(form__program__sites=site),
+                             'form__program__', request)
         
     def response_add(self, request, obj, **kwargs):
         if '_popup' in request.POST or '_continue' not in request.POST:
@@ -817,9 +826,9 @@ class SiteAccessMixin:
     def has_change_permission(self, request, obj=None):
         slug = self.model._meta.program_slug
         site = get_current_site(request)
-        if not site: return True
         
-        return slug in site.programs.values_list('slug', flat=True)
+        programs = user_programs(site.programs, '', request)
+        return slug in programs.values_list('db_slug', flat=True)
     
     def has_view_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)

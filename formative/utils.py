@@ -20,6 +20,10 @@ def get_current_site(request):
     
     return None
 
+def user_programs(queryset, path, request):
+    if request.user.is_superuser: return queryset
+    return queryset.filter(**{path+'user': request.user})
+
 def create_model(name, fields, app_label='formative', module='',
                  program=None, meta=None, base_class=Model):
     class Meta:
