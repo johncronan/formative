@@ -828,7 +828,7 @@ class SiteAccessMixin:
         site = get_current_site(request)
         
         programs = user_programs(site.programs, '', request)
-        return slug in programs.values_list('slug', flat=True)
+        return slug in programs.values_list('db_slug', flat=True)
     
     def has_view_permission(self, request, obj=None):
         return self.has_change_permission(request, obj)

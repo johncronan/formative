@@ -22,7 +22,8 @@ def file_thumbnail(file):
 
 @register.simple_tag
 def env_bundle():
-    return settings.ENV # 'bundles/' + settings.ENV
+    if settings.ENV != 'prod': return 'bundles/' + settings.ENV
+    return settings.ENV
 
 register.filter('human_readable', human_readable_filesize)
 
