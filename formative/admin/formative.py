@@ -688,6 +688,10 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
         else: kwargs['widgets'] = {'_rank': forms.HiddenInput}
         return super().get_changelist_form(request, **kwargs)
     
+    def add_view(self, *args, **kwargs):
+        kwargs['extra_context'] = {'show_save_and_add_another': False}
+        return super().add_view(*args, **kwargs)
+    
     def change_view(self, *args, **kwargs):
         # we still have the bulk action for delete - it redirects properly
         kwargs['extra_context'] = {'show_delete': False,
