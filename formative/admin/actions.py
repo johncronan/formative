@@ -52,17 +52,17 @@ class UserActionsMixin:
             if not row: return 'File has empty line.', None
             if '@' not in row[0]:
                 return 'Email address must be in first column.', None
-            n = len(row)
             email, *rest = row
+            n = len(rest)
             username = f'{email}__{site.id}'
             try: validator(username)
             except exceptions.ValidationError:
                 return 'Invalid characters in username.', None
             
             user = {'email': email, 'username': username}
-            if n > 2 and row[2]: user['password'] = row[2]
-            if n > 3 and row[3]: user['first_name'] = row[3]
-            if n > 4 and row[4]: user['last_name'] = row[4]
+            if n > 0 and rest[0]: user['password'] = rest[0]
+            if n > 1 and rest[1]: user['first_name'] = rest[1]
+            if n > 2 and rest[2]: user['last_name'] = rest[2]
             data.append(user)
         return None, data
     
