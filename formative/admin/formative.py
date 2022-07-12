@@ -74,7 +74,8 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     actions = ['make_active', 'make_inactive', 'send_password_reset']
     add_form = UserCreationAdminForm
     add_fieldsets = ((None, {'classes': ('wide',),
-                             'fields': ('email', 'password1', 'password2')}),)
+                             'fields': ('email', 'password1', 'password2',
+                                        'is_staff')}),)
     
     def get_queryset(self, request):
         queryset, user = super().get_queryset(request), request.user
@@ -102,10 +103,10 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     
     def get_list_display(self, request):
         display = super().get_list_display(request)
+        keep = tuple(f for f in display if f not in ('email', 'username'))
         if not request.user.is_superuser:
-            keep = tuple(f for f in display if f not in ('email', 'username'))
-            return ('user_id',) + keep + ('is_active',)
-        return display + ('is_active', 'site')
+            return ('user_id',) + keep + ('is_active', 'date_joined')
+        return ('user_id',) + keep + ('is_active', 'date_joined', 'site')
     
     def get_list_filter(self, request):
         filters = super().get_list_filter(request)
@@ -142,11 +143,16 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
         return fields
     
     def save_model(self, request, obj, form, change):
-        if request.user.site and not request.user.is_superuser:
-            obj.site = request.user.site
-        if not obj.is_staff:
-            obj.username = obj.email
-            if obj.site: obj.username += f'__{obj.site_id}'
+        # TODO incomplete:
+        # need a username form field that strips out __{obj.site_id}
+        # what to do, general superuser vs site superuser
+        site = get_current_site(request)
+        if not obj.is_staff or not request.user.is_superuser: obj.site = site
+        
+        # currently, this doesn't keep it updated when ID set, then changes
+        if not obj.is_staff: obj.username = obj.email
+        if obj.site and '__' not in obj.username:
+            obj.username += f'__{obj.site_id}'
         super().save_model(request, obj, form, change)
     
     @admin.display(description='username')

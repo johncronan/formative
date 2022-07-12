@@ -307,7 +307,7 @@ class AdminJSONForm(forms.ModelForm, metaclass=AdminJSONFormMetaclass):
 
 class UserCreationAdminForm(UserCreationForm):
     class Meta:
-        fields = ('email',)
+        fields = ('email', 'is_staff')
         model = User
     
     def save(self, commit=True):
