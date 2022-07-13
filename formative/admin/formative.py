@@ -92,7 +92,7 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
         if obj.is_staff:
             main = ((None, {'fields': ('username', 'password', 'programs')}),)
         else: main = ((None, {'fields': ('email', 'password')}),)
-        if request.user.is_superuser:
+        if request.user.is_superuser and not request.user.site:
             main = ((None, {'fields': main[0][1]['fields'] + ('site',)}),)
         
         info = ((fieldsets[1][0], {
@@ -104,13 +104,14 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
     def get_list_display(self, request):
         display = super().get_list_display(request)
         keep = tuple(f for f in display if f not in ('email', 'username'))
-        if not request.user.is_superuser:
+        if not request.user.is_superuser or request.user.site:
             return ('user_id',) + keep + ('is_active', 'date_joined')
         return ('user_id',) + keep + ('is_active', 'date_joined', 'site')
     
     def get_list_filter(self, request):
         filters = super().get_list_filter(request)
-        if request.user.is_superuser: return filters + ('site',)
+        if request.user.is_superuser and not request.user.site:
+            return filters + ('site',)
         return filters
     
     def get_form(self, request, obj=None, **kwargs):
@@ -143,12 +144,11 @@ class UserAdmin(UserActionsMixin, auth.admin.UserAdmin):
         return fields
     
     def save_model(self, request, obj, form, change):
-        # TODO incomplete:
-        # need a username form field that strips out __{obj.site_id}
-        # what to do, general superuser vs site superuser
+        # TODO need a username form field that strips out __{obj.site_id}
         site = get_current_site(request)
         if not obj.is_staff or not request.user.is_superuser: obj.site = site
-        
+        if request.user.is_superuser and request.user.site:
+            obj.site = request.user.site
         # currently, this doesn't keep it updated when ID set, then changes
         if not obj.is_staff: obj.username = obj.email
         if obj.site and '__' not in obj.username:
@@ -190,7 +190,8 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
         fields = self.get_fields(request, obj)
         
         exclude = []
-        if not request.user.is_superuser: exclude.append('sites')
+        if not request.user.is_superuser or request.user.site:
+            exclude.append('sites')
         
         main = (None, {'fields': [ f for f in fields if f not in exclude ] })
         if not obj: return [main]
@@ -211,7 +212,7 @@ class ProgramAdmin(admin.ModelAdmin, DynamicArrayMixin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         site = get_current_site(request)
-        if site and not request.user.is_superuser:
+        if not request.user.is_superuser and not request.user.site:
             queryset = queryset.filter(sites=site)
         return user_programs(queryset, '', request)
     
@@ -951,6 +952,11 @@ class SiteAdmin(SuperuserAccessMixin, admin.ModelAdmin):
     form = SiteAdminForm
     list_display = ('domain', 'name', 'time_zone')
     search_fields = ('domain', 'name')
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        if request.user.site: return queryset.filter(pk=request.user.site.pk)
+        return queryset
     
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
