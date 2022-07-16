@@ -33,7 +33,7 @@ class UserActionsMixin:
         for user in queryset:
             form = auth.forms.PasswordResetForm({'email': user.email})
             form.full_clean()
-            form.save({
+            form.save(**{
                 'use_https': request.is_secure(),
                 'token_generator': auth.tokens.default_token_generator,
                 'from_email': settings.DEFAULT_FROM_EMAIL,
