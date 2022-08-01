@@ -122,7 +122,8 @@ def formblock_pre_save(sender, instance, raw, **kwargs):
 @receiver(post_save, sender=FormBlock)
 def formblock_post_save(sender, instance, created, raw, **kwargs):
     if raw: return
-
+    
+    if 'stock' in instance.__dict__: del instance.stock # don't use cache
     block, stock, new = instance, instance.stock, created
 
     # get stock block's FormLabels and save
