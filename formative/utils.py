@@ -20,11 +20,13 @@ def get_current_site(request):
     
     return None
 
-def user_programs(queryset, path, request):
+def user_programs(queryset, path, request, or_cond=None):
     if request.user.is_superuser:
         if not request.user.site: return queryset
-        return queryset.filter(**{path+'sites': request.user.site})
-    return queryset.filter(**{path+'user': request.user})
+        cond = Q(**{path+'sites': request.user.site})
+        return queryset.filter(cond | or_cond if or_cond else cond)
+    cond = Q(**{path+'user': request.user})
+    return queryset.filter(cond | or_cond if or_cond else cond)
 
 def create_model(name, fields, app_label='formative', module='',
                  program=None, meta=None, base_class=Model):
