@@ -10,6 +10,7 @@ services:
     environment:
       DOCKER_ENV: 'on'
       S6_KILL_GRACETIME: 1
+      S6_CMD_WAIT_FOR_SERVICES_MAXTIME: 20000
     volumes:
       - requirements_volume:/opt/services/djangoapp/requirements
       - static_volume:/opt/services/djangoapp/static
