@@ -37,7 +37,7 @@ include = ["manage.py", "settings.py", "urls.py", "templates", "Dockerfile",
 [tool.poetry.dependencies]
 python = "^3.8"
 "backports.zoneinfo" = { version = "*", python = "~3.8" }
-django = "~=4.0"
+django = "4.0.*"
 gunicorn = "*"
 psycopg2 = "*"
 redis = "*"

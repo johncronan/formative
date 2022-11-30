@@ -201,14 +201,14 @@ packaging = "*"
 
 [[package]]
 name = "django"
-version = "4.1.3"
+version = "4.0.8"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 
 [package.dependencies]
-asgiref = ">=3.5.2,<4"
+asgiref = ">=3.4.1,<4"
 "backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
 sqlparse = ">=0.2.2"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
@@ -778,7 +778,7 @@ reviewpanel = ["reviewpanel"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "3d70d44758c089bc5b968724ac5b9158e02aaec05a73b9def385c50ad93554aa"
+content-hash = "12c1a81b0c5a98b00733ff93263aafaf461249288849a6a639401f07297c0f38"
 
 [metadata.files]
 amqp = []
