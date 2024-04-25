@@ -241,7 +241,7 @@ class FormChangeList(ChangeList):
 
 @admin.register(Form, site=site)
 class FormAdmin(FormActionsMixin, admin.ModelAdmin):
-    list_display = ('name', 'program', 'created', 'modified')
+    list_display = ('name', 'program', 'status', 'created', 'modified')
     list_filter = ('program',)
     form = FormAdminForm
     actions = ['form_plugins', 'export_json', 'duplicate']

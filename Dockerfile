@@ -4,14 +4,17 @@ RUN mkdir -p /opt/services/djangoapp/src /opt/services/djangoapp/static
 WORKDIR /opt/services/djangoapp/src
 
 COPY pyproject.toml poetry.lock /opt/services/djangoapp/src/
+ENV PATH="/opt/services/djangoapp/venv/bin:${PATH}"
+ENV VIRTUAL_ENV="/opt/services/djangoapp/venv"
 
 # dependencies
 RUN apt-get update \
     && apt-get install -y build-essential libpq-dev libqpdf-dev pip xz-utils \
-        python3-dev python3-importlib-metadata wget redis nginx \
+        python3-dev python3-wheel python3-venv wget redis nginx \
     && apt-get install -y --no-install-recommends ffmpeg \
-    && pip install wheel poetry && poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-root -E reviewpanel \
+    && python3 -m venv /opt/services/djangoapp/venv \
+    && pip install wheel poetry pytz && poetry config virtualenvs.create false \
+    && poetry install --without dev --no-root -E reviewpanel \
     && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default \
     && apt-get purge -y --auto-remove build-essential
 # virtualenvs.create option because we don't need an extra virtualenv here
