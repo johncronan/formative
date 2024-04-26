@@ -38,7 +38,7 @@ include = ["manage.py", "settings.py", "urls.py", "templates", "Dockerfile",
 python = "^3.8"
 "backports.zoneinfo" = { version = "*", python = "~3.8" }
 django = "4.0.*"
-gunicorn = "*"
+gunicorn = "20.1.*"
 psycopg2 = "*"
 redis = "*"
 django-environ = "*"
