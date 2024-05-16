@@ -600,7 +600,7 @@ class FormBlockAdmin(FormBlockActionsMixin, FormBlockBase,
     list_filter = (PageListFilter,)
     form = StockBlockAdminForm
     inlines = [FormDependencyInline]
-    actions = ['move_blocks_action']
+    actions = ['delete_selected', 'move_blocks_action']
     sortable_by = ()
     polymorphic_list = True
     

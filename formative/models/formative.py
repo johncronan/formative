@@ -333,7 +333,7 @@ class Form(AutoSlugModel):
         for label in self.labels.all():
             key, target = label.path, labels
             if '.' in label.path:
-                base, key = label.path.split('.')
+                base, key = label.path.split('.', 1)
                 if key[-1] == '_': base, key = base + '_', key[:-1]
                 
                 if base not in labels: labels[base] = {}
@@ -697,9 +697,10 @@ class CustomBlock(FormBlock):
             return models.IntegerField(null=True, blank=(not self.required))
 
         elif self.type == self.InputType.CHOICE:
+            clist = [(c, c) for c in self.choices(include_empty=True)]
             return models.CharField(null=True, blank=(not self.required),
                                     max_length=self.CHOICE_VAL_MAXLEN,
-                                    choices=[(c, c) for c in self.choices()])
+                                    choices=clist)
         
         elif self.type == self.InputType.BOOLEAN:
             return models.BooleanField(null=True)
@@ -965,6 +966,7 @@ class Submission(models.Model):
                 obj.__dict__ = { n: getattr(self, block.stock.field_name(n))
                                  for n in block.stock.widget_names() }
                 if len(obj.__dict__) > 1: context[block.name] = obj
+                elif not len(obj.__dict__): context[block.name] = obj
                 else: context[block.name] = next(iter(obj.__dict__.values()))
     
     def _send_email(self, form, name, **kwargs):
