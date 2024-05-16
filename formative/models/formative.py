@@ -333,7 +333,7 @@ class Form(AutoSlugModel):
         for label in self.labels.all():
             key, target = label.path, labels
             if '.' in label.path:
-                base, key = label.path.split('.')
+                base, key = label.path.split('.', 1)
                 if key[-1] == '_': base, key = base + '_', key[:-1]
                 
                 if base not in labels: labels[base] = {}
